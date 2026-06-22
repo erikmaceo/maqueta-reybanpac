@@ -1,0 +1,79 @@
+# ===========================================================================
+# Directorio LDAP de ejemplo — usuarios "cliente final" de Reybanpac.
+# Base DN: dc=reybanpac,dc=com  (creada automáticamente por la imagen)
+# Contraseña de todos los usuarios de ejemplo: Reyba2024
+# ===========================================================================
+
+dn: ou=people,dc=reybanpac,dc=com
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=grobles,ou=people,dc=reybanpac,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: grobles
+cn: Geovanny Robles
+givenName: Geovanny
+sn: Robles
+mail: grobles@reybanpac.com
+title: Analista Desarrollo
+ou: Desarrollo
+userPassword: Reyba2024
+
+dn: uid=mvelez,ou=people,dc=reybanpac,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: mvelez
+cn: Maria Fernanda Velez
+givenName: María Fernanda
+sn: Vélez
+mail: mvelez@reybanpac.com
+title: Analista Financiero
+ou: Finanzas
+userPassword: Reyba2024
+
+dn: uid=jmoran,ou=people,dc=reybanpac,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: jmoran
+cn: Julio Moran
+givenName: Julio
+sn: Morán
+mail: jmoran@reybanpac.com
+title: Jefe de Logística
+ou: Logística
+userPassword: Reyba2024
+
+dn: uid=acastro,ou=people,dc=reybanpac,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: acastro
+cn: Ana Castro
+givenName: Ana
+sn: Castro
+mail: acastro@reybanpac.com
+title: Contadora
+ou: Finanzas
+userPassword: Reyba2024
+
+dn: uid=pvera,ou=people,dc=reybanpac,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: pvera
+cn: Pedro Vera
+givenName: Pedro
+sn: Vera
+mail: pvera@reybanpac.com
+title: Especialista QA
+ou: Calidad
+userPassword: Reyba2024

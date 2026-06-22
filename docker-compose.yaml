@@ -1,0 +1,72 @@
+# ===========================================================================
+# Central Access Manager — Reybanpac / Favorita Fruit Company
+# Stack de 4 componentes:
+#   1. frontend      -> Consola web (React + Vite servida con nginx)
+#   2. front-angular -> Consola web (Angular 21 + PrimeNG servida con nginx)
+#   3. backend       -> API REST (Express, datos en memoria RAM)
+#   4. ldap         -> OpenLDAP (fuente de los usuarios "cliente final")
+# Arranque:  docker compose up --build
+# React:     http://localhost:8080   (login: ctudela / admin123)
+# Angular:   http://localhost:5174  (mismo login)
+# ===========================================================================
+
+services:
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: cam-ldap
+    command: ["--copy-service"]
+    environment:
+      LDAP_ORGANISATION: "Reybanpac"
+      LDAP_DOMAIN: "reybanpac.com"
+      LDAP_ADMIN_PASSWORD: "admin123"
+      LDAP_BASE_DN: "dc=reybanpac,dc=com"
+    volumes:
+      - ./ldap/bootstrap.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/01-users.ldif:ro
+    ports:
+      - "3890:389"
+    networks: [cam-net]
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost", "-b", "dc=reybanpac,dc=com", "-D", "cn=admin,dc=reybanpac,dc=com", "-w", "admin123"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  backend:
+    build: ./backend
+    container_name: cam-backend
+    environment:
+      PORT: "4000"
+      # Resuelto por DNS interno de la red cam-net (nombre del servicio), no por IP fija.
+      LDAP_URL: "ldap://ldap:389"
+      LDAP_BIND_DN: "cn=admin,dc=reybanpac,dc=com"
+      LDAP_BIND_PW: "admin123"
+      LDAP_SEARCH_BASE: "ou=people,dc=reybanpac,dc=com"
+    ports:
+      - "4000:4000"
+    depends_on:
+      ldap:
+        condition: service_healthy
+    networks: [cam-net]
+
+  frontend:
+    build: ./frontend
+    container_name: cam-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks: [cam-net]
+
+  front-angular:
+    build: ./front-angular
+    container_name: cam-front-angular
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+    networks: [cam-net]
+
+networks:
+  cam-net:
+    driver: bridge

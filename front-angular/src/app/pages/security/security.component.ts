@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import * as XLSX from 'xlsx';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -11,7 +12,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
-  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent,
+  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
 import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/types';
 
@@ -24,7 +25,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
     CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
-    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent,
+    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
   ],
   template: `
     <div class="page-head">
@@ -55,9 +56,14 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               <input type="text" placeholder="Buscar por código, nombre o descripción..."
                 [ngModel]="searchApp()" (ngModelChange)="searchApp.set($event)" />
             </div>
-            <button class="btn btn-primary" (click)="openAppDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nueva aplicación
-            </button>
+            <div class="row gap-2">
+              <button class="btn btn-ghost" (click)="exportApps()">
+                <app-icon-download [width]="14" [height]="14" /> Exportar
+              </button>
+              <button class="btn btn-primary" (click)="openAppDialog()">
+                <app-icon-plus [width]="14" [height]="14" /> Nueva aplicación
+              </button>
+            </div>
           </div>
           <div class="card table-wrap">
             <table class="data">
@@ -135,9 +141,14 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               <input type="text" placeholder="Buscar por código, nombre o aplicación..."
                 [ngModel]="searchMod()" (ngModelChange)="searchMod.set($event)" />
             </div>
-            <button class="btn btn-primary" (click)="openModDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nuevo módulo
-            </button>
+            <div class="row gap-2">
+              <button class="btn btn-ghost" (click)="exportMods()">
+                <app-icon-download [width]="14" [height]="14" /> Exportar
+              </button>
+              <button class="btn btn-primary" (click)="openModDialog()">
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo módulo
+              </button>
+            </div>
           </div>
           <div class="card table-wrap">
             <table class="data">
@@ -215,9 +226,14 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               <input type="text" placeholder="Buscar por código, nombre o módulo..."
                 [ngModel]="searchPrg()" (ngModelChange)="searchPrg.set($event)" />
             </div>
-            <button class="btn btn-primary" (click)="openPrgDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nuevo programa
-            </button>
+            <div class="row gap-2">
+              <button class="btn btn-ghost" (click)="exportPrgs()">
+                <app-icon-download [width]="14" [height]="14" /> Exportar
+              </button>
+              <button class="btn btn-primary" (click)="openPrgDialog()">
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo programa
+              </button>
+            </div>
           </div>
           <div class="card table-wrap">
             <table class="data">
@@ -295,9 +311,14 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               <input type="text" placeholder="Buscar por código, nombre o programa..."
                 [ngModel]="searchPerf()" (ngModelChange)="searchPerf.set($event)" />
             </div>
-            <button class="btn btn-primary" (click)="openPerfDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nuevo perfil
-            </button>
+            <div class="row gap-2">
+              <button class="btn btn-ghost" (click)="exportPerfs()">
+                <app-icon-download [width]="14" [height]="14" /> Exportar
+              </button>
+              <button class="btn btn-primary" (click)="openPerfDialog()">
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo perfil
+              </button>
+            </div>
           </div>
           <div class="card table-wrap">
             <table class="data">
@@ -655,6 +676,51 @@ export class SecurityComponent implements OnInit {
     const pages: number[] = [];
     for (let i = 0; i < total; i++) pages.push(i);
     return pages;
+  }
+
+  private exportXlsx(data: any[], headers: string[], cols: string[], filename: string): void {
+    const aoa = [headers, ...data.map(row => cols.map(c => row[c] ?? ''))];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = cols.map(() => ({ wch: 25 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+  }
+
+  exportApps(): void {
+    this.exportXlsx(
+      this.filteredApps(),
+      ['Código', 'Nombre', 'Descripción', 'Estado'],
+      ['codigo', 'nombre', 'descripcion', 'estado'],
+      'aplicaciones'
+    );
+  }
+
+  exportMods(): void {
+    this.exportXlsx(
+      this.filteredMods(),
+      ['Código', 'Nombre', 'Aplicación', 'Descripción', 'Estado'],
+      ['codigo', 'nombre', 'appCodigo', 'descripcion', 'estado'],
+      'modulos'
+    );
+  }
+
+  exportPrgs(): void {
+    this.exportXlsx(
+      this.filteredPrgs(),
+      ['Código', 'Nombre', 'Módulo', 'Descripción', 'Estado'],
+      ['codigo', 'nombre', 'modCodigo', 'descripcion', 'estado'],
+      'programas'
+    );
+  }
+
+  exportPerfs(): void {
+    this.exportXlsx(
+      this.filteredPerfs(),
+      ['Código', 'Nombre', 'Programa', 'Descripción', 'Estado'],
+      ['codigo', 'nombre', 'prgCodigo', 'descripcion', 'estado'],
+      'perfiles'
+    );
   }
 
   appForm = this.blankApp();

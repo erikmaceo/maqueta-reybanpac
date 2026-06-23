@@ -7,11 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { EventsService } from '../../core/services/events.service';
 import { AvatarComponent } from '../../shared/components/ui';
+import type { Aplicacion } from '../../shared/models/types';
 import {
   IconDashboardComponent, IconSystemsComponent, IconRolesComponent,
   IconUsersComponent, IconAuthorizerComponent, IconAccessComponent,
   IconAuditComponent, IconLogoutComponent, IconLdapComponent,
-  IconSecurityComponent, IconMatrixComponent,
+  IconSecurityComponent, IconMatrixComponent, IconServerComponent, IconChevronRightComponent,
 } from '../../shared/components/icons';
 
 interface NavItem {
@@ -22,6 +23,8 @@ interface NavItem {
   group: string;
   adminOnly?: boolean;
   badge?: boolean;
+  isSection?: boolean;
+  children?: { label: string; path: string }[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -32,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Gobierno de accesos', adminOnly: true },
+  { path: '/soluciones', label: 'Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true, isSection: true },
   { path: '/autorizador', label: 'Autorizador', icon: IconAuthorizerComponent, group: 'Operación', badge: true },
   { path: '/accesos', label: 'Accesos efectivos', icon: IconAccessComponent, group: 'Operación', adminOnly: true },
   { path: '/auditoria', label: 'Auditoría', icon: IconAuditComponent, group: 'Operación', adminOnly: true },
@@ -48,6 +52,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/autorizador': { title: 'Módulo autorizador', sub: 'Aprobación y rechazo de solicitudes de acceso' },
   '/accesos': { title: 'Accesos efectivos', sub: 'Matriz de accesos vigentes por usuario y sistema' },
   '/auditoria': { title: 'Auditoría', sub: 'Trazabilidad de todas las acciones de la consola' },
+  '/soluciones': { title: 'Soluciones', sub: 'Navegación por aplicación y su jerarquía de seguridades' },
 };
 
 @Component({
@@ -68,7 +73,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
     IconAuditComponent,
     IconLogoutComponent,
     IconLdapComponent,
-    IconSecurityComponent, IconMatrixComponent,
+    IconSecurityComponent, IconMatrixComponent, IconServerComponent, IconChevronRightComponent,
   ],
   template: `
     <div class="app-shell">
@@ -86,7 +91,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
             <div>
               <div class="group-label">{{ group }}</div>
               @for (item of visibleNavItems(); track item.path) {
-                @if (item.group === group) {
+                @if (item.group === group && !item.isSection) {
                   <a
                     [routerLink]="item.path"
                     routerLinkActive="active"
@@ -103,6 +108,30 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
                       <span class="badge-count">{{ pendingCount() }}</span>
                     }
                   </a>
+                }
+                @if (item.group === group && item.isSection) {
+                  <button class="nav-link nav-section-header" (click)="toggleSoluciones()">
+                    <span class="chevron-wrap">
+                      <app-icon-chevron-right [width]="14" [height]="14" [class.rotated]="solucionesExpanded()" />
+                    </span>
+                    <span>Soluciones</span>
+                    <span class="apps-count">{{ solucionApps().length }}</span>
+                  </button>
+                  @if (solucionesExpanded()) {
+                    @for (app of solucionApps(); track app.id) {
+                      <a
+                        [routerLink]="'/soluciones/' + app.codigo"
+                        routerLinkActive="active"
+                        class="nav-link nav-sub-link"
+                      >
+                        <span></span>
+                        <span class="sub-label">{{ app.nombre }}</span>
+                      </a>
+                    }
+                    @if (solucionApps().length === 0) {
+                      <span class="nav-link sub-empty">Cargando...</span>
+                    }
+                  }
                 }
               }
             </div>
@@ -193,6 +222,59 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
       border-radius: 999px;
       padding: 1px 8px;
     }
+    .nav-sub-link {
+      padding-left: 28px !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+    }
+    .nav-sub-link.active {
+      box-shadow: inset 2px 0 0 var(--gold-500);
+    }
+    .sub-label {
+      color: #a8c4e8;
+    }
+    .sub-empty {
+      display: block;
+      padding: 8px 28px;
+      color: #5a7a9a;
+      font-size: 12px;
+      font-style: italic;
+    }
+    .nav-section-header {
+      width: 100%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      color: #c2d4f5;
+      font-weight: 600;
+      font-size: 13.5px;
+    }
+    .nav-section-header:hover {
+      background: rgba(255, 255, 255, .07);
+      color: #fff;
+    }
+    .chevron-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      transition: transform .2s;
+    }
+    .chevron-wrap app-icon-chevron-right {
+      transition: transform .2s;
+    }
+    .apps-count {
+      margin-left: auto;
+      background: rgba(255,255,255,.1);
+      color: #8ab4d8;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 1px 8px;
+    }
   `],
 })
 export class LayoutComponent implements OnInit {
@@ -204,6 +286,8 @@ export class LayoutComponent implements OnInit {
 
   user = this.auth.user;
   pendingCount = signal(0);
+  solucionApps = signal<Aplicacion[]>([]);
+  solucionesExpanded = signal(true);
 
   groups = signal<string[]>([]);
   visibleNavItems = signal<NavItem[]>([]);
@@ -213,9 +297,11 @@ export class LayoutComponent implements OnInit {
     this.updateNav();
     this.refreshPending();
     this.updateMetaFromPath();
+    this.loadSolucionApps();
 
     this.events.onDataChanged(() => {
       this.refreshPending();
+      this.loadSolucionApps();
     });
 
     this.router.events
@@ -223,7 +309,15 @@ export class LayoutComponent implements OnInit {
       .subscribe(() => {
         this.updateMetaFromPath();
         this.refreshPending();
+        this.loadSolucionApps();
       });
+  }
+
+  private loadSolucionApps(): void {
+    this.api.listAplicaciones().subscribe({
+      next: (apps) => this.solucionApps.set(apps),
+      error: () => {},
+    });
   }
 
   private updateNav(): void {
@@ -263,6 +357,10 @@ export class LayoutComponent implements OnInit {
 
   getIconClass(icon: any): string {
     return '';
+  }
+
+  toggleSoluciones(): void {
+    this.solucionesExpanded.update(v => !v);
   }
 
   logout(): void {

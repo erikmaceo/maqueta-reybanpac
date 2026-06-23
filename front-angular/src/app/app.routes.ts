@@ -43,6 +43,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/directory/directory.component').then(m => m.DirectoryComponent),
         canActivate: [adminGuard],
       },
+      {
+        path: 'soluciones',
+        loadComponent: () => import('./pages/soluciones/soluciones.component').then(m => m.SolucionesComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'soluciones/:codigo',
+        loadComponent: () => import('./pages/soluciones/soluciones.component').then(m => m.SolucionesComponent),
+        canActivate: [adminGuard],
+      },
       { path: 'autorizador', loadComponent: () => import('./pages/authorizer/authorizer.component').then(m => m.AuthorizerComponent) },
       {
         path: 'accesos',

@@ -1419,6 +1419,7 @@ textarea.input {
   background: var(--surface) !important;
   color: var(--text) !important;
   gap: 12px !important;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
 }
 
 .p-dialog .p-dialog-title {

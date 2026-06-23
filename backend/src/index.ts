@@ -4,6 +4,8 @@
 
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import multer from 'multer';
+import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
@@ -714,6 +716,133 @@ app.delete('/api/seg-perfiles/:id', requireAuth, requireGlobalAdmin, (req, res) 
   const [removed] = db.perfiles.splice(idx, 1);
   logAudit(actorName(req), 'DELETE_PERFIL', 'perfil', removed.id, `Perfil "${removed.nombre}" eliminado.`);
   res.json({ ok: true });
+});
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo.' });
+
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    if (!ws) return res.status(400).json({ error: 'El archivo no tiene hojas.' });
+
+    const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (rows.length === 0) return res.status(400).json({ error: 'La hoja no tiene datos.' });
+
+    const normalize = (v: any) => String(v ?? '').trim();
+    const normLower = (v: any) => normalize(v).toLowerCase();
+
+    let created = { apps: 0, mods: 0, prgs: 0, perfs: 0 };
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const rowNum = i + 2;
+
+      const appCodigo = normalize(r['app_codigo']);
+      const appNombre = normalize(r['app_nombre']);
+      const modCodigo = normalize(r['mod_codigo']);
+      const modNombre = normalize(r['mod_nombre']);
+      const prgCodigo = normalize(r['prg_codigo']);
+      const prgNombre = normalize(r['prg_nombre']);
+      const perfCodigo = normalize(r['perf_codigo']);
+      const perfNombre = normalize(r['perf_nombre']);
+      const estadoRaw = normalize(r['estado']) || 'ACTIVO';
+      const estado = estadoRaw.toUpperCase() === 'INACTIVO' ? 'INACTIVO' : 'ACTIVO';
+
+      if (!appCodigo || !appNombre || !modCodigo || !modNombre || !prgCodigo || !prgNombre || !perfCodigo || !perfNombre) {
+        errors.push(`Fila ${rowNum}: faltan campos obligatorios.`);
+        skipped++;
+        continue;
+      }
+
+      // --- Aplicación (upsert por codigo) ---
+      let app = db.aplicaciones.find(a => a.codigo === appCodigo);
+      if (!app) {
+        app = {
+          id: newId('seg_app'),
+          codigo: appCodigo,
+          nombre: appNombre,
+          descripcion: normalize(r['app_descripcion']),
+          estado: 'ACTIVO',
+          createdAt: nowIso(),
+        };
+        db.aplicaciones.push(app);
+        created.apps++;
+      }
+
+      // --- Módulo (upsert por codigo) ---
+      let mod = db.modulos.find(m => m.codigo === modCodigo);
+      if (!mod) {
+        mod = {
+          id: newId('seg_mod'),
+          codigo: modCodigo,
+          nombre: modNombre,
+          descripcion: normalize(r['mod_descripcion']),
+          appCodigo,
+          estado: 'ACTIVO',
+          createdAt: nowIso(),
+        };
+        db.modulos.push(mod);
+        created.mods++;
+      } else if (mod.appCodigo !== appCodigo) {
+        mod.appCodigo = appCodigo;
+      }
+
+      // --- Programa (upsert por codigo) ---
+      let prg = db.programas.find(p => p.codigo === prgCodigo);
+      if (!prg) {
+        prg = {
+          id: newId('seg_prg'),
+          codigo: prgCodigo,
+          nombre: prgNombre,
+          descripcion: normalize(r['prg_descripcion']),
+          modCodigo,
+          estado: 'ACTIVO',
+          createdAt: nowIso(),
+        };
+        db.programas.push(prg);
+        created.prgs++;
+      } else if (prg.modCodigo !== modCodigo) {
+        prg.modCodigo = modCodigo;
+      }
+
+      // --- Perfil (upsert por codigo) ---
+      let perf = db.perfiles.find(p => p.codigo === perfCodigo);
+      if (!perf) {
+        perf = {
+          id: newId('seg_perf'),
+          codigo: perfCodigo,
+          nombre: perfNombre,
+          descripcion: normalize(r['perf_descripcion']),
+          prgCodigo,
+          estado,
+          createdAt: nowIso(),
+        };
+        db.perfiles.push(perf);
+        created.perfs++;
+      } else {
+        if (perf.prgCodigo !== prgCodigo) perf.prgCodigo = prgCodigo;
+        if (perf.estado !== estado) perf.estado = estado;
+      }
+    }
+
+    logAudit(
+      actorName(req),
+      'UPLOAD_MATRIZ',
+      'matriz',
+      'excel',
+      `Carga masiva: ${created.apps} apps, ${created.mods} mods, ${created.prgs} prgs, ${created.perfs} perfs. Errores: ${skipped}.`,
+    );
+
+    const summary = `Creados: ${created.apps} aplicaciones, ${created.mods} módulos, ${created.prgs} programas, ${created.perfs} perfiles.${skipped ? ` Filas omitidas: ${skipped}.` : ''}${errors.length ? ` Errores: ${errors.slice(0, 5).join('; ')}` : ''}`;
+    res.json({ ok: true, summary });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Error al procesar el archivo.' });
+  }
 });
 
 app.listen(PORT, () => {

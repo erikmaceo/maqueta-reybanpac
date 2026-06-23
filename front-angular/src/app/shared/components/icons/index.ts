@@ -342,6 +342,28 @@ export class IconTrendUpComponent {
   @Input() height = 16;
 }
 
+@Component({
+  selector: 'app-icon-matrix',
+  standalone: true,
+  imports: [CommonModule],
+  template: `<i class="pi pi-table" [style.font-size.px]="width"></i>`,
+})
+export class IconMatrixComponent {
+  @Input() width = 16;
+  @Input() height = 16;
+}
+
+@Component({
+  selector: 'app-icon-upload',
+  standalone: true,
+  imports: [CommonModule],
+  template: `<i class="pi pi-upload" [style.font-size.px]="width"></i>`,
+})
+export class IconUploadComponent {
+  @Input() width = 16;
+  @Input() height = 16;
+}
+
 export const ICONS = [
   IconDashboardComponent,
   IconSystemsComponent,
@@ -374,4 +396,6 @@ export const ICONS = [
   IconLayersComponent,
   IconTrendUpComponent,
   IconSecurityComponent,
+  IconMatrixComponent,
+  IconUploadComponent,
 ];

@@ -11,7 +11,7 @@ import {
   IconDashboardComponent, IconSystemsComponent, IconRolesComponent,
   IconUsersComponent, IconAuthorizerComponent, IconAccessComponent,
   IconAuditComponent, IconLogoutComponent, IconLdapComponent,
-  IconSecurityComponent,
+  IconSecurityComponent, IconMatrixComponent,
 } from '../../shared/components/icons';
 
 interface NavItem {
@@ -30,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/seguridades', label: 'Seguridades', icon: IconSecurityComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/roles', label: 'Roles y accesos', icon: IconRolesComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Gobierno de accesos', adminOnly: true },
+  { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/autorizador', label: 'Autorizador', icon: IconAuthorizerComponent, group: 'Operación', badge: true },
   { path: '/accesos', label: 'Accesos efectivos', icon: IconAccessComponent, group: 'Operación', adminOnly: true },
@@ -42,6 +43,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/seguridades': { title: 'Seguridades', sub: 'Configuración de seguridades y políticas de acceso' },
   '/roles': { title: 'Roles y accesos', sub: 'Defina roles y seleccione los accesos que otorgan' },
   '/usuarios': { title: 'Usuarios', sub: 'Administradores locales y clientes finales desde LDAP' },
+  '/matriz-acceso': { title: 'Matriz de Acceso', sub: 'Carga masiva de seguridades mediante archivo Excel' },
   '/directorio': { title: 'Directorio LDAP', sub: 'Usuarios cliente final integrados desde el directorio corporativo' },
   '/autorizador': { title: 'Módulo autorizador', sub: 'Aprobación y rechazo de solicitudes de acceso' },
   '/accesos': { title: 'Accesos efectivos', sub: 'Matriz de accesos vigentes por usuario y sistema' },
@@ -66,7 +68,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
     IconAuditComponent,
     IconLogoutComponent,
     IconLdapComponent,
-    IconSecurityComponent,
+    IconSecurityComponent, IconMatrixComponent,
   ],
   template: `
     <div class="app-shell">

@@ -230,4 +230,14 @@ export class ApiService {
   deletePerfil(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-perfiles/${id}`);
   }
+
+  uploadMatriz(file: File): Observable<{ ok: boolean; summary: string }> {
+    const url = `${this.baseUrl}/seg-matriz/upload`;
+    const token = tokenStore.get();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    return this.http.post<{ ok: boolean; summary: string }>(url, fd, { headers: new HttpHeaders(headers) });
+  }
 }

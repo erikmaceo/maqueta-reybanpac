@@ -34,6 +34,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'matriz-acceso',
+        loadComponent: () => import('./pages/matrix-access/matrix-access.component').then(m => m.MatrixAccessComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'directorio',
         loadComponent: () => import('./pages/directory/directory.component').then(m => m.DirectoryComponent),
         canActivate: [adminGuard],

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
@@ -11,7 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
-  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent,
+  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent,
 } from '../../shared/components/icons';
 import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/types';
 
@@ -24,7 +24,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
     CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
-    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent,
+    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent,
   ],
   template: `
     <div class="page-head">
@@ -50,7 +50,11 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <app-error-state [message]="errorApp()!" [onRetry]="loadAplicaciones" />
         } @else {
           <div class="row between mb-4">
-            <b class="small muted">Total: {{ aplicaciones().length }}</b>
+            <div class="search">
+              <app-icon-search [width]="15" [height]="15" />
+              <input type="text" placeholder="Buscar por código, nombre o descripción..."
+                [ngModel]="searchApp()" (ngModelChange)="searchApp.set($event)" />
+            </div>
             <button class="btn btn-primary" (click)="openAppDialog()">
               <app-icon-plus [width]="14" [height]="14" /> Nueva aplicación
             </button>
@@ -67,7 +71,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                 </tr>
               </thead>
               <tbody>
-                @for (a of aplicaciones(); track a.id) {
+                @for (a of paginatedApps(); track a.id) {
                   <tr>
                     <td class="mono">{{ a.codigo }}</td>
                     <td><div class="cell-strong">{{ a.nombre }}</div></td>
@@ -94,6 +98,27 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               </tbody>
             </table>
           </div>
+          @if (totalPagesApp() > 1) {
+            <div class="pagination">
+              <div class="page-size-selector">
+                <span class="muted small">Mostrar</span>
+                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <span class="muted small">registros</span>
+              </div>
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pageApp() === 0" (click)="setPage('app', pageApp() - 1)">‹</button>
+                @for (p of getPageNumbers(totalPagesApp(), pageApp()); track p) {
+                  <button class="btn btn-sm" [class.btn-primary]="p === pageApp()" [class.btn-ghost]="p !== pageApp()" (click)="setPage('app', p)">{{ p + 1 }}</button>
+                }
+                <button class="btn btn-ghost btn-sm" [disabled]="pageApp() === totalPagesApp() - 1" (click)="setPage('app', pageApp() + 1)">›</button>
+              </div>
+            </div>
+          }
         }
       </p-tabpanel>
 
@@ -105,7 +130,11 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <app-error-state [message]="errorMod()!" [onRetry]="loadModulos" />
         } @else {
           <div class="row between mb-4">
-            <b class="small muted">Total: {{ modulos().length }}</b>
+            <div class="search">
+              <app-icon-search [width]="15" [height]="15" />
+              <input type="text" placeholder="Buscar por código, nombre o aplicación..."
+                [ngModel]="searchMod()" (ngModelChange)="searchMod.set($event)" />
+            </div>
             <button class="btn btn-primary" (click)="openModDialog()">
               <app-icon-plus [width]="14" [height]="14" /> Nuevo módulo
             </button>
@@ -122,7 +151,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                 </tr>
               </thead>
               <tbody>
-                @for (m of modulos(); track m.id) {
+@for (m of paginatedMods(); track m.id) {
                   <tr>
                     <td class="mono">{{ m.codigo }}</td>
                     <td><div class="cell-strong">{{ m.nombre }}</div><div class="tiny dim">{{ m.descripcion }}</div></td>
@@ -149,6 +178,27 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               </tbody>
             </table>
           </div>
+          @if (totalPagesMod() > 1) {
+            <div class="pagination">
+              <div class="page-size-selector">
+                <span class="muted small">Mostrar</span>
+                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <span class="muted small">registros</span>
+              </div>
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pageMod() === 0" (click)="setPage('mod', pageMod() - 1)">‹</button>
+                @for (p of getPageNumbers(totalPagesMod(), pageMod()); track p) {
+                  <button class="btn btn-sm" [class.btn-primary]="p === pageMod()" [class.btn-ghost]="p !== pageMod()" (click)="setPage('mod', p)">{{ p + 1 }}</button>
+                }
+                <button class="btn btn-ghost btn-sm" [disabled]="pageMod() === totalPagesMod() - 1" (click)="setPage('mod', pageMod() + 1)">›</button>
+              </div>
+            </div>
+          }
         }
       </p-tabpanel>
 
@@ -160,7 +210,11 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <app-error-state [message]="errorPrg()!" [onRetry]="loadProgramas" />
         } @else {
           <div class="row between mb-4">
-            <b class="small muted">Total: {{ programas().length }}</b>
+            <div class="search">
+              <app-icon-search [width]="15" [height]="15" />
+              <input type="text" placeholder="Buscar por código, nombre o módulo..."
+                [ngModel]="searchPrg()" (ngModelChange)="searchPrg.set($event)" />
+            </div>
             <button class="btn btn-primary" (click)="openPrgDialog()">
               <app-icon-plus [width]="14" [height]="14" /> Nuevo programa
             </button>
@@ -177,7 +231,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                 </tr>
               </thead>
               <tbody>
-                @for (p of programas(); track p.id) {
+@for (p of paginatedPrgs(); track p.id) {
                   <tr>
                     <td class="mono">{{ p.codigo }}</td>
                     <td><div class="cell-strong">{{ p.nombre }}</div><div class="tiny dim">{{ p.descripcion }}</div></td>
@@ -204,6 +258,27 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               </tbody>
             </table>
           </div>
+          @if (totalPagesPrg() > 1) {
+            <div class="pagination">
+              <div class="page-size-selector">
+                <span class="muted small">Mostrar</span>
+                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <span class="muted small">registros</span>
+              </div>
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePrg() === 0" (click)="setPage('prg', pagePrg() - 1)">‹</button>
+                @for (p of getPageNumbers(totalPagesPrg(), pagePrg()); track p) {
+                  <button class="btn btn-sm" [class.btn-primary]="p === pagePrg()" [class.btn-ghost]="p !== pagePrg()" (click)="setPage('prg', p)">{{ p + 1 }}</button>
+                }
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePrg() === totalPagesPrg() - 1" (click)="setPage('prg', pagePrg() + 1)">›</button>
+              </div>
+            </div>
+          }
         }
       </p-tabpanel>
 
@@ -215,7 +290,11 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <app-error-state [message]="errorPerf()!" [onRetry]="loadPerfiles" />
         } @else {
           <div class="row between mb-4">
-            <b class="small muted">Total: {{ perfiles().length }}</b>
+            <div class="search">
+              <app-icon-search [width]="15" [height]="15" />
+              <input type="text" placeholder="Buscar por código, nombre o programa..."
+                [ngModel]="searchPerf()" (ngModelChange)="searchPerf.set($event)" />
+            </div>
             <button class="btn btn-primary" (click)="openPerfDialog()">
               <app-icon-plus [width]="14" [height]="14" /> Nuevo perfil
             </button>
@@ -232,7 +311,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                 </tr>
               </thead>
               <tbody>
-                @for (p of perfiles(); track p.id) {
+                @for (p of paginatedPerfs(); track p.id) {
                   <tr>
                     <td class="mono">{{ p.codigo }}</td>
                     <td><div class="cell-strong">{{ p.nombre }}</div><div class="tiny dim">{{ p.descripcion }}</div></td>
@@ -259,6 +338,27 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               </tbody>
             </table>
           </div>
+          @if (totalPagesPerf() > 1) {
+            <div class="pagination">
+              <div class="page-size-selector">
+                <span class="muted small">Mostrar</span>
+                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <span class="muted small">registros</span>
+              </div>
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePerf() === 0" (click)="setPage('perf', pagePerf() - 1)">‹</button>
+                @for (p of getPageNumbers(totalPagesPerf(), pagePerf()); track p) {
+                  <button class="btn btn-sm" [class.btn-primary]="p === pagePerf()" [class.btn-ghost]="p !== pagePerf()" (click)="setPage('perf', p)">{{ p + 1 }}</button>
+                }
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePerf() === totalPagesPerf() - 1" (click)="setPage('perf', pagePerf() + 1)">›</button>
+              </div>
+            </div>
+          }
         }
       </p-tabpanel>
       </p-tabpanels>
@@ -456,6 +556,107 @@ export class SecurityComponent implements OnInit {
   showPrgDlg = false; editPrgId: string | null = null;
   showPerfDlg = false; editPerfId: string | null = null;
 
+  // --- Filtros de búsqueda ---
+  searchApp = signal('');
+  searchMod = signal('');
+  searchPrg = signal('');
+  searchPerf = signal('');
+
+  // --- Paginación ---
+  pageSize = signal(10);
+  pageApp = signal(0);
+  pageMod = signal(0);
+  pagePrg = signal(0);
+  pagePerf = signal(0);
+
+  filteredApps = computed(() => {
+    const q = this.searchApp().toLowerCase().trim();
+    if (!q) return this.aplicaciones();
+    return this.aplicaciones().filter(a =>
+      a.codigo.toLowerCase().includes(q) ||
+      a.nombre.toLowerCase().includes(q) ||
+      (a.descripcion || '').toLowerCase().includes(q)
+    );
+  });
+  filteredMods = computed(() => {
+    const q = this.searchMod().toLowerCase().trim();
+    if (!q) return this.modulos();
+    return this.modulos().filter(m =>
+      m.codigo.toLowerCase().includes(q) ||
+      m.nombre.toLowerCase().includes(q) ||
+      m.appCodigo.toLowerCase().includes(q) ||
+      (m.descripcion || '').toLowerCase().includes(q)
+    );
+  });
+  filteredPrgs = computed(() => {
+    const q = this.searchPrg().toLowerCase().trim();
+    if (!q) return this.programas();
+    return this.programas().filter(p =>
+      p.codigo.toLowerCase().includes(q) ||
+      p.nombre.toLowerCase().includes(q) ||
+      p.modCodigo.toLowerCase().includes(q) ||
+      (p.descripcion || '').toLowerCase().includes(q)
+    );
+  });
+  filteredPerfs = computed(() => {
+    const q = this.searchPerf().toLowerCase().trim();
+    if (!q) return this.perfiles();
+    return this.perfiles().filter(p =>
+      p.codigo.toLowerCase().includes(q) ||
+      p.nombre.toLowerCase().includes(q) ||
+      p.prgCodigo.toLowerCase().includes(q) ||
+      (p.descripcion || '').toLowerCase().includes(q)
+    );
+  });
+
+  paginatedApps = computed(() => {
+    const start = this.pageApp() * this.pageSize();
+    return this.filteredApps().slice(start, start + this.pageSize());
+  });
+  totalPagesApp = computed(() => Math.max(1, Math.ceil(this.filteredApps().length / this.pageSize())));
+
+  paginatedMods = computed(() => {
+    const start = this.pageMod() * this.pageSize();
+    return this.filteredMods().slice(start, start + this.pageSize());
+  });
+  totalPagesMod = computed(() => Math.max(1, Math.ceil(this.filteredMods().length / this.pageSize())));
+
+  paginatedPrgs = computed(() => {
+    const start = this.pagePrg() * this.pageSize();
+    return this.filteredPrgs().slice(start, start + this.pageSize());
+  });
+  totalPagesPrg = computed(() => Math.max(1, Math.ceil(this.filteredPrgs().length / this.pageSize())));
+
+  paginatedPerfs = computed(() => {
+    const start = this.pagePerf() * this.pageSize();
+    return this.filteredPerfs().slice(start, start + this.pageSize());
+  });
+  totalPagesPerf = computed(() => Math.max(1, Math.ceil(this.filteredPerfs().length / this.pageSize())));
+
+  setPage(entity: 'app' | 'mod' | 'prg' | 'perf', page: number): void {
+    const total = entity === 'app' ? this.totalPagesApp() : entity === 'mod' ? this.totalPagesMod() : entity === 'prg' ? this.totalPagesPrg() : this.totalPagesPerf();
+    const current = entity === 'app' ? this.pageApp() : entity === 'mod' ? this.pageMod() : entity === 'prg' ? this.pagePrg() : this.pagePerf();
+    if (page < 0 || page >= total) return;
+    if (entity === 'app') this.pageApp.set(page);
+    else if (entity === 'mod') this.pageMod.set(page);
+    else if (entity === 'prg') this.pagePrg.set(page);
+    else this.pagePerf.set(page);
+  }
+
+  changePageSize(size: number): void {
+    this.pageSize.set(size);
+    this.pageApp.set(0);
+    this.pageMod.set(0);
+    this.pagePrg.set(0);
+    this.pagePerf.set(0);
+  }
+
+  getPageNumbers(total: number, current: number): number[] {
+    const pages: number[] = [];
+    for (let i = 0; i < total; i++) pages.push(i);
+    return pages;
+  }
+
   appForm = this.blankApp();
   modForm = this.blankMod();
   prgForm = this.blankPrg();
@@ -475,6 +676,11 @@ export class SecurityComponent implements OnInit {
     this.events.onDataChanged(() => {
       this._loadApp(); this._loadMod(); this._loadPrg(); this._loadPerf();
     });
+    effect(() => { this.searchApp(); this.pageApp.set(0); }, { allowSignalWrites: true });
+    effect(() => { this.searchMod(); this.pageMod.set(0); }, { allowSignalWrites: true });
+    effect(() => { this.searchPrg(); this.pagePrg.set(0); }, { allowSignalWrites: true });
+    effect(() => { this.searchPerf(); this.pagePerf.set(0); }, { allowSignalWrites: true });
+    effect(() => { this.pageSize(); this.pageApp.set(0); this.pageMod.set(0); this.pagePrg.set(0); this.pagePerf.set(0); }, { allowSignalWrites: true });
   }
 
   // ============ LOADERS ============

@@ -148,27 +148,34 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
             </tr>
             <tr>
               <td class="mono">J</td>
+              <td><b>prg_tipo</b></td>
+              <td><span class="badge badge-gray">No</span></td>
+              <td class="muted small">Tipo de Programa: Menú, Submenú, Maestro, Transacción, Proceso, Consulta, Reporte, Objeto.</td>
+              <td>Transacción</td>
+            </tr>
+            <tr>
+              <td class="mono">K</td>
               <td><b>perf_codigo</b></td>
               <td><span class="badge badge-green">Sí</span></td>
               <td class="muted small">Código único del Perfil.</td>
               <td class="mono">PERF-FI-VIS</td>
             </tr>
             <tr>
-              <td class="mono">K</td>
+              <td class="mono">L</td>
               <td><b>perf_nombre</b></td>
               <td><span class="badge badge-green">Sí</span></td>
               <td class="muted small">Nombre del Perfil.</td>
               <td>FI Visualizador</td>
             </tr>
             <tr>
-              <td class="mono">L</td>
+              <td class="mono">M</td>
               <td><b>perf_descripcion</b></td>
               <td><span class="badge badge-gray">No</span></td>
               <td class="muted small">Descripción del Perfil.</td>
               <td>Solo consulta</td>
             </tr>
             <tr>
-              <td class="mono">M</td>
+              <td class="mono">N</td>
               <td><b>estado</b></td>
               <td><span class="badge badge-gray">No</span></td>
               <td class="muted small">ACTIVO o INACTIVO. Default: ACTIVO.</td>
@@ -192,6 +199,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <th>mod_nombre</th>
               <th>prg_codigo</th>
               <th>prg_nombre</th>
+              <th>prg_tipo</th>
               <th>perf_codigo</th>
               <th>perf_nombre</th>
               <th>estado</th>
@@ -205,6 +213,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td>Finanzas</td>
               <td class="mono">PRG-FI-DOCS</td>
               <td>Documentos contables</td>
+              <td>Consulta</td>
               <td class="mono">PERF-FI-VIS</td>
               <td>FI Visualizador</td>
               <td><span class="badge badge-green">Activo</span></td>
@@ -216,6 +225,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td>Finanzas</td>
               <td class="mono">PRG-FI-DOCS</td>
               <td>Documentos contables</td>
+              <td>Transacción</td>
               <td class="mono">PERF-FI-EDT</td>
               <td>FI Editor</td>
               <td><span class="badge badge-green">Activo</span></td>
@@ -227,6 +237,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td>Materiales</td>
               <td class="mono">PRG-MM-PO</td>
               <td>Órdenes de compra</td>
+              <td>Transacción</td>
               <td class="mono">PERF-MM-COMPR</td>
               <td>MM Comprador</td>
               <td><span class="badge badge-green">Activo</span></td>
@@ -238,9 +249,10 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td>Ventas</td>
               <td class="mono">PRG-VE-LEAD</td>
               <td>Gestión de leads</td>
+              <td>Proceso</td>
               <td class="mono">PERF-VE-VEND</td>
               <td>Vendedor</td>
-              <td><span class="badge badge-green">Activo</span></td>
+              <td><span class="badge green-badge">Activo</span></td>
             </tr>
           </tbody>
         </table>
@@ -292,15 +304,15 @@ export class MatrixAccessComponent {
     const headers = [
       'app_codigo','app_nombre','app_descripcion',
       'mod_codigo','mod_nombre','mod_descripcion',
-      'prg_codigo','prg_nombre','prg_descripcion',
+      'prg_codigo','prg_nombre','prg_tipo','prg_descripcion',
       'perf_codigo','perf_nombre','perf_descripcion',
       'estado',
     ];
     const rows = [
-      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-FI','Finanzas (FI)','Módulo de Finanzas','PRG-FI-DOCS','Documentos contables','Gestión de documentos','PERF-FI-VIS','FI Visualizador','Solo consulta','ACTIVO'],
-      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-FI','Finanzas (FI)','Módulo de Finanzas','PRG-FI-DOCS','Documentos contables','Gestión de documentos','PERF-FI-EDT','FI Editor','Edición completa','ACTIVO'],
-      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-MM','Materiales (MM)','Gestión de materiales','PRG-MM-PO','Órdenes de compra','PO y recepciones','PERF-MM-COMPR','MM Comprador','Crea y aprueba PO','ACTIVO'],
-      ['APP-CRM','Salesforce CRM','CRM de ventas','MOD-VE','Ventas','Gestión comercial','PRG-VE-LEAD','Gestión de leads','Leads y oportunidades','PERF-VE-VEND','Vendedor','Gestiona sus leads','ACTIVO'],
+      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-FI','Finanzas (FI)','Módulo de Finanzas','PRG-FI-DOCS','Documentos contables','Consulta','Gestión de documentos','PERF-FI-VIS','FI Visualizador','Solo consulta','ACTIVO'],
+      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-FI','Finanzas (FI)','Módulo de Finanzas','PRG-FI-DOCS','Documentos contables','Transacción','Gestión de documentos','PERF-FI-EDT','FI Editor','Edición completa','ACTIVO'],
+      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-MM','Materiales (MM)','Gestión de materiales','PRG-MM-PO','Órdenes de compra','Transacción','PO y recepciones','PERF-MM-COMPR','MM Comprador','Crea y aprueba PO','ACTIVO'],
+      ['APP-CRM','Salesforce CRM','CRM de ventas','MOD-VE','Ventas','Gestión comercial','PRG-VE-LEAD','Gestión de leads','Proceso','Leads y oportunidades','PERF-VE-VEND','Vendedor','Gestiona sus leads','ACTIVO'],
     ];
     const aoa = [headers, ...rows];
     const ws = XLSX.utils.aoa_to_sheet(aoa);

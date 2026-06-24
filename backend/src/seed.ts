@@ -380,10 +380,10 @@ export const modulos: Modulo[] = [
 ];
 
 export const programas: Programa[] = [
-  { id: 'seg_prg_1', codigo: 'PRG-FI-DOCS', nombre: 'Documentos contables', descripcion: 'Consulta de documentos contables FI.', modCodigo: 'MOD-FI', estado: 'ACTIVO', createdAt: iso(80) },
-  { id: 'seg_prg_2', codigo: 'PRG-MM-PED', nombre: 'Pedidos de compra', descripcion: 'Creación de pedidos de compra MM.', modCodigo: 'MOD-MM', estado: 'ACTIVO', createdAt: iso(78) },
-  { id: 'seg_prg_3', codigo: 'PRG-KS8-DEP', nombre: 'Deployments', descripcion: 'Gestión de deployments en KS8.', modCodigo: 'MOD-KS8-OPS', estado: 'ACTIVO', createdAt: iso(65) },
-  { id: 'seg_prg_4', codigo: 'PRG-RPA-LAUNCH', nombre: 'Lanzar bot', descripcion: 'Lanzar proceso automatizado.', modCodigo: 'MOD-RPA-RUN', estado: 'ACTIVO', createdAt: iso(55) },
+  { id: 'seg_prg_1', codigo: 'PRG-FI-DOCS', nombre: 'Documentos contables', descripcion: 'Consulta de documentos contables FI.', modCodigo: 'MOD-FI', tipo: 'Consulta', estado: 'ACTIVO', createdAt: iso(80) },
+  { id: 'seg_prg_2', codigo: 'PRG-MM-PED', nombre: 'Pedidos de compra', descripcion: 'Creación de pedidos de compra MM.', modCodigo: 'MOD-MM', tipo: 'Transacción', estado: 'ACTIVO', createdAt: iso(78) },
+  { id: 'seg_prg_3', codigo: 'PRG-KS8-DEP', nombre: 'Deployments', descripcion: 'Gestión de deployments en KS8.', modCodigo: 'MOD-KS8-OPS', tipo: 'Proceso', estado: 'ACTIVO', createdAt: iso(65) },
+  { id: 'seg_prg_4', codigo: 'PRG-RPA-LAUNCH', nombre: 'Lanzar bot', descripcion: 'Lanzar proceso automatizado.', modCodigo: 'MOD-RPA-RUN', tipo: 'Proceso', estado: 'ACTIVO', createdAt: iso(55) },
 ];
 
 export const perfiles: Perfil[] = [

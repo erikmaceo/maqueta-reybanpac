@@ -24,12 +24,15 @@ export interface Modulo {
   createdAt: string;
 }
 
+export type TipoPrograma = 'Menú' | 'Submenú' | 'Maestro' | 'Transacción' | 'Proceso' | 'Consulta' | 'Reporte' | 'Objeto';
+
 export interface Programa {
   id: string;
   codigo: string;
   nombre: string;
   descripcion: string;
   modCodigo: string;
+  tipo: TipoPrograma;
   estado: 'ACTIVO' | 'INACTIVO';
   createdAt: string;
 }

@@ -657,11 +657,11 @@ app.delete('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) =
 app.get('/api/seg-programas', requireAuth, (_req, res) => res.json(db.programas));
 
 app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
-  const { codigo, nombre, descripcion, modCodigo, estado } = req.body || {};
+  const { codigo, nombre, descripcion, modCodigo, tipo, estado } = req.body || {};
   if (!codigo || !nombre || !modCodigo) return res.status(400).json({ error: 'codigo, nombre y modCodigo son obligatorios.' });
   if (!db.modulos.some((m) => m.codigo === modCodigo)) return res.status(404).json({ error: 'Módulo no encontrado.' });
   if (db.programas.some((p) => p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  const prg: Programa = { id: newId('seg_prg'), codigo, nombre, descripcion: descripcion || '', modCodigo, estado: estado || 'ACTIVO', createdAt: nowIso() };
+  const prg: Programa = { id: newId('seg_prg'), codigo, nombre, descripcion: descripcion || '', modCodigo, tipo: tipo || 'Transacción', estado: estado || 'ACTIVO', createdAt: nowIso() };
   db.programas.push(prg);
   logAudit(actorName(req), 'CREATE_PROGRAMA', 'programa', prg.id, `Programa "${nombre}" creado.`);
   res.status(201).json(prg);
@@ -670,9 +670,9 @@ app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
 app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const prg = db.programas.find((p) => p.id === req.params.id);
   if (!prg) return res.status(404).json({ error: 'Programa no encontrado.' });
-  const { codigo, nombre, descripcion, modCodigo, estado } = req.body || {};
+  const { codigo, nombre, descripcion, modCodigo, tipo, estado } = req.body || {};
   if (codigo && db.programas.some((p) => p.id !== prg.id && p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  Object.assign(prg, definedOnly({ codigo, nombre, descripcion, modCodigo, estado }));
+  Object.assign(prg, definedOnly({ codigo, nombre, descripcion, modCodigo, tipo, estado }));
   logAudit(actorName(req), 'UPDATE_PROGRAMA', 'programa', prg.id, `Programa "${prg.nombre}" actualizado.`);
   res.json(prg);
 });
@@ -794,6 +794,7 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
 
       // --- Programa (upsert por codigo) ---
       let prg = db.programas.find(p => p.codigo === prgCodigo);
+      const prgTipo = (normalize(r['prg_tipo']) || 'Transacción') as any;
       if (!prg) {
         prg = {
           id: newId('seg_prg'),
@@ -801,13 +802,15 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
           nombre: prgNombre,
           descripcion: normalize(r['prg_descripcion']),
           modCodigo,
+          tipo: prgTipo,
           estado: 'ACTIVO',
           createdAt: nowIso(),
         };
         db.programas.push(prg);
         created.prgs++;
-      } else if (prg.modCodigo !== modCodigo) {
-        prg.modCodigo = modCodigo;
+      } else {
+        if (prg.modCodigo !== modCodigo) prg.modCodigo = modCodigo;
+        if (prg.tipo !== prgTipo) prg.tipo = prgTipo;
       }
 
       // --- Perfil (upsert por codigo) ---

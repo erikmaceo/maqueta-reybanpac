@@ -14,9 +14,11 @@ import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/compon
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
-import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/types';
+import type { Aplicacion, Modulo, Programa, Perfil, TipoPrograma } from '../../shared/models/types';
 
 type Estado = 'ACTIVO' | 'INACTIVO';
+
+const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transacción', 'Proceso', 'Consulta', 'Reporte', 'Objeto'];
 
 @Component({
   selector: 'app-security',
@@ -242,6 +244,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                   <th>Código</th>
                   <th>Nombre</th>
                   <th>Módulo</th>
+                  <th>Tipo</th>
                   <th>Estado</th>
                   <th></th>
                 </tr>
@@ -252,6 +255,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                     <td class="mono">{{ p.codigo }}</td>
                     <td><div class="cell-strong">{{ p.nombre }}</div><div class="tiny dim">{{ p.descripcion }}</div></td>
                     <td><span class="badge badge-blue">{{ p.modCodigo }}</span></td>
+                    <td><span class="badge badge-blue">{{ p.tipo }}</span></td>
                     <td>
                       <span class="badge" [class.badge-green]="p.estado === 'ACTIVO'" [class.badge-gray]="p.estado !== 'ACTIVO'">
                         {{ p.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
@@ -269,7 +273,7 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin programas registrados.</td></tr>
+                  <tr><td colspan="6" class="muted center" style="padding: 24px;">Sin programas registrados.</td></tr>
                 }
               </tbody>
             </table>
@@ -485,6 +489,14 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <option value="">— Seleccione —</option>
           @for (m of modulos(); track m.id) {
             <option [value]="m.codigo">{{ m.codigo }} · {{ m.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo de Programa</label>
+        <select class="select" [(ngModel)]="prgForm.tipo">
+          @for (tipo of tiposPrograma; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
           }
         </select>
       </div>
@@ -708,8 +720,8 @@ export class SecurityComponent implements OnInit {
   exportPrgs(): void {
     this.exportXlsx(
       this.filteredPrgs(),
-      ['Código', 'Nombre', 'Módulo', 'Descripción', 'Estado'],
-      ['codigo', 'nombre', 'modCodigo', 'descripcion', 'estado'],
+      ['Código', 'Nombre', 'Módulo', 'Tipo', 'Descripción', 'Estado'],
+      ['codigo', 'nombre', 'modCodigo', 'tipo', 'descripcion', 'estado'],
       'programas'
     );
   }
@@ -727,6 +739,7 @@ export class SecurityComponent implements OnInit {
   modForm = this.blankMod();
   prgForm = this.blankPrg();
   perfForm = this.blankPerf();
+  tiposPrograma = TIPOS_PROGRAMA;
 
   // --- Refs para retry ---
   loadAplicaciones = () => this._loadApp();
@@ -754,7 +767,7 @@ export class SecurityComponent implements OnInit {
     this.loadingApp.set(true); this.errorApp.set(null);
     this.api.listAplicaciones().subscribe({
       next: (d) => this.aplicaciones.set(d),
-      error: (e) => this.errorApp.set(e.message),
+      error: (e) => this.errorApp.set(e?.error?.error || e?.message || 'Error al cargar aplicaciones.'),
       complete: () => this.loadingApp.set(false),
     });
   }
@@ -762,7 +775,7 @@ export class SecurityComponent implements OnInit {
     this.loadingMod.set(true); this.errorMod.set(null);
     this.api.listModulos().subscribe({
       next: (d) => this.modulos.set(d),
-      error: (e) => this.errorMod.set(e.message),
+      error: (e) => this.errorMod.set(e?.error?.error || e?.message || 'Error al cargar módulos.'),
       complete: () => this.loadingMod.set(false),
     });
   }
@@ -770,7 +783,7 @@ export class SecurityComponent implements OnInit {
     this.loadingPrg.set(true); this.errorPrg.set(null);
     this.api.listProgramas().subscribe({
       next: (d) => this.programas.set(d),
-      error: (e) => this.errorPrg.set(e.message),
+      error: (e) => this.errorPrg.set(e?.error?.error || e?.message || 'Error al cargar programas.'),
       complete: () => this.loadingPrg.set(false),
     });
   }
@@ -778,7 +791,7 @@ export class SecurityComponent implements OnInit {
     this.loadingPerf.set(true); this.errorPerf.set(null);
     this.api.listPerfiles().subscribe({
       next: (d) => this.perfiles.set(d),
-      error: (e) => this.errorPerf.set(e.message),
+      error: (e) => this.errorPerf.set(e?.error?.error || e?.message || 'Error al cargar perfiles.'),
       complete: () => this.loadingPerf.set(false),
     });
   }
@@ -786,7 +799,7 @@ export class SecurityComponent implements OnInit {
   // ============ FORMS BLANK ============
   blankApp() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
   blankMod() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', estado: 'ACTIVO' as Estado }; }
-  blankPrg() { return { codigo: '', nombre: '', descripcion: '', modCodigo: '', estado: 'ACTIVO' as Estado }; }
+  blankPrg() { return { codigo: '', nombre: '', descripcion: '', modCodigo: '', tipo: 'Transacción' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
   blankPerf() { return { codigo: '', nombre: '', descripcion: '', prgCodigo: '', estado: 'ACTIVO' as Estado }; }
 
   // ============ APLICACIÓN CRUD ============
@@ -802,13 +815,16 @@ export class SecurityComponent implements OnInit {
       if (this.editAppId) { await this.api.updateAplicacion(this.editAppId, this.appForm).toPromise(); this.toast.success('Aplicación actualizada'); }
       else { await this.api.createAplicacion(this.appForm).toPromise(); this.toast.success('Aplicación creada'); }
       this.events.emitDataChanged(); this.closeAppDialog(); this._loadApp();
-    } catch (e: any) { this.toast.error('Error', e.message); }
+    } catch (e: any) {
+      const msg = e?.error?.error || e?.message || 'Error inesperado.';
+      this.toast.error('Error', msg);
+    }
   }
   confirmDeleteApp(a: Aplicacion): void {
     if (confirm(`¿Eliminar la aplicación "${a.nombre}"? Se eliminarán también sus módulos, programas y perfiles asociados.`)) {
       this.api.deleteAplicacion(a.id).subscribe({
         next: () => { this.toast.success('Aplicación eliminada'); this.events.emitDataChanged(); this._loadApp(); this._loadMod(); this._loadPrg(); this._loadPerf(); },
-        error: (e) => this.toast.error('Error', e.message),
+        error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
     }
   }
@@ -826,20 +842,23 @@ export class SecurityComponent implements OnInit {
       if (this.editModId) { await this.api.updateModulo(this.editModId, this.modForm).toPromise(); this.toast.success('Módulo actualizado'); }
       else { await this.api.createModulo(this.modForm).toPromise(); this.toast.success('Módulo creado'); }
       this.events.emitDataChanged(); this.closeModDialog(); this._loadMod();
-    } catch (e: any) { this.toast.error('Error', e.message); }
+    } catch (e: any) {
+      const msg = e?.error?.error || e?.message || 'Error inesperado.';
+      this.toast.error('Error', msg);
+    }
   }
   confirmDeleteMod(m: Modulo): void {
     if (confirm(`¿Eliminar el módulo "${m.nombre}"? Se eliminarán también sus programas y perfiles asociados.`)) {
       this.api.deleteModulo(m.id).subscribe({
         next: () => { this.toast.success('Módulo eliminado'); this.events.emitDataChanged(); this._loadMod(); this._loadPrg(); this._loadPerf(); },
-        error: (e) => this.toast.error('Error', e.message),
+        error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
     }
   }
 
   // ============ PROGRAMA CRUD ============
   openPrgDialog(p?: Programa): void {
-    if (p) { this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, modCodigo: p.modCodigo, estado: p.estado }; this.editPrgId = p.id; }
+    if (p) { this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado }; this.editPrgId = p.id; }
     else { this.prgForm = this.blankPrg(); this.editPrgId = null; }
     this.showPrgDlg = true;
   }
@@ -850,13 +869,16 @@ export class SecurityComponent implements OnInit {
       if (this.editPrgId) { await this.api.updatePrograma(this.editPrgId, this.prgForm).toPromise(); this.toast.success('Programa actualizado'); }
       else { await this.api.createPrograma(this.prgForm).toPromise(); this.toast.success('Programa creado'); }
       this.events.emitDataChanged(); this.closePrgDialog(); this._loadPrg();
-    } catch (e: any) { this.toast.error('Error', e.message); }
+    } catch (e: any) {
+      const msg = e?.error?.error || e?.message || 'Error inesperado.';
+      this.toast.error('Error', msg);
+    }
   }
   confirmDeletePrg(p: Programa): void {
     if (confirm(`¿Eliminar el programa "${p.nombre}"? Se eliminarán también sus perfiles asociados.`)) {
       this.api.deletePrograma(p.id).subscribe({
         next: () => { this.toast.success('Programa eliminado'); this.events.emitDataChanged(); this._loadPrg(); this._loadPerf(); },
-        error: (e) => this.toast.error('Error', e.message),
+        error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
     }
   }
@@ -874,13 +896,16 @@ export class SecurityComponent implements OnInit {
       if (this.editPerfId) { await this.api.updatePerfil(this.editPerfId, this.perfForm).toPromise(); this.toast.success('Perfil actualizado'); }
       else { await this.api.createPerfil(this.perfForm).toPromise(); this.toast.success('Perfil creado'); }
       this.events.emitDataChanged(); this.closePerfDialog(); this._loadPerf();
-    } catch (e: any) { this.toast.error('Error', e.message); }
+    } catch (e: any) {
+      const msg = e?.error?.error || e?.message || 'Error inesperado.';
+      this.toast.error('Error', msg);
+    }
   }
   confirmDeletePerf(p: Perfil): void {
     if (confirm(`¿Eliminar el perfil "${p.nombre}"?`)) {
       this.api.deletePerfil(p.id).subscribe({
         next: () => { this.toast.success('Perfil eliminado'); this.events.emitDataChanged(); this._loadPerf(); },
-        error: (e) => this.toast.error('Error', e.message),
+        error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
     }
   }

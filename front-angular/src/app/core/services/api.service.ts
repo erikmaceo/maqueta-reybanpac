@@ -5,7 +5,7 @@ import { tap } from 'rxjs/operators';
 import type {
   SystemApp, Permission, Role, User, AccessRequest, Grant, AuditEntry,
   LdapResponse, Stats,
-  Aplicacion, Modulo, Programa, Perfil,
+  Aplicacion, Modulo, Programa, Perfil, Control,
 } from '../../shared/models/types';
 
 const TOKEN_KEY = 'cam.token';
@@ -229,6 +229,14 @@ export class ApiService {
   }
   deletePerfil(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-perfiles/${id}`);
+  }
+
+  // --- Seguridades: Controles ---
+  listControles(): Observable<Control[]> {
+    return this.request<Control[]>('GET', '/seg-controles');
+  }
+  deleteControl(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/seg-controles/${id}`);
   }
 
   uploadMatriz(file: File): Observable<{ ok: boolean; summary: string }> {

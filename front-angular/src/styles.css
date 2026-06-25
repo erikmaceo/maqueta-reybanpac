@@ -1579,3 +1579,47 @@ textarea.input {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* --- Controles del Programa (dialog) --- */
+.controles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-row .control-tipo {
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.control-row .control-desc {
+  flex: 1;
+}
+
+.control-row .control-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--gray-500, #6b7280);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.control-row .control-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.control-row .btn-icon {
+  flex-shrink: 0;
+}

@@ -14,11 +14,19 @@ import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/compon
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
-import type { Aplicacion, Modulo, Programa, Perfil, TipoPrograma } from '../../shared/models/types';
+import type { Aplicacion, Modulo, Programa, Perfil, TipoPrograma, TipoControl, Control } from '../../shared/models/types';
 
 type Estado = 'ACTIVO' | 'INACTIVO';
 
 const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transacción', 'Proceso', 'Consulta', 'Reporte', 'Objeto'];
+
+const TIPOS_CONTROL: TipoControl[] = ['Caja de Texto', 'Botón', 'Check', 'Combo', 'Grid', 'Option', 'Otros'];
+
+interface ControlRow {
+  tipoControl: TipoControl;
+  descripcion: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+}
 
 @Component({
   selector: 'app-security',
@@ -470,7 +478,7 @@ const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transac
     <p-dialog
       [(visible)]="showPrgDlg"
       [header]="editPrgId ? 'Editar programa' : 'Nuevo programa'"
-      [modal]="true" [style]="{ width: '480px' }" [closable]="true"
+      [modal]="true" [style]="{ width: '640px' }" [closable]="true"
       (onHide)="closePrgDialog()"
     >
       <div class="form-grid">
@@ -511,6 +519,34 @@ const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transac
           <option value="INACTIVO">Inactivo</option>
         </select>
       </div>
+      @if (prgForm.tipo !== 'Menú' && prgForm.tipo !== 'Submenú') {
+        <div class="field">
+          <label>Controles del Programa</label>
+          <div class="controles-list">
+            @for (c of prgControles; track $index) {
+              <div class="control-row">
+                <select class="select control-tipo" [(ngModel)]="c.tipoControl">
+                  @for (t of tiposControl; track t) {
+                    <option [value]="t">{{ t }}</option>
+                  }
+                </select>
+                <input class="input control-desc" [(ngModel)]="c.descripcion" placeholder="Descripción del control" />
+                <label class="control-check">
+                  <input type="checkbox" [checked]="c.estado === 'ACTIVO'"
+                    (change)="c.estado = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
+                  <span>{{ c.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}</span>
+                </label>
+                <button class="btn btn-danger btn-sm btn-icon" title="Quitar control" (click)="removeControl($index)">
+                  <app-icon-trash [width]="14" [height]="14" />
+                </button>
+              </div>
+            }
+          </div>
+          <button class="btn btn-ghost btn-sm mt-2" (click)="addControl()">
+            <app-icon-plus [width]="14" [height]="14" /> Agregar control
+          </button>
+        </div>
+      }
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closePrgDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="savePrg()">{{ editPrgId ? 'Guardar' : 'Crear' }}</button>
@@ -740,6 +776,9 @@ export class SecurityComponent implements OnInit {
   prgForm = this.blankPrg();
   perfForm = this.blankPerf();
   tiposPrograma = TIPOS_PROGRAMA;
+  tiposControl = TIPOS_CONTROL;
+  prgControles: ControlRow[] = [];
+  controlesMap: Map<string, Control[]> = new Map();
 
   // --- Refs para retry ---
   loadAplicaciones = () => this._loadApp();
@@ -785,6 +824,18 @@ export class SecurityComponent implements OnInit {
       next: (d) => this.programas.set(d),
       error: (e) => this.errorPrg.set(e?.error?.error || e?.message || 'Error al cargar programas.'),
       complete: () => this.loadingPrg.set(false),
+    });
+    this.api.listControles().subscribe({
+      next: (d) => {
+        const map = new Map<string, Control[]>();
+        for (const c of d) {
+          const arr = map.get(c.prgCodigo) || [];
+          arr.push(c);
+          map.set(c.prgCodigo, arr);
+        }
+        this.controlesMap = map;
+      },
+      error: () => {},
     });
   }
   private _loadPerf(): void {
@@ -858,16 +909,34 @@ export class SecurityComponent implements OnInit {
 
   // ============ PROGRAMA CRUD ============
   openPrgDialog(p?: Programa): void {
-    if (p) { this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado }; this.editPrgId = p.id; }
-    else { this.prgForm = this.blankPrg(); this.editPrgId = null; }
+    if (p) {
+      this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado };
+      this.editPrgId = p.id;
+      const ctrls = this.controlesMap.get(p.codigo) || [];
+      this.prgControles = ctrls.map(c => ({ tipoControl: c.tipoControl, descripcion: c.descripcion, estado: c.estado }));
+    } else {
+      this.prgForm = this.blankPrg();
+      this.editPrgId = null;
+      this.prgControles = [];
+    }
     this.showPrgDlg = true;
   }
-  closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; }
+  closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; }
+  addControl(): void {
+    this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO' });
+  }
+  removeControl(idx: number): void {
+    this.prgControles.splice(idx, 1);
+  }
   async savePrg(): Promise<void> {
     if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre y módulo son obligatorios.'); return; }
+    const controles = this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú'
+      ? this.prgControles.filter(c => c.descripcion.trim() !== '')
+      : [];
     try {
-      if (this.editPrgId) { await this.api.updatePrograma(this.editPrgId, this.prgForm).toPromise(); this.toast.success('Programa actualizado'); }
-      else { await this.api.createPrograma(this.prgForm).toPromise(); this.toast.success('Programa creado'); }
+      const body: any = { ...this.prgForm, controles };
+      if (this.editPrgId) { await this.api.updatePrograma(this.editPrgId, body).toPromise(); this.toast.success('Programa actualizado'); }
+      else { await this.api.createPrograma(body).toPromise(); this.toast.success('Programa creado'); }
       this.events.emitDataChanged(); this.closePrgDialog(); this._loadPrg();
     } catch (e: any) {
       const msg = e?.error?.error || e?.message || 'Error inesperado.';
@@ -875,7 +944,7 @@ export class SecurityComponent implements OnInit {
     }
   }
   confirmDeletePrg(p: Programa): void {
-    if (confirm(`¿Eliminar el programa "${p.nombre}"? Se eliminarán también sus perfiles asociados.`)) {
+    if (confirm(`¿Eliminar el programa "${p.nombre}"? Se eliminarán también sus perfiles y controles asociados.`)) {
       this.api.deletePrograma(p.id).subscribe({
         next: () => { this.toast.success('Programa eliminado'); this.events.emitDataChanged(); this._loadPrg(); this._loadPerf(); },
         error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },

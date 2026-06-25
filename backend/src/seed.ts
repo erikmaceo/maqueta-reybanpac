@@ -19,6 +19,7 @@ import type {
   Modulo,
   Programa,
   Perfil,
+  Control,
 } from './types.js';
 
 const now = new Date();
@@ -392,4 +393,16 @@ export const perfiles: Perfil[] = [
   { id: 'seg_perf_3', codigo: 'PERF-MM-CR', nombre: 'MM Creador', descripcion: 'Creación de pedidos de compra.', prgCodigo: 'PRG-MM-PED', estado: 'ACTIVO', createdAt: iso(72) },
   { id: 'seg_perf_4', codigo: 'PERF-KS8-OPS', nombre: 'KS8 Operador', descripcion: 'Operación de deployments.', prgCodigo: 'PRG-KS8-DEP', estado: 'ACTIVO', createdAt: iso(60) },
   { id: 'seg_perf_5', codigo: 'PERF-RPA-OP', nombre: 'RPA Operador', descripcion: 'Ejecutar bots de automatización.', prgCodigo: 'PRG-RPA-LAUNCH', estado: 'ACTIVO', createdAt: iso(50) },
+];
+
+export const controles: Control[] = [
+  { id: 'seg_ctrl_1', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Caja de Texto', descripcion: 'Número de documento', estado: 'ACTIVO', createdAt: iso(70) },
+  { id: 'seg_ctrl_2', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Botón', descripcion: 'Buscar documento', estado: 'ACTIVO', createdAt: iso(70) },
+  { id: 'seg_ctrl_3', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Grid', descripcion: 'Resultados de búsqueda', estado: 'ACTIVO', createdAt: iso(70) },
+  { id: 'seg_ctrl_4', prgCodigo: 'PRG-MM-PED', tipoControl: 'Combo', descripcion: 'Seleccionar proveedor', estado: 'ACTIVO', createdAt: iso(72) },
+  { id: 'seg_ctrl_5', prgCodigo: 'PRG-MM-PED', tipoControl: 'Botón', descripcion: 'Crear pedido', estado: 'ACTIVO', createdAt: iso(72) },
+  { id: 'seg_ctrl_6', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Option', descripcion: 'Seleccionar ambiente (DEV/QAS/PROD)', estado: 'ACTIVO', createdAt: iso(65) },
+  { id: 'seg_ctrl_7', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Grid', descripcion: 'Lista de deployments', estado: 'ACTIVO', createdAt: iso(65) },
+  { id: 'seg_ctrl_8', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Botón', descripcion: 'Ejecutar bot', estado: 'ACTIVO', createdAt: iso(55) },
+  { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', createdAt: iso(55) },
 ];

@@ -15,6 +15,7 @@ import type {
   Modulo,
   Programa,
   Perfil,
+  Control,
 } from './types.js';
 import {
   systems as seedSystems,
@@ -28,6 +29,7 @@ import {
   modulos as seedModulos,
   programas as seedProgramas,
   perfiles as seedPerfiles,
+  controles as seedControles,
 } from './seed.js';
 
 interface DB {
@@ -42,6 +44,7 @@ interface DB {
   modulos: Modulo[];
   programas: Programa[];
   perfiles: Perfil[];
+  controles: Control[];
 }
 
 // Clonado profundo para no mutar los arrays de seed (permite "reset").
@@ -59,6 +62,7 @@ export const db: DB = {
   modulos: clone(seedModulos),
   programas: clone(seedProgramas),
   perfiles: clone(seedPerfiles),
+  controles: clone(seedControles),
 };
 
 export function resetDb() {
@@ -73,6 +77,7 @@ export function resetDb() {
   db.modulos = clone(seedModulos);
   db.programas = clone(seedProgramas);
   db.perfiles = clone(seedPerfiles);
+  db.controles = clone(seedControles);
 }
 
 let counter = 1000;

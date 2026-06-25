@@ -75,6 +75,63 @@
 
  ---
 
+ ## 2026-06-24 — Entidad Controles del Programa
+
+ ### Resumen
+
+ Se creó la entidad **Control** que se asocia a los Programas con tipo distinto de "Menú" y "Submenú". Los controles se gestionan visualmente dentro del diálogo de crear/editar Programa, permitiendo agregar múltiples filas dinámicamente.
+
+ ### Cambios realizados
+
+ #### Backend
+ - **Tipo `Control`**: Nueva interfaz con campos `id`, `prgCodigo`, `tipoControl`, `descripcion`, `estado`, `createdAt`.
+ - **Tipo `TipoControl`**: 7 valores: Caja de Texto, Botón, Check, Combo, Grid, Option, Otros.
+ - **Seed**: 9 controles de ejemplo distribuidos entre 4 programas existentes.
+ - **Store**: Array `controles` en `db`, exportado en `resetDb()`.
+ - **Endpoints**:
+   - `GET /api/seg-controles` — Listar todos los controles.
+   - `DELETE /api/seg-controles/:id` — Eliminar un control.
+   - `POST /api/seg-programas` — Acepta `controles` en el body; crea controles asociados al programa.
+   - `PUT /api/seg-programas/:id` — Acepta `controles`; reemplaza los controles existentes del programa.
+   - `DELETE /api/seg-programas/:id` — Elimina también los controles asociados.
+ - **Import**: `Control` añadido al import de tipos en `index.ts`.
+
+ #### Frontend
+ - **Types**: `TipoControl` e `Control` en `front-angular/src/app/shared/models/types.ts`.
+ - **ApiService**: Métodos `listControles()` y `deleteControl()`.
+ - **SecurityComponent**:
+   - `prgControles: ControlRow[]` — Array dinámico de filas de control en el diálogo.
+   - `controlesMap: Map<string, Control[]>` — Mapa precargado de controles por `prgCodigo`.
+   - `_loadPrg()` ahora también carga controles y construye el mapa.
+   - `openPrgDialog()` precarga los controles existentes al editar.
+   - `addControl()` / `removeControl()` — Agregar/quitar filas dinámicamente.
+   - `savePrg()` envía `controles` en el body del POST/PUT.
+   - Checkbox de estado con `(change)` handler (no usa `ngModel` para evitar conflicto boolean/string).
+   - Sección de controles solo se muestra si `tipo !== 'Menú' && tipo !== 'Submenú'`.
+ - **Diálogo**: Ancho incrementado a `640px` para acomodar las filas de controles.
+ - **CSS**: Estilos `.controles-list`, `.control-row`, `.control-tipo`, `.control-desc`, `.control-check`.
+
+ ### Archivos modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/types.ts` | `TipoControl` e `Control` |
+ | `backend/src/seed.ts` | 9 controles de ejemplo |
+ | `backend/src/store.ts` | Array `controles` en db + resetDb |
+ | `backend/src/index.ts` | Import Control, endpoints GET/DELETE controles, modif. POST/PUT/DELETE programas |
+ | `front-angular/src/app/shared/models/types.ts` | `TipoControl` e `Control` |
+ | `front-angular/src/app/core/services/api.service.ts` | `listControles()`, `deleteControl()` |
+ | `front-angular/src/app/pages/security/security.component.ts` | Diálogo con controles dinámicos, lógica add/remove/save/load |
+ | `front-angular/src/styles.css` | Estilos `.controles-list`, `.control-row`, etc. |
+
+ ### Notas técnicas
+ - Los controles se guardan como parte del POST/PUT del programa (replace strategy en PUT).
+ - Solo se envían controles con descripción no vacía.
+ - La sección de controles se occonde automáticamente si el tipo es Menú o Submenú.
+ - El checkbox usa `(change)` en lugar de `[(ngModel)]` porque ngModel enlaza boolean y el estado es `ACTIVO`/`INACTIVO`.
+
+ ---
+
  ## Cómo actualizar este archivo
 
  Al realizar un nuevo cambio, agregar una entrada bajo este formato:

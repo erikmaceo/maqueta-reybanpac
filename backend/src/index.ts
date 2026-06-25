@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
-import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil } from './types.js';
+import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, Control } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -657,22 +657,50 @@ app.delete('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) =
 app.get('/api/seg-programas', requireAuth, (_req, res) => res.json(db.programas));
 
 app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
-  const { codigo, nombre, descripcion, modCodigo, tipo, estado } = req.body || {};
+  const { codigo, nombre, descripcion, modCodigo, tipo, estado, controles } = req.body || {};
   if (!codigo || !nombre || !modCodigo) return res.status(400).json({ error: 'codigo, nombre y modCodigo son obligatorios.' });
   if (!db.modulos.some((m) => m.codigo === modCodigo)) return res.status(404).json({ error: 'Módulo no encontrado.' });
   if (db.programas.some((p) => p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
   const prg: Programa = { id: newId('seg_prg'), codigo, nombre, descripcion: descripcion || '', modCodigo, tipo: tipo || 'Transacción', estado: estado || 'ACTIVO', createdAt: nowIso() };
   db.programas.push(prg);
-  logAudit(actorName(req), 'CREATE_PROGRAMA', 'programa', prg.id, `Programa "${nombre}" creado.`);
+  if (Array.isArray(controles) && controles.length) {
+    for (const c of controles) {
+      const ctrl: Control = {
+        id: newId('seg_ctrl'),
+        prgCodigo: codigo,
+        tipoControl: c.tipoControl || 'Otros',
+        descripcion: c.descripcion || '',
+        estado: c.estado || 'ACTIVO',
+        createdAt: nowIso(),
+      };
+      db.controles.push(ctrl);
+    }
+  }
+  logAudit(actorName(req), 'CREATE_PROGRAMA', 'programa', prg.id, `Programa "${nombre}" creado${Array.isArray(controles) && controles.length ? ` con ${controles.length} control(es)` : ''}.`);
   res.status(201).json(prg);
 });
 
 app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const prg = db.programas.find((p) => p.id === req.params.id);
   if (!prg) return res.status(404).json({ error: 'Programa no encontrado.' });
-  const { codigo, nombre, descripcion, modCodigo, tipo, estado } = req.body || {};
+  const { codigo, nombre, descripcion, modCodigo, tipo, estado, controles } = req.body || {};
   if (codigo && db.programas.some((p) => p.id !== prg.id && p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
+  const oldCodigo = prg.codigo;
   Object.assign(prg, definedOnly({ codigo, nombre, descripcion, modCodigo, tipo, estado }));
+  if (Array.isArray(controles)) {
+    db.controles = db.controles.filter((c) => c.prgCodigo !== oldCodigo);
+    for (const c of controles) {
+      const ctrl: Control = {
+        id: newId('seg_ctrl'),
+        prgCodigo: prg.codigo,
+        tipoControl: c.tipoControl || 'Otros',
+        descripcion: c.descripcion || '',
+        estado: c.estado || 'ACTIVO',
+        createdAt: nowIso(),
+      };
+      db.controles.push(ctrl);
+    }
+  }
   logAudit(actorName(req), 'UPDATE_PROGRAMA', 'programa', prg.id, `Programa "${prg.nombre}" actualizado.`);
   res.json(prg);
 });
@@ -682,6 +710,7 @@ app.delete('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res)
   if (idx < 0) return res.status(404).json({ error: 'Programa no encontrado.' });
   const [removed] = db.programas.splice(idx, 1);
   db.perfiles = db.perfiles.filter((p) => p.prgCodigo !== removed.codigo);
+  db.controles = db.controles.filter((c) => c.prgCodigo !== removed.codigo);
   logAudit(actorName(req), 'DELETE_PROGRAMA', 'programa', removed.id, `Programa "${removed.nombre}" eliminado.`);
   res.json({ ok: true });
 });
@@ -715,6 +744,17 @@ app.delete('/api/seg-perfiles/:id', requireAuth, requireGlobalAdmin, (req, res) 
   if (idx < 0) return res.status(404).json({ error: 'Perfil no encontrado.' });
   const [removed] = db.perfiles.splice(idx, 1);
   logAudit(actorName(req), 'DELETE_PERFIL', 'perfil', removed.id, `Perfil "${removed.nombre}" eliminado.`);
+  res.json({ ok: true });
+});
+
+// --- Controles ---
+app.get('/api/seg-controles', requireAuth, (_req, res) => res.json(db.controles));
+
+app.delete('/api/seg-controles/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.controles.findIndex((c) => c.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Control no encontrado.' });
+  const [removed] = db.controles.splice(idx, 1);
+  logAudit(actorName(req), 'DELETE_CONTROL', 'control', removed.id, `Control "${removed.descripcion}" eliminado.`);
   res.json({ ok: true });
 });
 

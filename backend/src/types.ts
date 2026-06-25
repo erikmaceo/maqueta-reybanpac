@@ -43,6 +43,17 @@ export interface Programa {
   createdAt: string;
 }
 
+export type TipoControl = 'Caja de Texto' | 'Botón' | 'Check' | 'Combo' | 'Grid' | 'Option' | 'Otros';
+
+export interface Control {
+  id: string;
+  prgCodigo: string;
+  tipoControl: TipoControl;
+  descripcion: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
 export interface Perfil {
   id: string;
   codigo: string;

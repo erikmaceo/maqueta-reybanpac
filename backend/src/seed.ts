@@ -388,11 +388,11 @@ export const programas: Programa[] = [
 ];
 
 export const perfiles: Perfil[] = [
-  { id: 'seg_perf_1', codigo: 'PERF-FI-VIS', nombre: 'FI Visualizador', descripcion: 'Visualización de documentos contables.', prgCodigo: 'PRG-FI-DOCS', estado: 'ACTIVO', createdAt: iso(70) },
-  { id: 'seg_perf_2', codigo: 'PERF-FI-ED', nombre: 'FI Editor', descripcion: 'Edición de documentos contables.', prgCodigo: 'PRG-FI-DOCS', estado: 'ACTIVO', createdAt: iso(68) },
-  { id: 'seg_perf_3', codigo: 'PERF-MM-CR', nombre: 'MM Creador', descripcion: 'Creación de pedidos de compra.', prgCodigo: 'PRG-MM-PED', estado: 'ACTIVO', createdAt: iso(72) },
-  { id: 'seg_perf_4', codigo: 'PERF-KS8-OPS', nombre: 'KS8 Operador', descripcion: 'Operación de deployments.', prgCodigo: 'PRG-KS8-DEP', estado: 'ACTIVO', createdAt: iso(60) },
-  { id: 'seg_perf_5', codigo: 'PERF-RPA-OP', nombre: 'RPA Operador', descripcion: 'Ejecutar bots de automatización.', prgCodigo: 'PRG-RPA-LAUNCH', estado: 'ACTIVO', createdAt: iso(50) },
+  { id: 'seg_perf_1', codigo: 'PERF-FI-VIS', nombre: 'FI Visualizador', descripcion: 'Visualización de documentos contables.', programas: [{ prgCodigo: 'PRG-FI-DOCS', nuevo: false, modificar: false, anular: false, procesar: false, imprimir: true, consultar: true }], estado: 'ACTIVO', createdAt: iso(70) },
+  { id: 'seg_perf_2', codigo: 'PERF-FI-ED', nombre: 'FI Editor', descripcion: 'Edición de documentos contables.', programas: [{ prgCodigo: 'PRG-FI-DOCS', nuevo: true, modificar: true, anular: true, procesar: false, imprimir: true, consultar: true }], estado: 'ACTIVO', createdAt: iso(68) },
+  { id: 'seg_perf_3', codigo: 'PERF-MM-CR', nombre: 'MM Creador', descripcion: 'Creación de pedidos de compra.', programas: [{ prgCodigo: 'PRG-MM-PED', nuevo: true, modificar: true, anular: false, procesar: true, imprimir: true, consultar: true }], estado: 'ACTIVO', createdAt: iso(72) },
+  { id: 'seg_perf_4', codigo: 'PERF-KS8-OPS', nombre: 'KS8 Operador', descripcion: 'Operación de deployments.', programas: [{ prgCodigo: 'PRG-KS8-DEP', nuevo: false, modificar: true, anular: false, procesar: true, imprimir: false, consultar: true }], estado: 'ACTIVO', createdAt: iso(60) },
+  { id: 'seg_perf_5', codigo: 'PERF-RPA-OP', nombre: 'RPA Operador', descripcion: 'Ejecutar bots de automatización.', programas: [{ prgCodigo: 'PRG-RPA-LAUNCH', nuevo: false, modificar: false, anular: false, procesar: true, imprimir: false, consultar: true }], estado: 'ACTIVO', createdAt: iso(50) },
 ];
 
 export const controles: Control[] = [

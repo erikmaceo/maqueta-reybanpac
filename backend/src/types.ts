@@ -55,12 +55,22 @@ export interface Control {
   createdAt: string;
 }
 
+export interface PerfilPrograma {
+  prgCodigo: string;
+  nuevo: boolean;
+  modificar: boolean;
+  anular: boolean;
+  procesar: boolean;
+  imprimir: boolean;
+  consultar: boolean;
+}
+
 export interface Perfil {
   id: string;
   codigo: string;
   nombre: string;
   descripcion: string;
-  prgCodigo: string;
+  programas: PerfilPrograma[];
   estado: SegEstado;
   createdAt: string;
 }

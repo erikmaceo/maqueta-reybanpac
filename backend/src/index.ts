@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
-import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, Control } from './types.js';
+import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -613,7 +613,7 @@ app.delete('/api/seg-aplicaciones/:id', requireAuth, requireGlobalAdmin, (req, r
   db.modulos = db.modulos.filter((m) => m.appCodigo !== removed.codigo);
   const prgCodigos = db.programas.filter((p) => modCodigos.includes(p.modCodigo)).map((p) => p.codigo);
   db.programas = db.programas.filter((p) => !modCodigos.includes(p.modCodigo));
-  db.perfiles = db.perfiles.filter((p) => !prgCodigos.includes(p.prgCodigo));
+  db.perfiles = db.perfiles.filter((p) => !prgCodigos.some((pc) => p.programas.some((pp) => pp.prgCodigo === pc)));
   logAudit(actorName(req), 'DELETE_APLICACION', 'aplicacion', removed.id, `Aplicación "${removed.nombre}" eliminada.`);
   res.json({ ok: true });
 });
@@ -648,7 +648,7 @@ app.delete('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) =
   const [removed] = db.modulos.splice(idx, 1);
   const prgCodigos = db.programas.filter((p) => p.modCodigo === removed.codigo).map((p) => p.codigo);
   db.programas = db.programas.filter((p) => p.modCodigo !== removed.codigo);
-  db.perfiles = db.perfiles.filter((p) => !prgCodigos.includes(p.prgCodigo));
+  db.perfiles = db.perfiles.filter((p) => !prgCodigos.some((pc) => p.programas.some((pp) => pp.prgCodigo === pc)));
   logAudit(actorName(req), 'DELETE_MODULO', 'modulo', removed.id, `Módulo "${removed.nombre}" eliminado.`);
   res.json({ ok: true });
 });
@@ -711,7 +711,7 @@ app.delete('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res)
   const idx = db.programas.findIndex((p) => p.id === req.params.id);
   if (idx < 0) return res.status(404).json({ error: 'Programa no encontrado.' });
   const [removed] = db.programas.splice(idx, 1);
-  db.perfiles = db.perfiles.filter((p) => p.prgCodigo !== removed.codigo);
+  db.perfiles = db.perfiles.filter((p) => !p.programas.some((pp) => pp.prgCodigo === removed.codigo));
   db.controles = db.controles.filter((c) => c.prgCodigo !== removed.codigo);
   logAudit(actorName(req), 'DELETE_PROGRAMA', 'programa', removed.id, `Programa "${removed.nombre}" eliminado.`);
   res.json({ ok: true });
@@ -721,22 +721,31 @@ app.delete('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res)
 app.get('/api/seg-perfiles', requireAuth, (_req, res) => res.json(db.perfiles));
 
 app.post('/api/seg-perfiles', requireAuth, requireGlobalAdmin, (req, res) => {
-  const { codigo, nombre, descripcion, prgCodigo, estado } = req.body || {};
-  if (!codigo || !nombre || !prgCodigo) return res.status(400).json({ error: 'codigo, nombre y prgCodigo son obligatorios.' });
-  if (!db.programas.some((p) => p.codigo === prgCodigo)) return res.status(404).json({ error: 'Programa no encontrado.' });
+  const { codigo, nombre, descripcion, programas, estado } = req.body || {};
+  if (!codigo || !nombre || !programas || !programas.length) return res.status(400).json({ error: 'codigo, nombre y al menos un programa son obligatorios.' });
+  for (const pp of programas) {
+    if (!db.programas.some((p) => p.codigo === pp.prgCodigo)) return res.status(404).json({ error: `Programa "${pp.prgCodigo}" no encontrado.` });
+  }
   if (db.perfiles.some((p) => p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  const perf: Perfil = { id: newId('seg_perf'), codigo, nombre, descripcion: descripcion || '', prgCodigo, estado: estado || 'ACTIVO', createdAt: nowIso() };
+  const perf: Perfil = { id: newId('seg_perf'), codigo, nombre, descripcion: descripcion || '', programas, estado: estado || 'ACTIVO', createdAt: nowIso() };
   db.perfiles.push(perf);
-  logAudit(actorName(req), 'CREATE_PERFIL', 'perfil', perf.id, `Perfil "${nombre}" creado.`);
+  logAudit(actorName(req), 'CREATE_PERFIL', 'perfil', perf.id, `Perfil "${nombre}" creado con ${programas.length} programa(s).`);
   res.status(201).json(perf);
 });
 
 app.put('/api/seg-perfiles/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const perf = db.perfiles.find((p) => p.id === req.params.id);
   if (!perf) return res.status(404).json({ error: 'Perfil no encontrado.' });
-  const { codigo, nombre, descripcion, prgCodigo, estado } = req.body || {};
+  const { codigo, nombre, descripcion, programas, estado } = req.body || {};
   if (codigo && db.perfiles.some((p) => p.id !== perf.id && p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  Object.assign(perf, definedOnly({ codigo, nombre, descripcion, prgCodigo, estado }));
+  if (programas) {
+    for (const pp of programas) {
+      if (!db.programas.some((p) => p.codigo === pp.prgCodigo)) return res.status(404).json({ error: `Programa "${pp.prgCodigo}" no encontrado.` });
+    }
+  }
+  // Si programas viene, validamos que no esté vacío
+  if (programas !== undefined && !programas.length) return res.status(400).json({ error: 'Debe incluir al menos un programa.' });
+  Object.assign(perf, definedOnly({ codigo, nombre, descripcion, programas, estado }));
   logAudit(actorName(req), 'UPDATE_PERFIL', 'perfil', perf.id, `Perfil "${perf.nombre}" actualizado.`);
   res.json(perf);
 });
@@ -863,14 +872,32 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
           codigo: perfCodigo,
           nombre: perfNombre,
           descripcion: normalize(r['perf_descripcion']),
-          prgCodigo,
+          programas: [{
+            prgCodigo,
+            nuevo: false,
+            modificar: false,
+            anular: false,
+            procesar: false,
+            imprimir: false,
+            consultar: false,
+          }],
           estado,
           createdAt: nowIso(),
         };
         db.perfiles.push(perf);
         created.perfs++;
       } else {
-        if (perf.prgCodigo !== prgCodigo) perf.prgCodigo = prgCodigo;
+        if (!perf.programas.some((pp) => pp.prgCodigo === prgCodigo)) {
+          perf.programas.push({
+            prgCodigo,
+            nuevo: false,
+            modificar: false,
+            anular: false,
+            procesar: false,
+            imprimir: false,
+            consultar: false,
+          });
+        }
         if (perf.estado !== estado) perf.estado = estado;
       }
     }

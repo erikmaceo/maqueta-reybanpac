@@ -1623,3 +1623,26 @@ textarea.input {
 .control-row .btn-icon {
   flex-shrink: 0;
 }
+
+.control-row .perf-check {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.control-row .perf-check input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.perf-prgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

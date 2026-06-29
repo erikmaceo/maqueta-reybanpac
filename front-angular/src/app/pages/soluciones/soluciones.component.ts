@@ -295,7 +295,7 @@ export class SolucionesComponent implements OnInit {
       next: (perfs) => {
         const modCodigos = this.modulos().map(m => m.codigo);
         const prgCodigos = this.programas().map(p => p.codigo);
-        this.perfiles.set(perfs.filter(p => prgCodigos.includes(p.prgCodigo)));
+        this.perfiles.set(perfs.filter(p => p.programas.some(pp => prgCodigos.includes(pp.prgCodigo))));
         this.loadingPerfs.set(false);
       },
       error: () => this.loadingPerfs.set(false),
@@ -307,7 +307,7 @@ export class SolucionesComponent implements OnInit {
   }
 
   getPerfiles(prgCodigo: string): Perfil[] {
-    return this.perfiles().filter(p => p.prgCodigo === prgCodigo);
+    return this.perfiles().filter(p => p.programas.some(pp => pp.prgCodigo === prgCodigo));
   }
 
   toggleMod(id: string): void {

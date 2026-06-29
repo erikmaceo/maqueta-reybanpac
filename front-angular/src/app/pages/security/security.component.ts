@@ -14,7 +14,7 @@ import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/compon
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
-import type { Aplicacion, Modulo, Programa, Perfil, TipoPrograma, TipoControl, Control } from '../../shared/models/types';
+import type { Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, TipoPrograma, TipoControl, Control } from '../../shared/models/types';
 
 type Estado = 'ACTIVO' | 'INACTIVO';
 
@@ -27,6 +27,16 @@ interface ControlRow {
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
   log: 'ACTIVO' | 'INACTIVO';
+}
+
+interface PerfilProgramaRow {
+  prgCodigo: string;
+  nuevo: boolean;
+  modificar: boolean;
+  anular: boolean;
+  procesar: boolean;
+  imprimir: boolean;
+  consultar: boolean;
 }
 
 @Component({
@@ -349,7 +359,13 @@ interface ControlRow {
                   <tr>
                     <td class="mono">{{ p.codigo }}</td>
                     <td><div class="cell-strong">{{ p.nombre }}</div><div class="tiny dim">{{ p.descripcion }}</div></td>
-                    <td><span class="badge badge-blue">{{ p.prgCodigo }}</span></td>
+                    <td>
+                      <div class="perf-prgs">
+                        @for (pp of p.programas; track pp.prgCodigo) {
+                          <span class="badge badge-blue">{{ pp.prgCodigo }}</span>
+                        }
+                      </div>
+                    </td>
                     <td>
                       <span class="badge" [class.badge-green]="p.estado === 'ACTIVO'" [class.badge-gray]="p.estado !== 'ACTIVO'">
                         {{ p.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
@@ -563,7 +579,7 @@ interface ControlRow {
     <p-dialog
       [(visible)]="showPerfDlg"
       [header]="editPerfId ? 'Editar perfil' : 'Nuevo perfil'"
-      [modal]="true" [style]="{ width: '480px' }" [closable]="true"
+      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
       (onHide)="closePerfDialog()"
     >
       <div class="form-grid">
@@ -577,17 +593,35 @@ interface ControlRow {
         </div>
       </div>
       <div class="field">
-        <label>Programa</label>
-        <select class="select" [(ngModel)]="perfForm.prgCodigo">
-          <option value="">— Seleccione —</option>
-          @for (p of programas(); track p.id) {
-            <option [value]="p.codigo">{{ p.codigo }} · {{ p.nombre }}</option>
-          }
-        </select>
-      </div>
-      <div class="field">
         <label>Descripción</label>
         <textarea class="input" [(ngModel)]="perfForm.descripcion" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>Programas del Perfil</label>
+        <div class="controles-list">
+          @for (pp of perfProgramas; track $index) {
+            <div class="control-row">
+              <select class="select control-tipo" [(ngModel)]="pp.prgCodigo">
+                <option value="">— Seleccione —</option>
+                @for (p of programas(); track p.id) {
+                  <option [value]="p.codigo">{{ p.codigo }} · {{ p.nombre }}</option>
+                }
+              </select>
+              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.nuevo" /> Nuevo</label>
+              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.modificar" /> Modificar</label>
+              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.anular" /> Anular</label>
+              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.procesar" /> Procesar</label>
+              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.imprimir" /> Imprimir</label>
+              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.consultar" /> Consultar</label>
+              <button class="btn btn-danger btn-sm btn-icon" title="Quitar programa" (click)="removePerfPrograma($index)">
+                <app-icon-trash [width]="14" [height]="14" />
+              </button>
+            </div>
+          }
+        </div>
+        <button class="btn btn-ghost btn-sm mt-2" (click)="addPerfPrograma()">
+          <app-icon-plus [width]="14" [height]="14" /> Agregar programa
+        </button>
       </div>
       <div class="field">
         <label>Estado</label>
@@ -679,8 +713,14 @@ export class SecurityComponent implements OnInit {
     return this.perfiles().filter(p =>
       p.codigo.toLowerCase().includes(q) ||
       p.nombre.toLowerCase().includes(q) ||
-      p.prgCodigo.toLowerCase().includes(q) ||
-      (p.descripcion || '').toLowerCase().includes(q)
+      (p.descripcion || '').toLowerCase().includes(q) ||
+      p.programas.some(pp => pp.prgCodigo.toLowerCase().includes(q) ||
+        (pp.nuevo ? 'nuevo' : '').includes(q) ||
+        (pp.modificar ? 'modificar' : '').includes(q) ||
+        (pp.anular ? 'anular' : '').includes(q) ||
+        (pp.procesar ? 'procesar' : '').includes(q) ||
+        (pp.imprimir ? 'imprimir' : '').includes(q) ||
+        (pp.consultar ? 'consultar' : '').includes(q))
     );
   });
 
@@ -769,10 +809,25 @@ export class SecurityComponent implements OnInit {
   }
 
   exportPerfs(): void {
+    const rows = this.filteredPerfs().flatMap(p =>
+      p.programas.map(pp => ({
+        codigo: p.codigo,
+        nombre: p.nombre,
+        descripcion: p.descripcion,
+        programa: pp.prgCodigo,
+        nuevo: pp.nuevo ? 'Sí' : 'No',
+        modificar: pp.modificar ? 'Sí' : 'No',
+        anular: pp.anular ? 'Sí' : 'No',
+        procesar: pp.procesar ? 'Sí' : 'No',
+        imprimir: pp.imprimir ? 'Sí' : 'No',
+        consultar: pp.consultar ? 'Sí' : 'No',
+        estado: p.estado,
+      }))
+    );
     this.exportXlsx(
-      this.filteredPerfs(),
-      ['Código', 'Nombre', 'Programa', 'Descripción', 'Estado'],
-      ['codigo', 'nombre', 'prgCodigo', 'descripcion', 'estado'],
+      rows,
+      ['Código', 'Nombre', 'Descripción', 'Programa', 'Nuevo', 'Modificar', 'Anular', 'Procesar', 'Imprimir', 'Consultar', 'Estado'],
+      ['codigo', 'nombre', 'descripcion', 'programa', 'nuevo', 'modificar', 'anular', 'procesar', 'imprimir', 'consultar', 'estado'],
       'perfiles'
     );
   }
@@ -857,7 +912,8 @@ export class SecurityComponent implements OnInit {
   blankApp() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
   blankMod() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', estado: 'ACTIVO' as Estado }; }
   blankPrg() { return { codigo: '', nombre: '', descripcion: '', modCodigo: '', tipo: 'Transacción' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
-  blankPerf() { return { codigo: '', nombre: '', descripcion: '', prgCodigo: '', estado: 'ACTIVO' as Estado }; }
+  blankPerf() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
+  perfProgramas: PerfilProgramaRow[] = [];
 
   // ============ APLICACIÓN CRUD ============
   openAppDialog(a?: Aplicacion): void {
@@ -965,16 +1021,32 @@ export class SecurityComponent implements OnInit {
 
   // ============ PERFIL CRUD ============
   openPerfDialog(p?: Perfil): void {
-    if (p) { this.perfForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, prgCodigo: p.prgCodigo, estado: p.estado }; this.editPerfId = p.id; }
-    else { this.perfForm = this.blankPerf(); this.editPerfId = null; }
+    if (p) {
+      this.perfForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, estado: p.estado };
+      this.editPerfId = p.id;
+      this.perfProgramas = p.programas.map(pp => ({ ...pp }));
+    } else {
+      this.perfForm = this.blankPerf();
+      this.editPerfId = null;
+      this.perfProgramas = [];
+    }
     this.showPerfDlg = true;
   }
-  closePerfDialog(): void { this.showPerfDlg = false; this.editPerfId = null; }
+  closePerfDialog(): void { this.showPerfDlg = false; this.editPerfId = null; this.perfProgramas = []; }
+  addPerfPrograma(): void {
+    this.perfProgramas.push({ prgCodigo: '', nuevo: false, modificar: false, anular: false, procesar: false, imprimir: false, consultar: false });
+  }
+  removePerfPrograma(idx: number): void {
+    this.perfProgramas.splice(idx, 1);
+  }
   async savePerf(): Promise<void> {
-    if (!this.perfForm.codigo || !this.perfForm.nombre || !this.perfForm.prgCodigo) { this.toast.error('Faltan datos', 'Código, nombre y programa son obligatorios.'); return; }
+    const programasValidos = this.perfProgramas.filter(pp => pp.prgCodigo.trim() !== '');
+    if (!this.perfForm.codigo || !this.perfForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
+    if (!programasValidos.length) { this.toast.error('Faltan datos', 'Debe agregar al menos un programa.'); return; }
     try {
-      if (this.editPerfId) { await this.api.updatePerfil(this.editPerfId, this.perfForm).toPromise(); this.toast.success('Perfil actualizado'); }
-      else { await this.api.createPerfil(this.perfForm).toPromise(); this.toast.success('Perfil creado'); }
+      const body: any = { ...this.perfForm, programas: programasValidos };
+      if (this.editPerfId) { await this.api.updatePerfil(this.editPerfId, body).toPromise(); this.toast.success('Perfil actualizado'); }
+      else { await this.api.createPerfil(body).toPromise(); this.toast.success('Perfil creado'); }
       this.events.emitDataChanged(); this.closePerfDialog(); this._loadPerf();
     } catch (e: any) {
       const msg = e?.error?.error || e?.message || 'Error inesperado.';

@@ -26,6 +26,7 @@ interface ControlRow {
   tipoControl: TipoControl;
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
+  log: 'ACTIVO' | 'INACTIVO';
 }
 
 @Component({
@@ -536,6 +537,11 @@ interface ControlRow {
                     (change)="c.estado = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
                   <span>{{ c.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}</span>
                 </label>
+                <label class="control-check">
+                  <input type="checkbox" [checked]="c.log === 'ACTIVO'"
+                    (change)="c.log = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
+                  <span>Log</span>
+                </label>
                 <button class="btn btn-danger btn-sm btn-icon" title="Quitar control" (click)="removeControl($index)">
                   <app-icon-trash [width]="14" [height]="14" />
                 </button>
@@ -913,7 +919,12 @@ export class SecurityComponent implements OnInit {
       this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado };
       this.editPrgId = p.id;
       const ctrls = this.controlesMap.get(p.codigo) || [];
-      this.prgControles = ctrls.map(c => ({ tipoControl: c.tipoControl, descripcion: c.descripcion, estado: c.estado }));
+      this.prgControles = ctrls.map(c => ({ 
+        tipoControl: c.tipoControl, 
+        descripcion: c.descripcion, 
+        estado: c.estado,
+        log: c.log === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO'
+      }));
     } else {
       this.prgForm = this.blankPrg();
       this.editPrgId = null;
@@ -923,7 +934,7 @@ export class SecurityComponent implements OnInit {
   }
   closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; }
   addControl(): void {
-    this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO' });
+    this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO' });
   }
   removeControl(idx: number): void {
     this.prgControles.splice(idx, 1);

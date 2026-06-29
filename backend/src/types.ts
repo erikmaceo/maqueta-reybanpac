@@ -51,6 +51,7 @@ export interface Control {
   tipoControl: TipoControl;
   descripcion: string;
   estado: SegEstado;
+  log: SegEstado;
   createdAt: string;
 }
 

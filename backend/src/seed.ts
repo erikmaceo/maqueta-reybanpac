@@ -403,6 +403,6 @@ export const controles: Control[] = [
   { id: 'seg_ctrl_5', prgCodigo: 'PRG-MM-PED', tipoControl: 'Botón', descripcion: 'Crear pedido', estado: 'ACTIVO', createdAt: iso(72) },
   { id: 'seg_ctrl_6', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Option', descripcion: 'Seleccionar ambiente (DEV/QAS/PROD)', estado: 'ACTIVO', createdAt: iso(65) },
   { id: 'seg_ctrl_7', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Grid', descripcion: 'Lista de deployments', estado: 'ACTIVO', createdAt: iso(65) },
-  { id: 'seg_ctrl_8', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Botón', descripcion: 'Ejecutar bot', estado: 'ACTIVO', createdAt: iso(55) },
-  { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', createdAt: iso(55) },
+  { id: 'seg_ctrl_8', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Botón', descripcion: 'Ejecutar bot', estado: 'ACTIVO', log: 'INACTIVO', createdAt: iso(55) },
+  { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', log: 'INACTIVO', createdAt: iso(55) },
 ];

@@ -671,6 +671,7 @@ app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
         tipoControl: c.tipoControl || 'Otros',
         descripcion: c.descripcion || '',
         estado: c.estado || 'ACTIVO',
+        log: c.log || 'ACTIVO',
         createdAt: nowIso(),
       };
       db.controles.push(ctrl);
@@ -696,6 +697,7 @@ app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) =>
         tipoControl: c.tipoControl || 'Otros',
         descripcion: c.descripcion || '',
         estado: c.estado || 'ACTIVO',
+        log: c.log || 'ACTIVO',
         createdAt: nowIso(),
       };
       db.controles.push(ctrl);

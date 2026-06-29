@@ -1598,6 +1598,9 @@ textarea.input {
   width: 150px;
   flex-shrink: 0;
 }
+.control-row .perf-tipo {
+  width: 220px;
+}
 
 .control-row .control-desc {
   flex: 1;

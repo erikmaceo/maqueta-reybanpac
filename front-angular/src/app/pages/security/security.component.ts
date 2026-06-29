@@ -601,12 +601,15 @@ interface PerfilProgramaRow {
         <div class="controles-list">
           @for (pp of perfProgramas; track $index) {
             <div class="control-row">
-              <select class="select control-tipo" [(ngModel)]="pp.prgCodigo">
+              <select class="select control-tipo perf-tipo" [(ngModel)]="pp.prgCodigo">
                 <option value="">— Seleccione —</option>
                 @for (p of programas(); track p.id) {
                   <option [value]="p.codigo">{{ p.codigo }} · {{ p.nombre }}</option>
                 }
               </select>
+              @if (pp.prgCodigo) {
+                <span class="badge badge-amber">{{ getProgramaTipo(pp.prgCodigo) }}</span>
+              }
               <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.nuevo" /> Nuevo</label>
               <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.modificar" /> Modificar</label>
               <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.anular" /> Anular</label>
@@ -1038,6 +1041,9 @@ export class SecurityComponent implements OnInit {
   }
   removePerfPrograma(idx: number): void {
     this.perfProgramas.splice(idx, 1);
+  }
+  getProgramaTipo(codigo: string): string {
+    return this.programas().find(p => p.codigo === codigo)?.tipo || '';
   }
   async savePerf(): Promise<void> {
     const programasValidos = this.perfProgramas.filter(pp => pp.prgCodigo.trim() !== '');

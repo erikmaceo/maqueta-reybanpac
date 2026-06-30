@@ -72,7 +72,7 @@ import type { Stats } from '../../shared/models/types';
               <app-icon-authorizer />
             </div>
             <div class="kpi-val">{{ pendingVal }}</div>
-            <div class="kpi-label">Solicitudes pendientes</div>
+            <div class="kpi-label">Solicitudes</div>
             <div class="kpi-foot">{{ pendingFoot }}</div>
           </div>
         </div>

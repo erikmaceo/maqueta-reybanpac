@@ -30,6 +30,8 @@ interface ControlRow {
 }
 
 interface PerfilProgramaRow {
+  appCodigo: string;
+  modCodigo: string;
   prgCodigo: string;
   nuevo: boolean;
   modificar: boolean;
@@ -609,25 +611,74 @@ interface PerfilProgramaRow {
         <label>Programas del Perfil</label>
         <div class="controles-list">
           @for (pp of perfProgramas; track $index) {
-            <div class="control-row">
-              <select class="select control-tipo perf-tipo" [(ngModel)]="pp.prgCodigo">
-                <option value="">— Seleccione —</option>
-                @for (p of programas(); track p.id) {
-                  <option [value]="p.codigo">{{ p.codigo }} · {{ p.nombre }}</option>
-                }
-              </select>
-              @if (pp.prgCodigo) {
-                <span class="badge badge-amber">{{ getProgramaTipo(pp.prgCodigo) }}</span>
-              }
-              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.nuevo" /> Nuevo</label>
-              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.modificar" /> Modificar</label>
-              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.anular" /> Anular</label>
-              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.procesar" /> Procesar</label>
-              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.imprimir" /> Imprimir</label>
-              <label class="perf-check"><input type="checkbox" [(ngModel)]="pp.consultar" /> Consultar</label>
-              <button class="btn btn-danger btn-sm btn-icon" title="Quitar programa" (click)="removePerfPrograma($index)">
-                <app-icon-trash [width]="14" [height]="14" />
-              </button>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+              <div style="display:flex;gap:8px;align-items:flex-end;">
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  <label class="small muted">Aplicación</label>
+                  <select class="select control-tipo" style="width:200px;" [(ngModel)]="pp.appCodigo" (ngModelChange)="changePerfApp($index)">
+                    <option value="">— Seleccionar —</option>
+                    @for (a of aplicaciones(); track a.id) {
+                      <option [value]="a.codigo">{{ a.codigo }} · {{ a.nombre }}</option>
+                    }
+                  </select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  <label class="small muted">Módulo</label>
+                  <select class="select control-tipo" style="width:200px;" [(ngModel)]="pp.modCodigo" (ngModelChange)="changePerfMod($index)">
+                    <option value="">— Seleccionar —</option>
+                    @for (m of getModsForPerfRow($index); track m.id) {
+                      <option [value]="m.codigo">{{ m.codigo }} · {{ m.nombre }}</option>
+                    }
+                  </select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  <label class="small muted">Programa</label>
+                  <select class="select control-tipo" style="width:200px;" [(ngModel)]="pp.prgCodigo">
+                    <option value="">— Seleccionar —</option>
+                    @for (p of getPrgsForPerfRow($index); track p.id) {
+                      <option [value]="p.codigo">{{ p.codigo }} · {{ p.nombre }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="table-wrap mt-2">
+                <table class="data" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Tipo Programa</th>
+                      <th>Nuevo</th>
+                      <th>Modificar</th>
+                      <th>Anular</th>
+                      <th>Procesar</th>
+                      <th>Imprimir</th>
+                      <th>Consultar</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        @if (pp.prgCodigo) {
+                          <span class="badge badge-amber">{{ getProgramaTipo(pp.prgCodigo) }}</span>
+                        } @else {
+                          <span class="muted small">—</span>
+                        }
+                      </td>
+                      <td><input type="checkbox" [(ngModel)]="pp.nuevo" style="width:16px;height:16px;cursor:pointer;" /></td>
+                      <td><input type="checkbox" [(ngModel)]="pp.modificar" style="width:16px;height:16px;cursor:pointer;" /></td>
+                      <td><input type="checkbox" [(ngModel)]="pp.anular" style="width:16px;height:16px;cursor:pointer;" /></td>
+                      <td><input type="checkbox" [(ngModel)]="pp.procesar" style="width:16px;height:16px;cursor:pointer;" /></td>
+                      <td><input type="checkbox" [(ngModel)]="pp.imprimir" style="width:16px;height:16px;cursor:pointer;" /></td>
+                      <td><input type="checkbox" [(ngModel)]="pp.consultar" style="width:16px;height:16px;cursor:pointer;" /></td>
+                      <td>
+                        <button class="btn btn-danger btn-sm btn-icon" title="Quitar" (click)="removePerfPrograma($index)">
+                          <app-icon-trash [width]="14" [height]="14" />
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           }
         </div>
@@ -1047,7 +1098,11 @@ export class SecurityComponent implements OnInit {
     if (p) {
       this.perfForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, estado: p.estado };
       this.editPerfId = p.id;
-      this.perfProgramas = p.programas.map(pp => ({ ...pp }));
+      this.perfProgramas = p.programas.map(pp => {
+        const prg = this.programas().find(x => x.codigo === pp.prgCodigo);
+        const mod = prg ? this.modulos().find(m => m.codigo === prg.modCodigo) : undefined;
+        return { appCodigo: mod?.appCodigo || '', modCodigo: prg?.modCodigo || '', ...pp };
+      });
     } else {
       this.perfForm = this.blankPerf();
       this.editPerfId = null;
@@ -1057,13 +1112,30 @@ export class SecurityComponent implements OnInit {
   }
   closePerfDialog(): void { this.showPerfDlg = false; this.editPerfId = null; this.perfProgramas = []; }
   addPerfPrograma(): void {
-    this.perfProgramas.push({ prgCodigo: '', nuevo: false, modificar: false, anular: false, procesar: false, imprimir: false, consultar: false });
+    this.perfProgramas.push({ appCodigo: '', modCodigo: '', prgCodigo: '', nuevo: false, modificar: false, anular: false, procesar: false, imprimir: false, consultar: false });
   }
   removePerfPrograma(idx: number): void {
     this.perfProgramas.splice(idx, 1);
   }
   getProgramaTipo(codigo: string): string {
     return this.programas().find(p => p.codigo === codigo)?.tipo || '';
+  }
+  getModsForPerfRow(idx: number): Modulo[] {
+    const appCod = this.perfProgramas[idx]?.appCodigo || '';
+    if (!appCod) return this.modulos();
+    return this.modulos().filter(m => m.appCodigo === appCod);
+  }
+  getPrgsForPerfRow(idx: number): Programa[] {
+    const modCod = this.perfProgramas[idx]?.modCodigo || '';
+    if (!modCod) return this.programas();
+    return this.programas().filter(p => p.modCodigo === modCod);
+  }
+  changePerfApp(idx: number): void {
+    this.perfProgramas[idx].modCodigo = '';
+    this.perfProgramas[idx].prgCodigo = '';
+  }
+  changePerfMod(idx: number): void {
+    this.perfProgramas[idx].prgCodigo = '';
   }
   async savePerf(): Promise<void> {
     const programasValidos = this.perfProgramas.filter(pp => pp.prgCodigo.trim() !== '');

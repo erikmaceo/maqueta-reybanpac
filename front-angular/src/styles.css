@@ -1601,6 +1601,9 @@ textarea.input {
 .control-row .perf-tipo {
   width: 220px;
 }
+.control-row .perf-cascade {
+  width: 120px;
+}
 
 .control-row .control-desc {
   flex: 1;

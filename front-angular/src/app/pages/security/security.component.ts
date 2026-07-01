@@ -608,6 +608,14 @@ interface PerfilProgramaRow {
         <textarea class="input" [(ngModel)]="perfForm.descripcion" rows="2"></textarea>
       </div>
       <div class="field">
+        <label>Estado</label>
+        <select class="select" [(ngModel)]="perfForm.estado">
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+      <div class="field">
         <label>Programas del Perfil</label>
         <div class="controles-list">
           @for (pp of perfProgramas; track $index) {
@@ -685,13 +693,6 @@ interface PerfilProgramaRow {
         <button class="btn btn-ghost btn-sm mt-2" (click)="addPerfPrograma()">
           <app-icon-plus [width]="14" [height]="14" /> Agregar programa
         </button>
-      </div>
-      <div class="field">
-        <label>Estado</label>
-        <select class="select" [(ngModel)]="perfForm.estado">
-          <option value="ACTIVO">Activo</option>
-          <option value="INACTIVO">Inactivo</option>
-        </select>
       </div>
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closePerfDialog()">Cancelar</button>

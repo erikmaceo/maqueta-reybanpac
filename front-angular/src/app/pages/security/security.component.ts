@@ -687,6 +687,7 @@ interface PerfilProgramaRow {
                   </tbody>
                 </table>
               </div>
+              <hr style="border:none;border-top:1px solid var(--border);margin:8px 0;" />
             </div>
           }
         </div>

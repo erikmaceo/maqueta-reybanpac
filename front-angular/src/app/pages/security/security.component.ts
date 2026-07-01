@@ -509,10 +509,19 @@ interface PerfilProgramaRow {
         </div>
       </div>
       <div class="field">
+        <label>Aplicación</label>
+        <select class="select" [(ngModel)]="prgForm.appCodigo" (ngModelChange)="changePrgApp()">
+          <option value="">— Seleccione —</option>
+          @for (a of aplicaciones(); track a.id) {
+            <option [value]="a.codigo">{{ a.codigo }} · {{ a.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
         <label>Módulo</label>
         <select class="select" [(ngModel)]="prgForm.modCodigo">
           <option value="">— Seleccione —</option>
-          @for (m of modulos(); track m.id) {
+          @for (m of filteredModsForPrg(); track m.id) {
             <option [value]="m.codigo">{{ m.codigo }} · {{ m.nombre }}</option>
           }
         </select>
@@ -710,6 +719,11 @@ export class SecurityComponent implements OnInit {
       (p.descripcion || '').toLowerCase().includes(q)
     );
   });
+  filteredModsForPrg = computed(() => {
+    const appCod = this.prgAppCodigo();
+    if (!appCod) return this.modulos();
+    return this.modulos().filter(m => m.appCodigo === appCod);
+  });
   filteredPerfs = computed(() => {
     const q = this.searchPerf().toLowerCase().trim();
     if (!q) return this.perfiles();
@@ -838,6 +852,7 @@ export class SecurityComponent implements OnInit {
   appForm = this.blankApp();
   modForm = this.blankMod();
   prgForm = this.blankPrg();
+  prgAppCodigo = signal('');
   perfForm = this.blankPerf();
   tiposPrograma = TIPOS_PROGRAMA;
   tiposControl = TIPOS_CONTROL;
@@ -914,7 +929,7 @@ export class SecurityComponent implements OnInit {
   // ============ FORMS BLANK ============
   blankApp() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
   blankMod() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', estado: 'ACTIVO' as Estado }; }
-  blankPrg() { return { codigo: '', nombre: '', descripcion: '', modCodigo: '', tipo: 'Transacción' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
+  blankPrg() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', modCodigo: '', tipo: 'Transacción' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
   blankPerf() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
   perfProgramas: PerfilProgramaRow[] = [];
 
@@ -975,23 +990,28 @@ export class SecurityComponent implements OnInit {
   // ============ PROGRAMA CRUD ============
   openPrgDialog(p?: Programa): void {
     if (p) {
-      this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado };
+      const mod = this.modulos().find(m => m.codigo === p.modCodigo);
+      const appCod = mod?.appCodigo || '';
+      this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, appCodigo: appCod, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado };
+      this.prgAppCodigo.set(appCod);
       this.editPrgId = p.id;
       const ctrls = this.controlesMap.get(p.codigo) || [];
-      this.prgControles = ctrls.map(c => ({ 
-        tipoControl: c.tipoControl, 
-        descripcion: c.descripcion, 
+      this.prgControles = ctrls.map(c => ({
+        tipoControl: c.tipoControl,
+        descripcion: c.descripcion,
         estado: c.estado,
         log: c.log === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO'
       }));
     } else {
       this.prgForm = this.blankPrg();
+      this.prgAppCodigo.set('');
       this.editPrgId = null;
       this.prgControles = [];
     }
     this.showPrgDlg = true;
   }
-  closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; }
+  closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; this.prgAppCodigo.set(''); }
+  changePrgApp(): void { this.prgAppCodigo.set(this.prgForm.appCodigo); this.prgForm.modCodigo = ''; }
   addControl(): void {
     this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO' });
   }
@@ -999,7 +1019,7 @@ export class SecurityComponent implements OnInit {
     this.prgControles.splice(idx, 1);
   }
   async savePrg(): Promise<void> {
-    if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre y módulo son obligatorios.'); return; }
+    if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.appCodigo || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre, aplicación y módulo son obligatorios.'); return; }
     const controles = this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú'
       ? this.prgControles.filter(c => c.descripcion.trim() !== '')
       : [];

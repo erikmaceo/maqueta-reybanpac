@@ -20,6 +20,9 @@ import type {
   Programa,
   Perfil,
   Control,
+  Empresa,
+  Sucursal,
+  PuntoVenta,
 } from './types.js';
 
 const now = new Date();
@@ -405,4 +408,27 @@ export const controles: Control[] = [
   { id: 'seg_ctrl_7', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Grid', descripcion: 'Lista de deployments', estado: 'ACTIVO', createdAt: iso(65) },
   { id: 'seg_ctrl_8', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Botón', descripcion: 'Ejecutar bot', estado: 'ACTIVO', log: 'INACTIVO', createdAt: iso(55) },
   { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', log: 'INACTIVO', createdAt: iso(55) },
+];
+
+// --- Configuración: Empresas ------------------------------------------------
+export const empresas: Empresa[] = [
+  { id: 'cfg_emp_1', codigo: 'EMP-001', nombre: 'Reybanpac S.A.', ruc: '0992345678001', direccion: 'Av. Carlos Luis Sáenz, Guayaquil', telefono: '04-600-1234', email: 'info@reybanpac.com', estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'cfg_emp_2', codigo: 'EMP-002', nombre: 'Favorita Fruit Company', ruc: '0998765432001', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', email: 'contacto@favoritafruit.com', estado: 'ACTIVO', createdAt: iso(95) },
+];
+
+// --- Configuración: Sucursales ----------------------------------------------
+export const sucursales: Sucursal[] = [
+  { id: 'cfg_suc_1', codigo: 'SUC-GYE-01', nombre: 'Matriz Guayaquil', empresaCodigo: 'EMP-001', direccion: 'Av. Carlos Luis Sáenz y 9 de Octubre, Guayaquil', telefono: '04-600-1234', estado: 'ACTIVO', createdAt: iso(90) },
+  { id: 'cfg_suc_2', codigo: 'SUC-GYE-02', nombre: 'Sucursal Aeropuerto', empresaCodigo: 'EMP-001', direccion: 'Av. Francisco de Orellana, Guayaquil', telefono: '04-600-5678', estado: 'ACTIVO', createdAt: iso(85) },
+  { id: 'cfg_suc_3', codigo: 'SUC-UIO-01', nombre: 'Matriz Quito', empresaCodigo: 'EMP-002', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', estado: 'ACTIVO', createdAt: iso(88) },
+  { id: 'cfg_suc_4', codigo: 'SUC-UIO-02', nombre: 'Sucursal Cumbayá', empresaCodigo: 'EMP-002', direccion: 'Av. Interoceánica y Cumbayá, Quito', telefono: '02-600-9012', estado: 'ACTIVO', createdAt: iso(80) },
+];
+
+// --- Configuración: Puntos de Venta -----------------------------------------
+export const puntosVenta: PuntoVenta[] = [
+  { id: 'cfg_pv_1', codigo: 'PV-001', nombre: 'Caja Principal', sucursalCodigo: 'SUC-GYE-01', direccion: 'Av. Carlos Luis Sáenz y 9 de Octubre', estado: 'ACTIVO', createdAt: iso(88) },
+  { id: 'cfg_pv_2', codigo: 'PV-002', nombre: 'Caja Secundaria', sucursalCodigo: 'SUC-GYE-01', direccion: 'Av. Carlos Luis Sáenz y 9 de Octubre', estado: 'ACTIVO', createdAt: iso(87) },
+  { id: 'cfg_pv_3', codigo: 'PV-003', nombre: 'Caja Aeropuerto', sucursalCodigo: 'SUC-GYE-02', direccion: 'Av. Francisco de Orellana', estado: 'ACTIVO', createdAt: iso(84) },
+  { id: 'cfg_pv_4', codigo: 'PV-004', nombre: 'Caja Matriz', sucursalCodigo: 'SUC-UIO-01', direccion: 'Av. Quito 1234', estado: 'ACTIVO', createdAt: iso(86) },
+  { id: 'cfg_pv_5', codigo: 'PV-005', nombre: 'Caja Cumbayá', sucursalCodigo: 'SUC-UIO-02', direccion: 'Av. Interoceánica y Cumbayá', estado: 'ACTIVO', createdAt: iso(78) },
 ];

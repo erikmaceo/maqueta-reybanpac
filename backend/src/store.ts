@@ -16,6 +16,9 @@ import type {
   Programa,
   Perfil,
   Control,
+  Empresa,
+  Sucursal,
+  PuntoVenta,
 } from './types.js';
 import {
   systems as seedSystems,
@@ -30,6 +33,9 @@ import {
   programas as seedProgramas,
   perfiles as seedPerfiles,
   controles as seedControles,
+  empresas as seedEmpresas,
+  sucursales as seedSucursales,
+  puntosVenta as seedPuntosVenta,
 } from './seed.js';
 
 interface DB {
@@ -45,6 +51,9 @@ interface DB {
   programas: Programa[];
   perfiles: Perfil[];
   controles: Control[];
+  empresas: Empresa[];
+  sucursales: Sucursal[];
+  puntosVenta: PuntoVenta[];
 }
 
 // Clonado profundo para no mutar los arrays de seed (permite "reset").
@@ -63,6 +72,9 @@ export const db: DB = {
   programas: clone(seedProgramas),
   perfiles: clone(seedPerfiles),
   controles: clone(seedControles),
+  empresas: clone(seedEmpresas),
+  sucursales: clone(seedSucursales),
+  puntosVenta: clone(seedPuntosVenta),
 };
 
 export function resetDb() {
@@ -78,6 +90,9 @@ export function resetDb() {
   db.programas = clone(seedProgramas);
   db.perfiles = clone(seedPerfiles);
   db.controles = clone(seedControles);
+  db.empresas = clone(seedEmpresas);
+  db.sucursales = clone(seedSucursales);
+  db.puntosVenta = clone(seedPuntosVenta);
 }
 
 let counter = 1000;

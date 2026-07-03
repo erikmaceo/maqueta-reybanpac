@@ -174,6 +174,40 @@ export interface AuditEntry {
 
 export interface AuthUser extends Omit<User, 'password'> {}
 
+// --- Configuración ----------------------------------------------------------
+export interface Empresa {
+  id: string;
+  codigo: string;
+  nombre: string;
+  ruc: string;
+  direccion: string;
+  telefono: string;
+  email: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
+export interface Sucursal {
+  id: string;
+  codigo: string;
+  nombre: string;
+  empresaCodigo: string;
+  direccion: string;
+  telefono: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
+export interface PuntoVenta {
+  id: string;
+  codigo: string;
+  nombre: string;
+  sucursalCodigo: string;
+  direccion: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
 // --- Contratos LDAP / Stats (espejo de frontend/src/types.ts) --------------
 export interface LdapPerson {
   username: string;

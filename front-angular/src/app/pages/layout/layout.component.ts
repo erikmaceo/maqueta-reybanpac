@@ -13,6 +13,7 @@ import {
   IconUsersComponent, IconAuthorizerComponent, IconAccessComponent,
   IconAuditComponent, IconLogoutComponent, IconLdapComponent,
   IconSecurityComponent, IconMatrixComponent, IconServerComponent, IconChevronRightComponent,
+  IconBuildingComponent,
 } from '../../shared/components/icons';
 
 interface NavItem {
@@ -31,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: IconDashboardComponent, end: true, group: 'General' },
   { path: '/sistemas', label: 'Sistemas', icon: IconSystemsComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/seguridades', label: 'Seguridades', icon: IconSecurityComponent, group: 'Gobierno de accesos', adminOnly: true },
+  { path: '/configuracion', label: 'Configuración', icon: IconBuildingComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/roles', label: 'Roles y accesos', icon: IconRolesComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Gobierno de accesos', adminOnly: true },
@@ -45,6 +47,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/': { title: 'Panel de control', sub: 'Resumen de la gestión centralizada de accesos' },
   '/sistemas': { title: 'Sistemas', sub: 'Aplicativos gobernados y su catálogo de accesos' },
   '/seguridades': { title: 'Seguridades', sub: 'Configuración de seguridades y políticas de acceso' },
+  '/configuracion': { title: 'Configuración', sub: 'Gestión de empresas, sucursales y puntos de venta' },
   '/roles': { title: 'Roles y accesos', sub: 'Defina roles y seleccione los accesos que otorgan' },
   '/usuarios': { title: 'Usuarios', sub: 'Administradores locales y clientes finales desde LDAP' },
   '/matriz-acceso': { title: 'Matriz de Acceso', sub: 'Carga masiva de seguridades mediante archivo Excel' },

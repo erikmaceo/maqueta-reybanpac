@@ -6,6 +6,7 @@ import type {
   SystemApp, Permission, Role, User, AccessRequest, Grant, AuditEntry,
   LdapResponse, Stats,
   Aplicacion, Modulo, Programa, Perfil, Control,
+  Empresa, Sucursal, PuntoVenta,
 } from '../../shared/models/types';
 
 const TOKEN_KEY = 'cam.token';
@@ -237,6 +238,48 @@ export class ApiService {
   }
   deleteControl(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-controles/${id}`);
+  }
+
+  // --- Configuración: Empresas ---
+  listEmpresas(): Observable<Empresa[]> {
+    return this.request<Empresa[]>('GET', '/config-empresas');
+  }
+  createEmpresa(body: Partial<Empresa>): Observable<Empresa> {
+    return this.request<Empresa>('POST', '/config-empresas', body);
+  }
+  updateEmpresa(id: string, body: Partial<Empresa>): Observable<Empresa> {
+    return this.request<Empresa>('PUT', `/config-empresas/${id}`, body);
+  }
+  deleteEmpresa(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/config-empresas/${id}`);
+  }
+
+  // --- Configuración: Sucursales ---
+  listSucursales(): Observable<Sucursal[]> {
+    return this.request<Sucursal[]>('GET', '/config-sucursales');
+  }
+  createSucursal(body: Partial<Sucursal>): Observable<Sucursal> {
+    return this.request<Sucursal>('POST', '/config-sucursales', body);
+  }
+  updateSucursal(id: string, body: Partial<Sucursal>): Observable<Sucursal> {
+    return this.request<Sucursal>('PUT', `/config-sucursales/${id}`, body);
+  }
+  deleteSucursal(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/config-sucursales/${id}`);
+  }
+
+  // --- Configuración: Puntos de Venta ---
+  listPuntosVenta(): Observable<PuntoVenta[]> {
+    return this.request<PuntoVenta[]>('GET', '/config-puntos-venta');
+  }
+  createPuntoVenta(body: Partial<PuntoVenta>): Observable<PuntoVenta> {
+    return this.request<PuntoVenta>('POST', '/config-puntos-venta', body);
+  }
+  updatePuntoVenta(id: string, body: Partial<PuntoVenta>): Observable<PuntoVenta> {
+    return this.request<PuntoVenta>('PUT', `/config-puntos-venta/${id}`, body);
+  }
+  deletePuntoVenta(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/config-puntos-venta/${id}`);
   }
 
   uploadMatriz(file: File): Observable<{ ok: boolean; summary: string }> {

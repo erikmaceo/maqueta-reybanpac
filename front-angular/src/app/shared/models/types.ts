@@ -187,3 +187,37 @@ export interface Stats {
   rolesPerSystem: { systemId: string; code: string; name: string; color: string; roles: number }[];
   recentAudit: AuditEntry[];
 }
+
+// --- Configuración ----------------------------------------------------------
+export interface Empresa {
+  id: string;
+  codigo: string;
+  nombre: string;
+  ruc: string;
+  direccion: string;
+  telefono: string;
+  email: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+  createdAt: string;
+}
+
+export interface Sucursal {
+  id: string;
+  codigo: string;
+  nombre: string;
+  empresaCodigo: string;
+  direccion: string;
+  telefono: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+  createdAt: string;
+}
+
+export interface PuntoVenta {
+  id: string;
+  codigo: string;
+  nombre: string;
+  sucursalCodigo: string;
+  direccion: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+  createdAt: string;
+}

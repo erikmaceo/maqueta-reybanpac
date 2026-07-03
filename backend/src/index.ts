@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
-import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control } from './types.js';
+import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, Empresa, Sucursal, PuntoVenta } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -915,6 +915,102 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Error al procesar el archivo.' });
   }
+});
+
+// ==========================================================================
+// Configuración: Empresas / Sucursales / Puntos de Venta
+// ==========================================================================
+
+// --- Empresas ---
+app.get('/api/config-empresas', requireAuth, (_req, res) => { res.json(db.empresas); });
+
+app.post('/api/config-empresas', requireAuth, requireGlobalAdmin, (req, res) => {
+  const body = req.body;
+  if (!body?.codigo || !body?.nombre || !body?.ruc) { res.status(400).json({ error: 'codigo, nombre y ruc son obligatorios.' }); return; }
+  const empresa: Empresa = { id: newId('cfg_emp'), codigo: body.codigo, nombre: body.nombre, ruc: body.ruc, direccion: body.direccion || '', telefono: body.telefono || '', email: body.email || '', estado: body.estado || 'ACTIVO', createdAt: nowIso() };
+  db.empresas.push(empresa);
+  logAudit('api', 'CREATE', 'config-empresa', empresa.id, `Empresa ${empresa.codigo}`);
+  res.status(201).json(empresa);
+});
+
+app.put('/api/config-empresas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const empresa = db.empresas.find(e => e.id === req.params.id);
+  if (!empresa) { res.status(404).json({ error: 'Empresa no encontrada.' }); return; }
+  const b = definedOnly(req.body);
+  Object.assign(empresa, b);
+  logAudit('api', 'UPDATE', 'config-empresa', empresa.id, `Empresa ${empresa.codigo}`);
+  res.json(empresa);
+});
+
+app.delete('/api/config-empresas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.empresas.findIndex(e => e.id === req.params.id);
+  if (idx === -1) { res.status(404).json({ error: 'Empresa no encontrada.' }); return; }
+  const removed = db.empresas.splice(idx, 1)[0];
+  const sucursalesEliminadas = db.sucursales.filter(s => s.empresaCodigo === removed.codigo);
+  const sucCodigos = sucursalesEliminadas.map(s => s.codigo);
+  db.sucursales = db.sucursales.filter(s => s.empresaCodigo !== removed.codigo);
+  db.puntosVenta = db.puntosVenta.filter(p => !sucCodigos.includes(p.sucursalCodigo));
+  logAudit('api', 'DELETE', 'config-empresa', removed.id, `Empresa ${removed.codigo}. Sucursales eliminadas: ${sucursalesEliminadas.length}.`);
+  res.json({ ok: true });
+});
+
+// --- Sucursales ---
+app.get('/api/config-sucursales', requireAuth, (_req, res) => { res.json(db.sucursales); });
+
+app.post('/api/config-sucursales', requireAuth, requireGlobalAdmin, (req, res) => {
+  const body = req.body;
+  if (!body?.codigo || !body?.nombre || !body?.empresaCodigo) { res.status(400).json({ error: 'codigo, nombre y empresaCodigo son obligatorios.' }); return; }
+  const sucursal: Sucursal = { id: newId('cfg_suc'), codigo: body.codigo, nombre: body.nombre, empresaCodigo: body.empresaCodigo, direccion: body.direccion || '', telefono: body.telefono || '', estado: body.estado || 'ACTIVO', createdAt: nowIso() };
+  db.sucursales.push(sucursal);
+  logAudit('api', 'CREATE', 'config-sucursal', sucursal.id, `Sucursal ${sucursal.codigo}`);
+  res.status(201).json(sucursal);
+});
+
+app.put('/api/config-sucursales/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const sucursal = db.sucursales.find(s => s.id === req.params.id);
+  if (!sucursal) { res.status(404).json({ error: 'Sucursal no encontrada.' }); return; }
+  const b = definedOnly(req.body);
+  Object.assign(sucursal, b);
+  logAudit('api', 'UPDATE', 'config-sucursal', sucursal.id, `Sucursal ${sucursal.codigo}`);
+  res.json(sucursal);
+});
+
+app.delete('/api/config-sucursales/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.sucursales.findIndex(s => s.id === req.params.id);
+  if (idx === -1) { res.status(404).json({ error: 'Sucursal no encontrada.' }); return; }
+  const removed = db.sucursales.splice(idx, 1)[0];
+  db.puntosVenta = db.puntosVenta.filter(p => p.sucursalCodigo !== removed.codigo);
+  logAudit('api', 'DELETE', 'config-sucursal', removed.id, `Sucursal ${removed.codigo}. Puntos de venta eliminados.`);
+  res.json({ ok: true });
+});
+
+// --- Puntos de Venta ---
+app.get('/api/config-puntos-venta', requireAuth, (_req, res) => { res.json(db.puntosVenta); });
+
+app.post('/api/config-puntos-venta', requireAuth, requireGlobalAdmin, (req, res) => {
+  const body = req.body;
+  if (!body?.codigo || !body?.nombre || !body?.sucursalCodigo) { res.status(400).json({ error: 'codigo, nombre y sucursalCodigo son obligatorios.' }); return; }
+  const pv: PuntoVenta = { id: newId('cfg_pv'), codigo: body.codigo, nombre: body.nombre, sucursalCodigo: body.sucursalCodigo, direccion: body.direccion || '', estado: body.estado || 'ACTIVO', createdAt: nowIso() };
+  db.puntosVenta.push(pv);
+  logAudit('api', 'CREATE', 'config-punto-venta', pv.id, `Punto de Venta ${pv.codigo}`);
+  res.status(201).json(pv);
+});
+
+app.put('/api/config-puntos-venta/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const pv = db.puntosVenta.find(p => p.id === req.params.id);
+  if (!pv) { res.status(404).json({ error: 'Punto de Venta no encontrado.' }); return; }
+  const b = definedOnly(req.body);
+  Object.assign(pv, b);
+  logAudit('api', 'UPDATE', 'config-punto-venta', pv.id, `Punto de Venta ${pv.codigo}`);
+  res.json(pv);
+});
+
+app.delete('/api/config-puntos-venta/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.puntosVenta.findIndex(p => p.id === req.params.id);
+  if (idx === -1) { res.status(404).json({ error: 'Punto de Venta no encontrado.' }); return; }
+  const removed = db.puntosVenta.splice(idx, 1)[0];
+  logAudit('api', 'DELETE', 'config-punto-venta', removed.id, `Punto de Venta ${removed.codigo}`);
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {

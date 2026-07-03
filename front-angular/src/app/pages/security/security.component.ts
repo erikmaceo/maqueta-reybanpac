@@ -419,7 +419,7 @@ interface PerfilProgramaRow {
     <!-- ============ DIÁLOGO APLICACIÓN ============ -->
     <p-dialog
       [(visible)]="showAppDlg"
-      [header]="editAppId ? 'Editar aplicación' : 'Nueva aplicación'"
+      [header]="editAppId ? 'Editar Aplicación' : 'Nueva Aplicación'"
       [modal]="true" [style]="{ width: '480px' }" [closable]="true"
       (onHide)="closeAppDialog()"
     >
@@ -453,7 +453,7 @@ interface PerfilProgramaRow {
     <!-- ============ DIÁLOGO MÓDULO ============ -->
     <p-dialog
       [(visible)]="showModDlg"
-      [header]="editModId ? 'Editar módulo' : 'Nuevo módulo'"
+      [header]="editModId ? 'Editar Módulo' : 'Nuevo Módulo'"
       [modal]="true" [style]="{ width: '480px' }" [closable]="true"
       (onHide)="closeModDialog()"
     >
@@ -496,7 +496,7 @@ interface PerfilProgramaRow {
     <!-- ============ DIÁLOGO PROGRAMA ============ -->
     <p-dialog
       [(visible)]="showPrgDlg"
-      [header]="editPrgId ? 'Editar programa' : 'Nuevo programa'"
+      [header]="editPrgId ? 'Editar Programa' : 'Nuevo Programa'"
       [modal]="true" [style]="{ width: '640px' }" [closable]="true"
       (onHide)="closePrgDialog()"
     >
@@ -589,7 +589,7 @@ interface PerfilProgramaRow {
     <!-- ============ DIÁLOGO PERFIL ============ -->
     <p-dialog
       [(visible)]="showPerfDlg"
-      [header]="editPerfId ? 'Editar perfil' : 'Nuevo perfil'"
+      [header]="editPerfId ? 'Editar Perfil' : 'Nuevo Perfil'"
       [modal]="true" [style]="{ width: '800px' }" [closable]="true"
       (onHide)="closePerfDialog()"
     >

@@ -156,7 +156,7 @@ interface RoleForm {
 
     <p-dialog
       [(visible)]="showDialog"
-      [header]="editId ? 'Editar rol' : 'Nuevo rol'"
+      [header]="editId ? 'Editar Rol' : 'Nuevo Rol'"
       [modal]="true"
       [style]="{ width: '820px' }"
       [closable]="true"

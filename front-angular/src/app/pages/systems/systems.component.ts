@@ -138,7 +138,7 @@ interface SystemForm {
 
     <p-dialog
       [(visible)]="showFormDialog"
-      [header]="editId ? 'Editar sistema' : 'Nuevo sistema'"
+      [header]="editId ? 'Editar Sistema' : 'Nuevo Sistema'"
       [modal]="true"
       [style]="{ width: '560px' }"
       [closable]="true"

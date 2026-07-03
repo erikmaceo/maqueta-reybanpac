@@ -390,10 +390,19 @@ type Estado = 'ACTIVO' | 'INACTIVO';
         </div>
       </div>
       <div class="field">
+        <label>Empresa</label>
+        <select class="select" [(ngModel)]="pvForm.empresaCodigo" (ngModelChange)="changePvEmpresa()">
+          <option value="">— Seleccione —</option>
+          @for (e of empresas(); track e.id) {
+            <option [value]="e.codigo">{{ e.codigo }} · {{ e.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
         <label>Sucursal</label>
         <select class="select" [(ngModel)]="pvForm.sucursalCodigo">
           <option value="">— Seleccione —</option>
-          @for (s of sucursales(); track s.id) {
+          @for (s of filteredSucsForPv(); track s.id) {
             <option [value]="s.codigo">{{ s.codigo }} · {{ s.nombre }}</option>
           }
         </select>
@@ -480,6 +489,11 @@ export class ConfigurationComponent implements OnInit {
       pv.sucursalCodigo.toLowerCase().includes(q) ||
       (pv.direccion || '').toLowerCase().includes(q)
     );
+  });
+  filteredSucsForPv = computed(() => {
+    const empCod = this.pvForm?.empresaCodigo || '';
+    if (!empCod) return this.sucursales();
+    return this.sucursales().filter(s => s.empresaCodigo === empCod);
   });
 
   paginatedEmps = computed(() => {
@@ -606,13 +620,20 @@ export class ConfigurationComponent implements OnInit {
       error: () => { this.errorPv.set('No se pudieron cargar los puntos de venta.'); this.loadingPv.set(false); },
     });
   }
-  blankPv() { return { codigo: '', nombre: '', sucursalCodigo: '', direccion: '', estado: 'ACTIVO' as Estado }; }
+  blankPv() { return { codigo: '', nombre: '', empresaCodigo: '', sucursalCodigo: '', direccion: '', estado: 'ACTIVO' as Estado }; }
   openPvDialog(pv?: PuntoVenta): void {
-    if (pv) { this.pvForm = { ...pv }; this.editPvId = pv.id; }
-    else { this.pvForm = this.blankPv(); this.editPvId = null; }
+    if (pv) {
+      const suc = this.sucursales().find(s => s.codigo === pv.sucursalCodigo);
+      this.pvForm = { ...pv, empresaCodigo: suc?.empresaCodigo || '' };
+      this.editPvId = pv.id;
+    } else {
+      this.pvForm = this.blankPv();
+      this.editPvId = null;
+    }
     this.showPvDlg = true;
   }
   closePvDialog(): void { this.showPvDlg = false; this.editPvId = null; }
+  changePvEmpresa(): void { this.pvForm.sucursalCodigo = ''; }
   async savePv(): Promise<void> {
     if (!this.pvForm.codigo || !this.pvForm.nombre || !this.pvForm.sucursalCodigo) { this.toast.error('Faltan datos', 'Código, nombre y sucursal son obligatorios.'); return; }
     try {

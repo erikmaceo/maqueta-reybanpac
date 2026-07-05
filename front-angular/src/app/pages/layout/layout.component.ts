@@ -38,7 +38,6 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Gobierno de accesos', adminOnly: true },
   { path: '/soluciones', label: 'Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true, isSection: true },
-  { path: '/autorizador', label: 'Autorizador', icon: IconAuthorizerComponent, group: 'Operación', badge: true },
   { path: '/accesos', label: 'Accesos efectivos', icon: IconAccessComponent, group: 'Operación', adminOnly: true },
   { path: '/auditoria', label: 'Auditoría', icon: IconAuditComponent, group: 'Operación', adminOnly: true },
 ];

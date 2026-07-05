@@ -126,13 +126,14 @@ export interface User {
   cargo: string;
   department: string;
   company: string;
+  empresaCodigo: string;
+  perfilCodigos: string[];
   type: UserType;
   source: UserSource;
   status: UserStatus;
   roleIds: string[];
   createdAt: string;
   lastLogin: string | null;
-  // password solo para usuarios LOCAL/ADMIN (maqueta, texto plano en RAM)
   password?: string;
 }
 

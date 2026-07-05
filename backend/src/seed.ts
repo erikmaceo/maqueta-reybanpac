@@ -118,6 +118,8 @@ const mkUser = (u: Partial<User> & Pick<User, 'id' | 'username' | 'firstName' | 
   cargo: '',
   department: '',
   company: 'Reybanpac',
+  empresaCodigo: '',
+  perfilCodigos: [],
   status: 'ACTIVE',
   roleIds: [],
   createdAt: iso(90),
@@ -137,6 +139,8 @@ export const users: User[] = [
     source: 'LOCAL',
     password: 'admin123',
     roleIds: ['r_global_admin'],
+    empresaCodigo: 'EMP-001',
+    perfilCodigos: ['PERF-FI-VIS', 'PERF-MM-CR'],
     lastLogin: iso(0),
   }),
   mkUser({
@@ -150,6 +154,8 @@ export const users: User[] = [
     source: 'LOCAL',
     password: 'admin123',
     roleIds: ['r_ks8_edit'],
+    empresaCodigo: 'EMP-001',
+    perfilCodigos: ['PERF-KS8-OPS'],
   }),
   // Clientes finales — provienen de LDAP (espejo de ldap/bootstrap.ldif)
   mkUser({
@@ -162,6 +168,8 @@ export const users: User[] = [
     type: 'CLIENTE_FINAL',
     source: 'LDAP',
     roleIds: ['r_ks8_view'],
+    empresaCodigo: 'EMP-002',
+    perfilCodigos: [],
   }),
   // Osniel Torres es Dueño Técnico (autorizador) del grupo View, por lo que es
   // un administrador local capaz de iniciar sesión y resolver solicitudes.
@@ -176,6 +184,8 @@ export const users: User[] = [
     source: 'LOCAL',
     password: 'admin123',
     roleIds: ['r_ks8_view'],
+    empresaCodigo: 'EMP-001',
+    perfilCodigos: ['PERF-FI-ED'],
   }),
   mkUser({
     id: 'u_mvelez',
@@ -187,6 +197,8 @@ export const users: User[] = [
     type: 'CLIENTE_FINAL',
     source: 'LDAP',
     roleIds: [],
+    empresaCodigo: 'EMP-002',
+    perfilCodigos: ['PERF-FI-VIS'],
   }),
 ];
 

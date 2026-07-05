@@ -1,0 +1,300 @@
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import * as XLSX from 'xlsx';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ApiService } from '../../core/services/api.service';
+import { ToastService } from '../../core/services/toast.service';
+import { EventsService } from '../../core/services/events.service';
+import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
+import {
+  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
+} from '../../shared/components/icons';
+import type { User, Empresa, Perfil } from '../../shared/models/types';
+
+@Component({
+  selector: 'app-user-access',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
+    DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
+    TableSkeletonComponent, ErrorStateComponent,
+    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
+  ],
+  template: `
+    <div class="page-head">
+      <div>
+        <h1>Accesos por usuario</h1>
+        <p>Gestión de Empresa y Perfiles asignados a cada usuario.</p>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <app-table-skeleton [rows]="5" [cols]="5" />
+    } @else if (error()) {
+      <app-error-state [message]="error()!" [onRetry]="loadData" />
+    } @else {
+      <div class="row between mb-4">
+        <div class="search">
+          <app-icon-search [width]="15" [height]="15" />
+          <input type="text" placeholder="Buscar por nombre, usuario o empresa..."
+            [ngModel]="search()" (ngModelChange)="search.set($event)" />
+        </div>
+        <div class="row gap-2">
+          <button class="btn btn-ghost" (click)="exportData()">
+            <app-icon-download [width]="14" [height]="14" /> Exportar
+          </button>
+          <button class="btn btn-primary" (click)="openNewDialog()">
+            <app-icon-plus [width]="14" [height]="14" /> Nuevo acceso
+          </button>
+        </div>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Nombre</th>
+              <th>Empresa</th>
+              <th>Perfiles</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of paginatedUsers(); track u.id) {
+              <tr>
+                <td class="mono">{{ u.username }}</td>
+                <td><div class="cell-strong">{{ u.firstName }} {{ u.lastName }}</div><div class="tiny dim">{{ u.email }}</div></td>
+                <td>
+                  @if (u.empresaCodigo) {
+                    <span class="badge badge-blue">{{ u.empresaCodigo }}</span>
+                  } @else {
+                    <span class="muted small">—</span>
+                  }
+                </td>
+                <td>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    @for (pc of u.perfilCodigos; track pc) {
+                      <span class="badge badge-amber">{{ pc }}</span>
+                    } @empty {
+                      <span class="muted small">—</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [class.badge-green]="u.status === 'ACTIVE'" [class.badge-gray]="u.status !== 'ACTIVE'">
+                    {{ u.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="cell-actions">
+                    <button class="btn btn-ghost btn-sm btn-icon" title="Editar acceso" (click)="openDialog(u)">
+                      <app-icon-edit [width]="15" [height]="15" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="muted center" style="padding: 24px;">Sin usuarios encontrados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <div class="page-controls">
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">‹</button>
+            @for (p of getPageNumbers(totalPages(), page()); track p) {
+              <button class="btn btn-sm" [class.btn-primary]="p === page()" [class.btn-ghost]="p !== page()" (click)="setPage(p)">{{ p + 1 }}</button>
+            }
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">›</button>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- ============ DIÁLOGO EDITAR ACCESO ============ -->
+    <p-dialog
+      [(visible)]="showDlg"
+      [header]="isNew ? 'Nuevo acceso' : 'Acceso de ' + (editUser?.firstName || '') + ' ' + (editUser?.lastName || '')"
+      [modal]="true" [style]="{ width: '520px' }" [closable]="true"
+      (onHide)="closeDialog()"
+    >
+      @if (isNew) {
+        <div class="field">
+          <label>Usuario</label>
+          <select class="select" [(ngModel)]="selectedUserId">
+            <option value="">— Seleccione usuario —</option>
+            @for (u of users(); track u.id) {
+              <option [value]="u.id">{{ u.username }} · {{ u.firstName }} {{ u.lastName }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div class="field">
+        <label>Empresa</label>
+        <select class="select" [(ngModel)]="editForm.empresaCodigo">
+          <option value="">— Sin empresa —</option>
+          @for (e of empresas(); track e.id) {
+            <option [value]="e.codigo">{{ e.codigo }} · {{ e.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label>Perfiles</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          @for (p of perfiles(); track p.id) {
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" [checked]="editForm.perfilCodigos.includes(p.codigo)"
+                (change)="togglePerfil(p.codigo)" style="width:16px;height:16px;cursor:pointer;" />
+              <span><b>{{ p.codigo }}</b> · {{ p.nombre }}</span>
+            </label>
+          }
+        </div>
+      </div>
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closeDialog()">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()">{{ isNew ? 'Crear' : 'Guardar' }}</button>
+      </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog></p-confirmDialog>
+  `,
+})
+export class UserAccessComponent implements OnInit {
+  private api = inject(ApiService);
+  private toast = inject(ToastService);
+  private events = inject(EventsService);
+
+  users = signal<User[]>([]);
+  empresas = signal<Empresa[]>([]);
+  perfiles = signal<Perfil[]>([]);
+
+  loading = signal(true);
+  error = signal<string | null>(null);
+
+  showDlg = false;
+  isNew = false;
+  editUser: User | null = null;
+  selectedUserId = '';
+  editForm = { empresaCodigo: '', perfilCodigos: [] as string[] };
+
+  search = signal('');
+  pageSize = signal(10);
+  page = signal(0);
+
+  filteredUsers = computed(() => {
+    const q = this.search().toLowerCase().trim();
+    if (!q) return this.users();
+    return this.users().filter(u =>
+      u.username.toLowerCase().includes(q) ||
+      u.firstName.toLowerCase().includes(q) ||
+      u.lastName.toLowerCase().includes(q) ||
+      u.empresaCodigo.toLowerCase().includes(q) ||
+      u.perfilCodigos.some(pc => pc.toLowerCase().includes(q))
+    );
+  });
+
+  paginatedUsers = computed(() => {
+    const start = this.page() * this.pageSize();
+    return this.filteredUsers().slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())));
+
+  setPage(p: number): void {
+    if (p < 0 || p >= this.totalPages()) return;
+    this.page.set(p);
+  }
+
+  getPageNumbers(total: number, current: number): number[] {
+    const pages: number[] = [];
+    for (let i = 0; i < total; i++) pages.push(i);
+    return pages;
+  }
+
+  ngOnInit(): void {
+    this.loadData();
+    this.events.onDataChanged(() => this.loadData());
+  }
+
+  loadData(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.listUserAccess().subscribe({
+      next: (data) => { this.users.set(data); this.loading.set(false); },
+      error: () => { this.error.set('No se pudieron cargar los usuarios.'); this.loading.set(false); },
+    });
+    this.api.listEmpresas().subscribe({ next: (data) => this.empresas.set(data) });
+    this.api.listPerfiles().subscribe({ next: (data) => this.perfiles.set(data) });
+  }
+
+  openDialog(u: User): void {
+    this.isNew = false;
+    this.editUser = u;
+    this.editForm = { empresaCodigo: u.empresaCodigo || '', perfilCodigos: [...(u.perfilCodigos || [])] };
+    this.showDlg = true;
+  }
+
+  openNewDialog(): void {
+    this.isNew = true;
+    this.editUser = null;
+    this.selectedUserId = '';
+    this.editForm = { empresaCodigo: '', perfilCodigos: [] };
+    this.showDlg = true;
+  }
+
+  closeDialog(): void { this.showDlg = false; this.editUser = null; this.isNew = false; }
+
+  togglePerfil(codigo: string): void {
+    const idx = this.editForm.perfilCodigos.indexOf(codigo);
+    if (idx >= 0) this.editForm.perfilCodigos.splice(idx, 1);
+    else this.editForm.perfilCodigos.push(codigo);
+  }
+
+  async save(): Promise<void> {
+    if (this.isNew) {
+      if (!this.selectedUserId) { this.toast.error('Faltan datos', 'Debe seleccionar un usuario.'); return; }
+      try {
+        await this.api.updateUserAccess(this.selectedUserId, this.editForm).toPromise();
+        this.toast.success('Acceso creado');
+        this.events.emitDataChanged();
+        this.closeDialog();
+        this.loadData();
+      } catch (e: any) {
+        this.toast.error('Error', e?.error?.error || 'Error inesperado.');
+      }
+    } else {
+      if (!this.editUser) return;
+      try {
+        await this.api.updateUserAccess(this.editUser.id, this.editForm).toPromise();
+        this.toast.success('Acceso actualizado');
+        this.events.emitDataChanged();
+        this.closeDialog();
+        this.loadData();
+      } catch (e: any) {
+        this.toast.error('Error', e?.error?.error || 'Error inesperado.');
+      }
+    }
+  }
+
+  exportData(): void {
+    const rows = this.filteredUsers().map(u => ({
+      usuario: u.username,
+      nombre: `${u.firstName} ${u.lastName}`,
+      email: u.email,
+      empresa: u.empresaCodigo || '',
+      perfiles: u.perfilCodigos.join(', '),
+      estado: u.status,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'accesos-usuario');
+    XLSX.writeFile(wb, 'accesos-usuario.xlsx');
+  }
+}

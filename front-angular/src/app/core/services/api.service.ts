@@ -168,6 +168,14 @@ export class ApiService {
     return this.request<{ ok: boolean }>('DELETE', `/grants/${id}`);
   }
 
+  // --- Acceso por usuario ---
+  listUserAccess(): Observable<User[]> {
+    return this.request<User[]>('GET', '/user-access');
+  }
+  updateUserAccess(id: string, body: { empresaCodigo: string; perfilCodigos: string[] }): Observable<User> {
+    return this.request<User>('PUT', `/user-access/${id}`, body);
+  }
+
   listAudit(): Observable<AuditEntry[]> {
     return this.request<AuditEntry[]>('GET', '/audit');
   }

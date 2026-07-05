@@ -389,6 +389,24 @@ app.put('/api/users/:id/roles', requireAuth, requireGlobalAdmin, (req, res) => {
 });
 
 // ===========================================================================
+// Acceso por usuario: Empresa + Perfiles
+// ===========================================================================
+app.get('/api/user-access', requireAuth, requireGlobalAdmin, (_req, res) => {
+  res.json(db.users.map(u => publicUser(u)));
+});
+
+app.put('/api/user-access/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const user = db.users.find(u => u.id === req.params.id);
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
+  const b = definedOnly(req.body);
+  if (b.empresaCodigo !== undefined) user.empresaCodigo = b.empresaCodigo;
+  if (b.perfilCodigos !== undefined) user.perfilCodigos = b.perfilCodigos;
+  logAudit(actorName(req), 'UPDATE_USER_ACCESS', 'user', user.id,
+    `Acceso actualizado para "${user.username}": empresa=${user.empresaCodigo}, perfiles=${user.perfilCodigos.length}.`);
+  res.json(publicUser(user));
+});
+
+// ===========================================================================
 // LDAP  (directorio de clientes finales + importación)
 // ===========================================================================
 app.get('/api/ldap/users', requireAuth, async (_req, res) => {

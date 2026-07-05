@@ -111,6 +111,8 @@ export interface User {
   cargo: string;
   department: string;
   company: string;
+  empresaCodigo: string;
+  perfilCodigos: string[];
   type: UserType;
   source: UserSource;
   status: UserStatus;

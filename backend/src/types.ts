@@ -179,10 +179,14 @@ export interface Empresa {
   id: string;
   codigo: string;
   nombre: string;
+  razonSocial: string;
   ruc: string;
   direccion: string;
   telefono: string;
   email: string;
+  paginaWeb: string;
+  customFields: string[];
+  logo: string;
   estado: SegEstado;
   createdAt: string;
 }

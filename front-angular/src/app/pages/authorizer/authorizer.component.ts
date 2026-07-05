@@ -148,7 +148,8 @@ import type { AccessRequest, Role, SystemApp, User } from '../../shared/models/t
         </div>
         <div class="field">
           <label>Comentario (opcional)</label>
-          <textarea class="input" [(ngModel)]="decisionComment" rows="3" placeholder="Agregue un comentario sobre la decisión…"></textarea>
+          <textarea class="input" [(ngModel)]="decisionComment" rows="3" placeholder="Agregue un comentario sobre la decisión…" maxlength="250"></textarea>
+          <div class="muted small" style="margin-top:2px;">{{ (decisionComment || '').length }}/250 caracteres máximos.</div>
         </div>
       }
       <ng-template pTemplate="footer">
@@ -170,7 +171,8 @@ import type { AccessRequest, Role, SystemApp, User } from '../../shared/models/t
       @if (selectedRequest) {
         <div class="field">
           <label>Comentario</label>
-          <textarea class="input" [(ngModel)]="decisionComment" rows="3" placeholder="¿Por qué se rechaza esta solicitud?"></textarea>
+          <textarea class="input" [(ngModel)]="decisionComment" rows="3" placeholder="¿Por qué se rechaza esta solicitud?" maxlength="250"></textarea>
+          <div class="muted small" style="margin-top:2px;">{{ (decisionComment || '').length }}/250 caracteres máximos.</div>
         </div>
       }
       <ng-template pTemplate="footer">
@@ -234,7 +236,8 @@ import type { AccessRequest, Role, SystemApp, User } from '../../shared/models/t
       }
       <div class="field">
         <label>Justificación</label>
-        <textarea class="input" [(ngModel)]="requestForm.justification" rows="3" placeholder="¿Por qué este usuario necesita este rol?"></textarea>
+        <textarea class="input" [(ngModel)]="requestForm.justification" rows="3" placeholder="¿Por qué este usuario necesita este rol?" maxlength="250"></textarea>
+        <div class="muted small" style="margin-top:2px;">{{ (requestForm.justification || '').length }}/250 caracteres máximos.</div>
       </div>
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeRequestDialog()">Cancelar</button>

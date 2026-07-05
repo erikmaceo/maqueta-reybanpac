@@ -435,7 +435,8 @@ interface PerfilProgramaRow {
       </div>
       <div class="field">
         <label>Descripción</label>
-        <textarea class="input" [(ngModel)]="appForm.descripcion" rows="2"></textarea>
+        <textarea class="input" [(ngModel)]="appForm.descripcion" rows="2" maxlength="250"></textarea>
+        <div class="muted small" style="margin-top:2px;">{{ (appForm.descripcion || '').length }}/250 caracteres máximos.</div>
       </div>
       <div class="field">
         <label>Estado</label>
@@ -478,7 +479,8 @@ interface PerfilProgramaRow {
       </div>
       <div class="field">
         <label>Descripción</label>
-        <textarea class="input" [(ngModel)]="modForm.descripcion" rows="2"></textarea>
+        <textarea class="input" [(ngModel)]="modForm.descripcion" rows="2" maxlength="250"></textarea>
+        <div class="muted small" style="margin-top:2px;">{{ (modForm.descripcion || '').length }}/250 caracteres máximos.</div>
       </div>
       <div class="field">
         <label>Estado</label>
@@ -538,7 +540,8 @@ interface PerfilProgramaRow {
       </div>
       <div class="field">
         <label>Descripción</label>
-        <textarea class="input" [(ngModel)]="prgForm.descripcion" rows="2"></textarea>
+        <textarea class="input" [(ngModel)]="prgForm.descripcion" rows="2" maxlength="250"></textarea>
+        <div class="muted small" style="margin-top:2px;">{{ (prgForm.descripcion || '').length }}/250 caracteres máximos.</div>
       </div>
       <div class="field">
         <label>Estado</label>
@@ -605,7 +608,8 @@ interface PerfilProgramaRow {
       </div>
       <div class="field">
         <label>Descripción</label>
-        <textarea class="input" [(ngModel)]="perfForm.descripcion" rows="2"></textarea>
+        <textarea class="input" [(ngModel)]="perfForm.descripcion" rows="2" maxlength="250"></textarea>
+        <div class="muted small" style="margin-top:2px;">{{ (perfForm.descripcion || '').length }}/250 caracteres máximos.</div>
       </div>
       <div class="field">
         <label>Estado</label>

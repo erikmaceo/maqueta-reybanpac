@@ -156,7 +156,8 @@ interface SystemForm {
       </div>
       <div class="field">
         <label>Descripción</label>
-        <textarea class="input" [(ngModel)]="formData.description" rows="2"></textarea>
+        <textarea class="input" [(ngModel)]="formData.description" rows="2" maxlength="250"></textarea>
+        <div class="muted small" style="margin-top:2px;">{{ (formData.description || '').length }}/250 caracteres máximos.</div>
       </div>
       <div class="form-grid">
         <div class="field">

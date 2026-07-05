@@ -412,8 +412,8 @@ export const controles: Control[] = [
 
 // --- Configuración: Empresas ------------------------------------------------
 export const empresas: Empresa[] = [
-  { id: 'cfg_emp_1', codigo: 'EMP-001', nombre: 'Reybanpac S.A.', ruc: '0992345678001', direccion: 'Av. Carlos Luis Sáenz, Guayaquil', telefono: '04-600-1234', email: 'info@reybanpac.com', estado: 'ACTIVO', createdAt: iso(100) },
-  { id: 'cfg_emp_2', codigo: 'EMP-002', nombre: 'Favorita Fruit Company', ruc: '0998765432001', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', email: 'contacto@favoritafruit.com', estado: 'ACTIVO', createdAt: iso(95) },
+  { id: 'cfg_emp_1', codigo: 'EMP-001', nombre: 'Reybanpac', razonSocial: 'Reybanpac S.A.', ruc: '0992345678001', direccion: 'Av. Carlos Luis Sáenz, Guayaquil', telefono: '04-600-1234', email: 'info@reybanpac.com', paginaWeb: 'www.reybanpac.com', customFields: [], logo: '', estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'cfg_emp_2', codigo: 'EMP-002', nombre: 'Favorita Fruit', razonSocial: 'Favorita Fruit Company C.A.', ruc: '0998765432001', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', email: 'contacto@favoritafruit.com', paginaWeb: 'www.favoritafruit.com', customFields: [], logo: '', estado: 'ACTIVO', createdAt: iso(95) },
 ];
 
 // --- Configuración: Sucursales ----------------------------------------------

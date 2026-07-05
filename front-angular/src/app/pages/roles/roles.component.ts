@@ -179,7 +179,8 @@ interface RoleForm {
       </div>
       <div class="field">
         <label>Descripción</label>
-        <textarea class="input" [(ngModel)]="formData.description" rows="2" placeholder="¿Para qué sirve este rol?"></textarea>
+        <textarea class="input" [(ngModel)]="formData.description" rows="2" placeholder="¿Para qué sirve este rol?" maxlength="250"></textarea>
+        <div class="muted small" style="margin-top:2px;">{{ (formData.description || '').length }}/250 caracteres máximos.</div>
       </div>
       <div class="form-grid">
         <div class="field">

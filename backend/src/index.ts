@@ -927,7 +927,7 @@ app.get('/api/config-empresas', requireAuth, (_req, res) => { res.json(db.empres
 app.post('/api/config-empresas', requireAuth, requireGlobalAdmin, (req, res) => {
   const body = req.body;
   if (!body?.codigo || !body?.nombre || !body?.ruc) { res.status(400).json({ error: 'codigo, nombre y ruc son obligatorios.' }); return; }
-  const empresa: Empresa = { id: newId('cfg_emp'), codigo: body.codigo, nombre: body.nombre, ruc: body.ruc, direccion: body.direccion || '', telefono: body.telefono || '', email: body.email || '', estado: body.estado || 'ACTIVO', createdAt: nowIso() };
+  const empresa: Empresa = { id: newId('cfg_emp'), codigo: body.codigo, nombre: body.nombre, razonSocial: body.razonSocial || '', ruc: body.ruc, direccion: body.direccion || '', telefono: body.telefono || '', email: body.email || '', paginaWeb: body.paginaWeb || '', estado: body.estado || 'ACTIVO', createdAt: nowIso() };
   db.empresas.push(empresa);
   logAudit('api', 'CREATE', 'config-empresa', empresa.id, `Empresa ${empresa.codigo}`);
   res.status(201).json(empresa);

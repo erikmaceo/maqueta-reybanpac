@@ -70,9 +70,9 @@ type Estado = 'ACTIVO' | 'INACTIVO';
               <thead>
                 <tr>
                   <th>Código</th>
-                  <th>Nombre</th>
+                  <th>Nombre Comercial</th>
+                  <th>Razón Social</th>
                   <th>RUC</th>
-                  <th>Dirección</th>
                   <th>Estado</th>
                   <th></th>
                 </tr>
@@ -82,8 +82,8 @@ type Estado = 'ACTIVO' | 'INACTIVO';
                   <tr>
                     <td class="mono">{{ e.codigo }}</td>
                     <td><div class="cell-strong">{{ e.nombre }}</div><div class="tiny dim">{{ e.email }}</div></td>
+                    <td><span class="muted small">{{ e.razonSocial }}</span></td>
                     <td class="mono">{{ e.ruc }}</td>
-                    <td><span class="muted small">{{ e.direccion }}</span></td>
                     <td>
                       <span class="badge" [class.badge-green]="e.estado === 'ACTIVO'" [class.badge-gray]="e.estado !== 'ACTIVO'">
                         {{ e.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
@@ -290,17 +290,29 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <input class="input" [(ngModel)]="empForm.codigo" placeholder="EMP-001" />
         </div>
         <div class="field">
-          <label>Nombre</label>
-          <input class="input" [(ngModel)]="empForm.nombre" placeholder="Reybanpac S.A." />
+          <label>R.U.C.</label>
+          <input class="input" [(ngModel)]="empForm.ruc" placeholder="0992345678001" />
         </div>
       </div>
-      <div class="field">
-        <label>RUC</label>
-        <input class="input" [(ngModel)]="empForm.ruc" placeholder="0992345678001" />
+      <div class="form-grid">
+        <div class="field">
+          <label>Razón Social</label>
+          <input class="input" [(ngModel)]="empForm.razonSocial" placeholder="Reybanpac S.A." />
+        </div>
+        <div class="field">
+          <label>Nombre Comercial</label>
+          <input class="input" [(ngModel)]="empForm.nombre" placeholder="Reybanpac" />
+        </div>
       </div>
-      <div class="field">
-        <label>Dirección</label>
-        <input class="input" [(ngModel)]="empForm.direccion" placeholder="Av. Carlos Luis Sáenz, Guayaquil" />
+      <div class="form-grid">
+        <div class="field">
+          <label>Dirección</label>
+          <input class="input" [(ngModel)]="empForm.direccion" placeholder="Av. Carlos Luis Sáenz, Guayaquil" />
+        </div>
+        <div class="field">
+          <label>Página Web</label>
+          <input class="input" [(ngModel)]="empForm.paginaWeb" placeholder="www.empresa.com" />
+        </div>
       </div>
       <div class="form-grid">
         <div class="field">
@@ -318,6 +330,32 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <option value="ACTIVO">Activo</option>
           <option value="INACTIVO">Inactivo</option>
         </select>
+      </div>
+      @for (cf of empForm.customFields; track $index) {
+        <div class="field">
+          <label>Personalizado No. {{ $index + 1 }}</label>
+          <textarea class="input" [(ngModel)]="empForm.customFields[$index]" rows="2" maxlength="250"></textarea>
+          <div class="muted small" style="margin-top:2px;">{{ (empForm.customFields[$index] || '').length }}/250 caracteres máximos.</div>
+        </div>
+      }
+      <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;" (click)="addCustomField()">
+        <app-icon-plus [width]="14" [height]="14" /> Agregar personalizados
+      </button>
+      <div class="field" style="margin-top:12px;">
+        <label>Logo</label>
+        <input type="file" #logoInput accept=".jpg,.jpeg,.png" style="display:none;" (change)="onLogoSelected($event)" />
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" (click)="logoInput.click()">
+            <app-icon-plus [width]="14" [height]="14" /> Seleccionar imagen
+          </button>
+          @if (empForm.logo) {
+            <img [src]="empForm.logo" style="height:40px;border-radius:6px;border:1px solid var(--border);" />
+            <button class="btn btn-danger btn-sm btn-icon" (click)="empForm.logo = ''" title="Quitar logo">
+              <app-icon-trash [width]="14" [height]="14" />
+            </button>
+          }
+        </div>
+        <div class="muted small" style="margin-top:4px;">Formatos: JPG, PNG. Tamaño máximo: 1 MB.</div>
       </div>
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeEmpDialog()">Cancelar</button>
@@ -548,13 +586,24 @@ export class ConfigurationComponent implements OnInit {
       error: () => { this.errorEmp.set('No se pudieron cargar las empresas.'); this.loadingEmp.set(false); },
     });
   }
-  blankEmp() { return { codigo: '', nombre: '', ruc: '', direccion: '', telefono: '', email: '', estado: 'ACTIVO' as Estado }; }
+  blankEmp() { return { codigo: '', nombre: '', razonSocial: '', ruc: '', direccion: '', telefono: '', email: '', paginaWeb: '', estado: 'ACTIVO' as Estado, customFields: [] as string[], logo: '' }; }
   openEmpDialog(e?: Empresa): void {
-    if (e) { this.empForm = { ...e }; this.editEmpId = e.id; }
+    if (e) { this.empForm = { ...e, customFields: [...(e.customFields || [])] }; this.editEmpId = e.id; }
     else { this.empForm = this.blankEmp(); this.editEmpId = null; }
     this.showEmpDlg = true;
   }
   closeEmpDialog(): void { this.showEmpDlg = false; this.editEmpId = null; }
+  addCustomField(): void { this.empForm.customFields.push(''); }
+  onLogoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) { this.toast.error('Archivo muy grande', 'El logo no puede superar 1 MB.'); return; }
+    if (!['image/jpeg', 'image/png'].includes(file.type)) { this.toast.error('Formato no válido', 'Solo se permiten archivos JPG o PNG.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => { this.empForm.logo = reader.result as string; };
+    reader.readAsDataURL(file);
+    (event.target as HTMLInputElement).value = '';
+  }
   async saveEmp(): Promise<void> {
     if (!this.empForm.codigo || !this.empForm.nombre || !this.empForm.ruc) { this.toast.error('Faltan datos', 'Código, nombre y RUC son obligatorios.'); return; }
     try {
@@ -572,7 +621,7 @@ export class ConfigurationComponent implements OnInit {
     }
   }
   exportEmpresas(): void {
-    this.exportXlsx(this.filteredEmps(), ['Código', 'Nombre', 'RUC', 'Dirección', 'Teléfono', 'Email', 'Estado'], ['codigo', 'nombre', 'ruc', 'direccion', 'telefono', 'email', 'estado'], 'empresas');
+    this.exportXlsx(this.filteredEmps(), ['Código', 'Nombre Comercial', 'Razón Social', 'RUC', 'Dirección', 'Teléfono', 'Email', 'Página Web', 'Estado'], ['codigo', 'nombre', 'razonSocial', 'ruc', 'direccion', 'telefono', 'email', 'paginaWeb', 'estado'], 'empresas');
   }
 
   // ============ SUCURSALES ============

@@ -23,6 +23,9 @@ import type {
   Empresa,
   Sucursal,
   PuntoVenta,
+  Pais,
+  Provincia,
+  Ciudad,
 } from './types.js';
 
 const now = new Date();
@@ -411,21 +414,21 @@ export const perfiles: Perfil[] = [
 ];
 
 export const controles: Control[] = [
-  { id: 'seg_ctrl_1', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Caja de Texto', descripcion: 'Número de documento', estado: 'ACTIVO', createdAt: iso(70) },
-  { id: 'seg_ctrl_2', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Botón', descripcion: 'Buscar documento', estado: 'ACTIVO', createdAt: iso(70) },
-  { id: 'seg_ctrl_3', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Grid', descripcion: 'Resultados de búsqueda', estado: 'ACTIVO', createdAt: iso(70) },
-  { id: 'seg_ctrl_4', prgCodigo: 'PRG-MM-PED', tipoControl: 'Combo', descripcion: 'Seleccionar proveedor', estado: 'ACTIVO', createdAt: iso(72) },
-  { id: 'seg_ctrl_5', prgCodigo: 'PRG-MM-PED', tipoControl: 'Botón', descripcion: 'Crear pedido', estado: 'ACTIVO', createdAt: iso(72) },
-  { id: 'seg_ctrl_6', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Option', descripcion: 'Seleccionar ambiente (DEV/QAS/PROD)', estado: 'ACTIVO', createdAt: iso(65) },
-  { id: 'seg_ctrl_7', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Grid', descripcion: 'Lista de deployments', estado: 'ACTIVO', createdAt: iso(65) },
+  { id: 'seg_ctrl_1', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Caja de Texto', descripcion: 'Número de documento', estado: 'ACTIVO', log: 'ACTIVO', createdAt: iso(70) },
+  { id: 'seg_ctrl_2', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Botón', descripcion: 'Buscar documento', estado: 'ACTIVO', log: 'ACTIVO', createdAt: iso(70) },
+  { id: 'seg_ctrl_3', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Grid', descripcion: 'Resultados de búsqueda', estado: 'ACTIVO', log: 'ACTIVO', createdAt: iso(70) },
+  { id: 'seg_ctrl_4', prgCodigo: 'PRG-MM-PED', tipoControl: 'Combo', descripcion: 'Seleccionar proveedor', estado: 'ACTIVO', log: 'ACTIVO', createdAt: iso(72) },
+  { id: 'seg_ctrl_5', prgCodigo: 'PRG-MM-PED', tipoControl: 'Botón', descripcion: 'Crear pedido', estado: 'ACTIVO', log: 'ACTIVO', createdAt: iso(72) },
+  { id: 'seg_ctrl_6', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Option', descripcion: 'Seleccionar ambiente (DEV/QAS/PROD)', estado: 'ACTIVO', log: 'ACTIVO', createdAt: iso(65) },
+  { id: 'seg_ctrl_7', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Grid', descripcion: 'Lista de deployments', estado: 'ACTIVO', log: 'ACTIVO', createdAt: iso(65) },
   { id: 'seg_ctrl_8', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Botón', descripcion: 'Ejecutar bot', estado: 'ACTIVO', log: 'INACTIVO', createdAt: iso(55) },
   { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', log: 'INACTIVO', createdAt: iso(55) },
 ];
 
 // --- Configuración: Empresas ------------------------------------------------
 export const empresas: Empresa[] = [
-  { id: 'cfg_emp_1', codigo: 'EMP-001', nombre: 'Reybanpac', razonSocial: 'Reybanpac S.A.', ruc: '0992345678001', direccion: 'Av. Carlos Luis Sáenz, Guayaquil', telefono: '04-600-1234', email: 'info@reybanpac.com', paginaWeb: 'www.reybanpac.com', customFields: [], logo: '', estado: 'ACTIVO', createdAt: iso(100) },
-  { id: 'cfg_emp_2', codigo: 'EMP-002', nombre: 'Favorita Fruit', razonSocial: 'Favorita Fruit Company C.A.', ruc: '0998765432001', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', email: 'contacto@favoritafruit.com', paginaWeb: 'www.favoritafruit.com', customFields: [], logo: '', estado: 'ACTIVO', createdAt: iso(95) },
+  { id: 'cfg_emp_1', codigo: 'EMP-001', nombre: 'Reybanpac', razonSocial: 'Reybanpac S.A.', ruc: '0992345678001', direccion: 'Av. Carlos Luis Sáenz, Guayaquil', telefono: '04-600-1234', email: 'info@reybanpac.com', paginaWeb: 'www.reybanpac.com', customFields: [], logo: '', paisId: '', paisDescripcion: 'Ecuador', provinciaId: '', provinciaDescripcion: 'Guayas', ciudadId: '', ciudadDescripcion: 'Guayaquil', estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'cfg_emp_2', codigo: 'EMP-002', nombre: 'Favorita Fruit', razonSocial: 'Favorita Fruit Company C.A.', ruc: '0998765432001', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', email: 'contacto@favoritafruit.com', paginaWeb: 'www.favoritafruit.com', customFields: [], logo: '', paisId: '', paisDescripcion: 'Ecuador', provinciaId: '', provinciaDescripcion: 'Pichincha', ciudadId: '', ciudadDescripcion: 'Quito', estado: 'ACTIVO', createdAt: iso(95) },
 ];
 
 // --- Configuración: Sucursales ----------------------------------------------
@@ -443,4 +446,30 @@ export const puntosVenta: PuntoVenta[] = [
   { id: 'cfg_pv_3', codigo: 'PV-003', nombre: 'Caja Aeropuerto', sucursalCodigo: 'SUC-GYE-02', direccion: 'Av. Francisco de Orellana', estado: 'ACTIVO', createdAt: iso(84) },
   { id: 'cfg_pv_4', codigo: 'PV-004', nombre: 'Caja Matriz', sucursalCodigo: 'SUC-UIO-01', direccion: 'Av. Quito 1234', estado: 'ACTIVO', createdAt: iso(86) },
   { id: 'cfg_pv_5', codigo: 'PV-005', nombre: 'Caja Cumbayá', sucursalCodigo: 'SUC-UIO-02', direccion: 'Av. Interoceánica y Cumbayá', estado: 'ACTIVO', createdAt: iso(78) },
+];
+
+// --- Parámetros y Configuración: Países ----------------------------------------
+export const paises: Pais[] = [
+  { id: 'param_pais_1', codigo: 'ECU', descripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(120) },
+  { id: 'param_pais_2', codigo: 'PER', descripcion: 'Perú', estado: 'ACTIVO', createdAt: iso(110) },
+  { id: 'param_pais_3', codigo: 'COL', descripcion: 'Colombia', estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'param_pais_4', codigo: 'CHL', descripcion: 'Chile', estado: 'INACTIVO', createdAt: iso(90) },
+];
+
+// --- Parámetros y Configuración: Provincias ------------------------------------
+export const provincias: Provincia[] = [
+  { id: 'param_prov_1', codigo: 'GYE', descripcion: 'Guayas', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(115) },
+  { id: 'param_prov_2', codigo: 'UIO', descripcion: 'Pichincha', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(115) },
+  { id: 'param_prov_3', codigo: 'CUE', descripcion: 'Azuay', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(105) },
+  { id: 'param_prov_4', codigo: 'LIM', descripcion: 'Lima', paisId: 'param_pais_2', paisDescripcion: 'Perú', estado: 'ACTIVO', createdAt: iso(95) },
+  { id: 'param_prov_5', codigo: 'CAL', descripcion: 'Cali', paisId: 'param_pais_3', paisDescripcion: 'Colombia', estado: 'ACTIVO', createdAt: iso(85) },
+];
+
+// --- Parámetros y Configuración: Ciudades -------------------------------------
+export const ciudades: Ciudad[] = [
+  { id: 'param_ciu_1', codigo: 'GYE-C', descripcion: 'Guayaquil Centro', provinciaId: 'param_prov_1', provinciaDescripcion: 'Guayas', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(110) },
+  { id: 'param_ciu_2', codigo: 'GYE-N', descripcion: 'Guayaquil Norte', provinciaId: 'param_prov_1', provinciaDescripcion: 'Guayas', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(110) },
+  { id: 'param_ciu_3', codigo: 'UIO-C', descripcion: 'Quito Centro', provinciaId: 'param_prov_2', provinciaDescripcion: 'Pichincha', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(108) },
+  { id: 'param_ciu_4', codigo: 'CUE-C', descripcion: 'Cuenca', provinciaId: 'param_prov_3', provinciaDescripcion: 'Azuay', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'param_ciu_5', codigo: 'LIM-C', descripcion: 'Lima Centro', provinciaId: 'param_prov_4', provinciaDescripcion: 'Lima', paisId: 'param_pais_2', paisDescripcion: 'Perú', estado: 'ACTIVO', createdAt: iso(90) },
 ];

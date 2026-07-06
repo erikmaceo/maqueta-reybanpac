@@ -188,6 +188,12 @@ export interface Empresa {
   paginaWeb: string;
   customFields: string[];
   logo: string;
+  paisId: string;
+  paisDescripcion: string;
+  provinciaId: string;
+  provinciaDescripcion: string;
+  ciudadId: string;
+  ciudadDescripcion: string;
   estado: SegEstado;
   createdAt: string;
 }
@@ -209,6 +215,37 @@ export interface PuntoVenta {
   nombre: string;
   sucursalCodigo: string;
   direccion: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
+// --- Parámetros y Configuración -----------------------------------------------
+export interface Pais {
+  id: string;
+  codigo: string;
+  descripcion: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
+export interface Provincia {
+  id: string;
+  codigo: string;
+  descripcion: string;
+  paisId: string;
+  paisDescripcion: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
+export interface Ciudad {
+  id: string;
+  codigo: string;
+  descripcion: string;
+  provinciaId: string;
+  provinciaDescripcion: string;
+  paisId: string;
+  paisDescripcion: string;
   estado: SegEstado;
   createdAt: string;
 }

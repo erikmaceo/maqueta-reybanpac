@@ -14,7 +14,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
     <div class="page-head">
       <div>
         <h1>Matriz de Acceso</h1>
-        <p>Carga masiva de Aplicaciones, Módulos, Programas y Perfiles desde un archivo Excel.</p>
+        <p>Carga masiva de Empresas, Sucursales, Puntos de Venta, Usuarios, Aplicaciones, Módulos, Programas y Perfiles desde un archivo Excel.</p>
       </div>
       <div class="row gap-2">
         <button class="btn btn-ghost" (click)="downloadTemplate()">
@@ -55,8 +55,8 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
       <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">Importar matriz de seguridades</h2>
       <p class="muted" style="max-width:520px;margin:0 auto 20px;">
         Seleccione un archivo Excel (.xlsx) con la estructura de columnas indicada abajo.
-        El sistema creará automáticamente las Aplicaciones, Módulos, Programas y Perfiles
-        que no existan. Los que ya existan (por código) se mantendrán sin duplicar.
+        El sistema creará automáticamente las Empresas, Sucursales, Puntos de Venta, Usuarios,
+        Aplicaciones, Módulos, Programas y Perfiles que no existan. Los que ya existan (por código) se mantendrán sin duplicar.
       </p>
       <button class="btn btn-primary" (click)="triggerFileInput()" [disabled]="uploading()">
         <app-icon-upload [width]="15" [height]="15" />
@@ -67,10 +67,20 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
     <!-- Ejemplo -->
     <div class="card mt-4">
       <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;margin-left:10px;">Ejemplo de contenido</h2>
-      <div class="table-wrap">
+      <div class="table-wrap" style="overflow-x: auto;">
         <table class="data">
           <thead>
             <tr>
+              <th>emp_codigo</th>
+              <th>emp_nombre</th>
+              <th>emp_ruc</th>
+              <th>suc_codigo</th>
+              <th>suc_nombre</th>
+              <th>pv_codigo</th>
+              <th>pv_nombre</th>
+              <th>usr_codigo</th>
+              <th>usr_nombre</th>
+              <th>usr_email</th>
               <th>app_codigo</th>
               <th>app_nombre</th>
               <th>mod_codigo</th>
@@ -85,6 +95,16 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
           </thead>
           <tbody>
             <tr>
+              <td class="mono">EMP-001</td>
+              <td>Reybanpac</td>
+              <td>0992345678001</td>
+              <td class="mono">SUC-GYE</td>
+              <td>Guayaquil Matriz</td>
+              <td class="mono">PV-001</td>
+              <td>Caja Principal</td>
+              <td class="mono">USR-001</td>
+              <td>Juan Pérez</td>
+              <td>juan.perez&#64;reybanpac.com</td>
               <td class="mono">APP-SAP</td>
               <td>SAP ERP</td>
               <td class="mono">MOD-FI</td>
@@ -94,9 +114,19 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td>Consulta</td>
               <td class="mono">PERF-FI-VIS</td>
               <td>FI Visualizador</td>
-              <td><span class="badge badge-green">Activo</span></td>
+              <td><span class="badge badge-green">ACTIVO</span></td>
             </tr>
             <tr>
+              <td class="mono">EMP-001</td>
+              <td>Reybanpac</td>
+              <td>0992345678001</td>
+              <td class="mono">SUC-GYE</td>
+              <td>Guayaquil Matriz</td>
+              <td class="mono">PV-001</td>
+              <td>Caja Principal</td>
+              <td class="mono">USR-001</td>
+              <td>Juan Pérez</td>
+              <td>juan.perez&#64;reybanpac.com</td>
               <td class="mono">APP-SAP</td>
               <td>SAP ERP</td>
               <td class="mono">MOD-FI</td>
@@ -106,21 +136,19 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td>Transacción</td>
               <td class="mono">PERF-FI-EDT</td>
               <td>FI Editor</td>
-              <td><span class="badge badge-green">Activo</span></td>
+              <td><span class="badge badge-green">ACTIVO</span></td>
             </tr>
             <tr>
-              <td class="mono">APP-SAP</td>
-              <td>SAP ERP</td>
-              <td class="mono">MOD-MM</td>
-              <td>Materiales</td>
-              <td class="mono">PRG-MM-PO</td>
-              <td>Órdenes de compra</td>
-              <td>Transacción</td>
-              <td class="mono">PERF-MM-COMPR</td>
-              <td>MM Comprador</td>
-              <td><span class="badge badge-green">Activo</span></td>
-            </tr>
-            <tr>
+              <td class="mono">EMP-001</td>
+              <td>Reybanpac</td>
+              <td>0992345678001</td>
+              <td class="mono">SUC-UIO</td>
+              <td>Quito Sucursal</td>
+              <td class="mono">PV-002</td>
+              <td>Caja Norte</td>
+              <td class="mono">USR-002</td>
+              <td>María García</td>
+              <td>maria.garcia&#64;reybanpac.com</td>
               <td class="mono">APP-CRM</td>
               <td>Salesforce CRM</td>
               <td class="mono">MOD-VE</td>
@@ -130,7 +158,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td>Proceso</td>
               <td class="mono">PERF-VE-VEND</td>
               <td>Vendedor</td>
-              <td><span class="badge green-badge">Activo</span></td>
+              <td><span class="badge badge-green">ACTIVO</span></td>
             </tr>
           </tbody>
         </table>
@@ -180,21 +208,56 @@ export class MatrixAccessComponent {
 
   downloadTemplate(): void {
     const headers = [
-      'app_codigo','app_nombre','app_descripcion',
-      'mod_codigo','mod_nombre','mod_descripcion',
-      'prg_codigo','prg_nombre','prg_tipo','prg_descripcion',
-      'perf_codigo','perf_nombre','perf_descripcion',
+      'emp_codigo', 'emp_nombre', 'emp_ruc', 'emp_direccion', 'emp_telefono', 'emp_email', 'emp_estado',
+      'suc_codigo', 'suc_nombre', 'suc_direccion', 'suc_telefono', 'suc_estado',
+      'pv_codigo', 'pv_nombre', 'pv_direccion', 'pv_estado',
+      'usr_codigo', 'usr_nombre', 'usr_email', 'usr_estado',
+      'app_codigo', 'app_nombre', 'app_descripcion',
+      'mod_codigo', 'mod_nombre', 'mod_descripcion',
+      'prg_codigo', 'prg_nombre', 'prg_tipo', 'prg_descripcion',
+      'perf_codigo', 'perf_nombre', 'perf_descripcion',
       'estado',
     ];
+
     const rows = [
-      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-FI','Finanzas (FI)','Módulo de Finanzas','PRG-FI-DOCS','Documentos contables','Consulta','Gestión de documentos','PERF-FI-VIS','FI Visualizador','Solo consulta','ACTIVO'],
-      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-FI','Finanzas (FI)','Módulo de Finanzas','PRG-FI-DOCS','Documentos contables','Transacción','Gestión de documentos','PERF-FI-EDT','FI Editor','Edición completa','ACTIVO'],
-      ['APP-SAP','SAP ERP','Sistema ERP corporativo','MOD-MM','Materiales (MM)','Gestión de materiales','PRG-MM-PO','Órdenes de compra','Transacción','PO y recepciones','PERF-MM-COMPR','MM Comprador','Crea y aprueba PO','ACTIVO'],
-      ['APP-CRM','Salesforce CRM','CRM de ventas','MOD-VE','Ventas','Gestión comercial','PRG-VE-LEAD','Gestión de leads','Proceso','Leads y oportunidades','PERF-VE-VEND','Vendedor','Gestiona sus leads','ACTIVO'],
+      [
+        'EMP-001', 'Reybanpac', '0992345678001', 'Av. Carlos Luis Sáenz', '04-600-1234', 'info@reybanpac.com', 'ACTIVO',
+        'SUC-GYE', 'Guayaquil Matriz', 'Av. Carlos Luis Sáenz, Guayaquil', '04-600-1234', 'ACTIVO',
+        'PV-001', 'Caja Principal', 'Av. Carlos Luis Sáenz y 9 de Octubre', 'ACTIVO',
+        'USR-001', 'Juan Pérez', 'juan.perez@reybanpac.com', 'ACTIVO',
+        'APP-SAP', 'SAP ERP', 'Sistema ERP corporativo',
+        'MOD-FI', 'Finanzas (FI)', 'Módulo de Finanzas',
+        'PRG-FI-DOCS', 'Documentos contables', 'Consulta', 'Gestión de documentos',
+        'PERF-FI-VIS', 'FI Visualizador', 'Solo consulta',
+        'ACTIVO'
+      ],
+      [
+        'EMP-001', 'Reybanpac', '0992345678001', 'Av. Carlos Luis Sáenz', '04-600-1234', 'info@reybanpac.com', 'ACTIVO',
+        'SUC-GYE', 'Guayaquil Matriz', 'Av. Carlos Luis Sáenz, Guayaquil', '04-600-1234', 'ACTIVO',
+        'PV-001', 'Caja Principal', 'Av. Carlos Luis Sáenz y 9 de Octubre', 'ACTIVO',
+        'USR-001', 'Juan Pérez', 'juan.perez@reybanpac.com', 'ACTIVO',
+        'APP-SAP', 'SAP ERP', 'Sistema ERP corporativo',
+        'MOD-FI', 'Finanzas (FI)', 'Módulo de Finanzas',
+        'PRG-FI-DOCS', 'Documentos contables', 'Transacción', 'Gestión de documentos',
+        'PERF-FI-EDT', 'FI Editor', 'Edición completa',
+        'ACTIVO'
+      ],
+      [
+        'EMP-001', 'Reybanpac', '0992345678001', 'Av. Carlos Luis Sáenz', '04-600-1234', 'info@reybanpac.com', 'ACTIVO',
+        'SUC-UIO', 'Quito Sucursal', 'Av. Amazonas y NNUU, Quito', '02-200-5678', 'ACTIVO',
+        'PV-002', 'Caja Norte', 'Av. Amazonas N35-42', 'ACTIVO',
+        'USR-002', 'María García', 'maria.garcia@reybanpac.com', 'ACTIVO',
+        'APP-CRM', 'Salesforce CRM', 'CRM de ventas',
+        'MOD-VE', 'Ventas', 'Gestión comercial',
+        'PRG-VE-LEAD', 'Gestión de leads', 'Proceso', 'Leads y oportunidades',
+        'PERF-VE-VEND', 'Vendedor', 'Gestiona sus leads',
+        'ACTIVO'
+      ],
     ];
+
     const aoa = [headers, ...rows];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = headers.map(() => ({ wch: 20 }));
+    ws['!cols'] = headers.map(() => ({ wch: 18 }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Matriz');
     XLSX.writeFile(wb, 'plantilla_matriz_acceso.xlsx');

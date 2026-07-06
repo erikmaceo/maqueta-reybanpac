@@ -1,9 +1,9 @@
 import {
   BaseComponent
-} from "./chunk-SBOYH52B.js";
+} from "./chunk-2XE7DV7V.js";
 import {
   s
-} from "./chunk-MQBLUKMR.js";
+} from "./chunk-T4IRR3SY.js";
 import {
   Directive,
   computed,
@@ -54,4 +54,4 @@ var BaseModelHolder = class _BaseModelHolder extends BaseComponent {
 export {
   BaseModelHolder
 };
-//# sourceMappingURL=chunk-QHIVQVLZ.js.map
+//# sourceMappingURL=chunk-M2YPPS23.js.map

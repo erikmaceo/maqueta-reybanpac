@@ -14,9 +14,32 @@ import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/compon
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
-import type { Empresa, Sucursal, PuntoVenta } from '../../shared/models/types';
+import type { Empresa, Sucursal, PuntoVenta, Pais, Provincia, Ciudad } from '../../shared/models/types';
 
 type Estado = 'ACTIVO' | 'INACTIVO';
+
+const MOCK_PAISES: Pais[] = [
+  { id: '1', codigo: 'ECU', descripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '2', codigo: 'PER', descripcion: 'Perú', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '3', codigo: 'COL', descripcion: 'Colombia', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '4', codigo: 'CHL', descripcion: 'Chile', estado: 'INACTIVO', createdAt: new Date().toISOString() },
+];
+
+const MOCK_PROVINCIAS: Provincia[] = [
+  { id: '1', codigo: 'GYE', descripcion: 'Guayas', paisId: '1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '2', codigo: 'UIO', descripcion: 'Pichincha', paisId: '1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '3', codigo: 'CUE', descripcion: 'Azuay', paisId: '1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '4', codigo: 'LIM', descripcion: 'Lima', paisId: '2', paisDescripcion: 'Perú', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '5', codigo: 'CAL', descripcion: 'Cali', paisId: '3', paisDescripcion: 'Colombia', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+];
+
+const MOCK_CIUDADES: Ciudad[] = [
+  { id: '1', codigo: 'GYE-C', descripcion: 'Guayaquil Centro', provinciaId: '1', provinciaDescripcion: 'Guayas', paisId: '1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '2', codigo: 'GYE-N', descripcion: 'Guayaquil Norte', provinciaId: '1', provinciaDescripcion: 'Guayas', paisId: '1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '3', codigo: 'UIO-C', descripcion: 'Quito Centro', provinciaId: '2', provinciaDescripcion: 'Pichincha', paisId: '1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '4', codigo: 'CUE-C', descripcion: 'Cuenca', provinciaId: '3', provinciaDescripcion: 'Azuay', paisId: '1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '5', codigo: 'LIM-C', descripcion: 'Lima Centro', provinciaId: '4', provinciaDescripcion: 'Lima', paisId: '2', paisDescripcion: 'Perú', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+];
 
 @Component({
   selector: 'app-configuration',
@@ -324,12 +347,43 @@ type Estado = 'ACTIVO' | 'INACTIVO';
           <input class="input" [(ngModel)]="empForm.email" placeholder="info@empresa.com" />
         </div>
       </div>
-      <div class="field">
-        <label>Estado</label>
-        <select class="select" [(ngModel)]="empForm.estado">
-          <option value="ACTIVO">Activo</option>
-          <option value="INACTIVO">Inactivo</option>
-        </select>
+      <div class="form-grid">
+        <div class="field">
+          <label>País</label>
+          <select class="select" [ngModel]="empFormPaisId()" (ngModelChange)="onEmpPaisChange($event)">
+            <option value="">— Seleccione —</option>
+            @for (p of paises(); track p.id) {
+              <option [value]="p.id">{{ p.codigo }} · {{ p.descripcion }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Provincia</label>
+          <select class="select" [ngModel]="empFormProvinciaId()" (ngModelChange)="onEmpProvinciaChange($event)">
+            <option value="">— Seleccione —</option>
+            @for (pr of filteredProvinciasForEmp(); track pr.id) {
+              <option [value]="pr.id">{{ pr.codigo }} · {{ pr.descripcion }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Ciudad</label>
+          <select class="select" [ngModel]="empFormCiudadId()" (ngModelChange)="empFormCiudadId.set($event)">
+            <option value="">— Seleccione —</option>
+            @for (c of filteredCiudadesForEmp(); track c.id) {
+              <option [value]="c.id">{{ c.codigo }} · {{ c.descripcion }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select class="select" [(ngModel)]="empForm.estado">
+            <option value="ACTIVO">Activo</option>
+            <option value="INACTIVO">Inactivo</option>
+          </select>
+        </div>
       </div>
       @for (cf of empForm.customFields; track $index) {
         <div class="field">
@@ -469,10 +523,14 @@ export class ConfigurationComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private useMockData = true;
 
   empresas = signal<Empresa[]>([]);
   sucursales = signal<Sucursal[]>([]);
   puntosVenta = signal<PuntoVenta[]>([]);
+  paises = signal<Pais[]>([]);
+  provincias = signal<Provincia[]>([]);
+  ciudades = signal<Ciudad[]>([]);
 
   loadingEmp = signal(true);
   loadingSuc = signal(true);
@@ -497,6 +555,21 @@ export class ConfigurationComponent implements OnInit {
   empForm: any = {};
   sucForm: any = {};
   pvForm: any = {};
+
+  empFormPaisId = signal('');
+  empFormProvinciaId = signal('');
+  empFormCiudadId = signal('');
+
+  filteredProvinciasForEmp = computed(() => {
+    const paisId = this.empFormPaisId();
+    if (!paisId) return this.provincias();
+    return this.provincias().filter(p => p.paisId === paisId);
+  });
+  filteredCiudadesForEmp = computed(() => {
+    const provinciaId = this.empFormProvinciaId();
+    if (!provinciaId) return this.ciudades();
+    return this.ciudades().filter(c => c.provinciaId === provinciaId);
+  });
 
   filteredEmps = computed(() => {
     const q = this.searchEmp().toLowerCase().trim();
@@ -570,6 +643,9 @@ export class ConfigurationComponent implements OnInit {
     this.loadEmpresas();
     this.loadSucursales();
     this.loadPuntosVenta();
+    this.loadPaises();
+    this.loadProvincias();
+    this.loadCiudades();
     this.events.onDataChanged(() => {
       this.loadEmpresas();
       this.loadSucursales();
@@ -586,10 +662,21 @@ export class ConfigurationComponent implements OnInit {
       error: () => { this.errorEmp.set('No se pudieron cargar las empresas.'); this.loadingEmp.set(false); },
     });
   }
-  blankEmp() { return { codigo: '', nombre: '', razonSocial: '', ruc: '', direccion: '', telefono: '', email: '', paginaWeb: '', estado: 'ACTIVO' as Estado, customFields: [] as string[], logo: '' }; }
+  blankEmp() { return { codigo: '', nombre: '', razonSocial: '', ruc: '', direccion: '', telefono: '', email: '', paginaWeb: '', estado: 'ACTIVO' as Estado, customFields: [] as string[], logo: '', paisId: '', provinciaId: '', ciudadId: '' }; }
   openEmpDialog(e?: Empresa): void {
-    if (e) { this.empForm = { ...e, customFields: [...(e.customFields || [])] }; this.editEmpId = e.id; }
-    else { this.empForm = this.blankEmp(); this.editEmpId = null; }
+    if (e) {
+      this.empForm = { ...e, customFields: [...(e.customFields || [])] };
+      this.empFormPaisId.set(e.paisId || '');
+      this.empFormProvinciaId.set(e.provinciaId || '');
+      this.empFormCiudadId.set(e.ciudadId || '');
+      this.editEmpId = e.id;
+    } else {
+      this.empForm = this.blankEmp();
+      this.empFormPaisId.set('');
+      this.empFormProvinciaId.set('');
+      this.empFormCiudadId.set('');
+      this.editEmpId = null;
+    }
     this.showEmpDlg = true;
   }
   closeEmpDialog(): void { this.showEmpDlg = false; this.editEmpId = null; }
@@ -607,8 +694,20 @@ export class ConfigurationComponent implements OnInit {
   async saveEmp(): Promise<void> {
     if (!this.empForm.codigo || !this.empForm.nombre || !this.empForm.ruc) { this.toast.error('Faltan datos', 'Código, nombre y RUC son obligatorios.'); return; }
     try {
-      if (this.editEmpId) { await this.api.updateEmpresa(this.editEmpId, this.empForm).toPromise(); this.toast.success('Empresa actualizada'); }
-      else { await this.api.createEmpresa(this.empForm).toPromise(); this.toast.success('Empresa creada'); }
+      const pais = this.paises().find(p => p.id === this.empFormPaisId());
+      const provincia = this.provincias().find(p => p.id === this.empFormProvinciaId());
+      const ciudad = this.ciudades().find(c => c.id === this.empFormCiudadId());
+      const empData = {
+        ...this.empForm,
+        paisId: this.empFormPaisId(),
+        paisDescripcion: pais?.descripcion || '',
+        provinciaId: this.empFormProvinciaId(),
+        provinciaDescripcion: provincia?.descripcion || '',
+        ciudadId: this.empFormCiudadId(),
+        ciudadDescripcion: ciudad?.descripcion || '',
+      };
+      if (this.editEmpId) { await this.api.updateEmpresa(this.editEmpId, empData).toPromise(); this.toast.success('Empresa actualizada'); }
+      else { await this.api.createEmpresa(empData).toPromise(); this.toast.success('Empresa creada'); }
       this.events.emitDataChanged(); this.closeEmpDialog(); this.loadEmpresas();
     } catch (e: any) { this.toast.error('Error', e?.error?.error || e?.message || 'Error inesperado.'); }
   }
@@ -622,6 +721,47 @@ export class ConfigurationComponent implements OnInit {
   }
   exportEmpresas(): void {
     this.exportXlsx(this.filteredEmps(), ['Código', 'Nombre Comercial', 'Razón Social', 'RUC', 'Dirección', 'Teléfono', 'Email', 'Página Web', 'Estado'], ['codigo', 'nombre', 'razonSocial', 'ruc', 'direccion', 'telefono', 'email', 'paginaWeb', 'estado'], 'empresas');
+  }
+
+  // ============ PARÁMETROS ============
+  loadPaises(): void {
+    if (this.useMockData) {
+      this.paises.set([...MOCK_PAISES]);
+      return;
+    }
+    this.api.listPaises().subscribe({
+      next: (data) => { this.paises.set(data); },
+      error: () => { this.paises.set([...MOCK_PAISES]); },
+    });
+  }
+  loadProvincias(): void {
+    if (this.useMockData) {
+      this.provincias.set([...MOCK_PROVINCIAS]);
+      return;
+    }
+    this.api.listProvincias().subscribe({
+      next: (data) => { this.provincias.set(data); },
+      error: () => { this.provincias.set([...MOCK_PROVINCIAS]); },
+    });
+  }
+  loadCiudades(): void {
+    if (this.useMockData) {
+      this.ciudades.set([...MOCK_CIUDADES]);
+      return;
+    }
+    this.api.listCiudades().subscribe({
+      next: (data) => { this.ciudades.set(data); },
+      error: () => { this.ciudades.set([...MOCK_CIUDADES]); },
+    });
+  }
+  onEmpPaisChange(paisId: string): void {
+    this.empFormPaisId.set(paisId);
+    this.empFormProvinciaId.set('');
+    this.empFormCiudadId.set('');
+  }
+  onEmpProvinciaChange(provinciaId: string): void {
+    this.empFormProvinciaId.set(provinciaId);
+    this.empFormCiudadId.set('');
   }
 
   // ============ SUCURSALES ============

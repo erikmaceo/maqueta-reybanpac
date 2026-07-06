@@ -364,6 +364,17 @@ export class IconUploadComponent {
   @Input() height = 16;
 }
 
+@Component({
+  selector: 'app-icon-settings',
+  standalone: true,
+  imports: [CommonModule],
+  template: `<i class="pi pi-sliders-h" [style.font-size.px]="width"></i>`,
+})
+export class IconSettingsComponent {
+  @Input() width = 16;
+  @Input() height = 16;
+}
+
 export const ICONS = [
   IconDashboardComponent,
   IconSystemsComponent,
@@ -398,4 +409,5 @@ export const ICONS = [
   IconSecurityComponent,
   IconMatrixComponent,
   IconUploadComponent,
+  IconSettingsComponent,
 ];

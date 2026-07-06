@@ -7,6 +7,7 @@ import type {
   LdapResponse, Stats,
   Aplicacion, Modulo, Programa, Perfil, Control,
   Empresa, Sucursal, PuntoVenta,
+  Pais, Provincia, Ciudad,
 } from '../../shared/models/types';
 
 const TOKEN_KEY = 'cam.token';
@@ -288,6 +289,54 @@ export class ApiService {
   }
   deletePuntoVenta(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/config-puntos-venta/${id}`);
+  }
+
+  // --- Parámetros: Países ---
+  listPaises(): Observable<Pais[]> {
+    return this.request<Pais[]>('GET', '/param-paises');
+  }
+  createPais(body: Partial<Pais>): Observable<Pais> {
+    return this.request<Pais>('POST', '/param-paises', body);
+  }
+  updatePais(id: string, body: Partial<Pais>): Observable<Pais> {
+    return this.request<Pais>('PUT', `/param-paises/${id}`, body);
+  }
+  deletePais(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/param-paises/${id}`);
+  }
+
+  // --- Parámetros: Provincias ---
+  listProvincias(): Observable<Provincia[]> {
+    return this.request<Provincia[]>('GET', '/param-provincias');
+  }
+  listProvinciasPorPais(paisId: string): Observable<Provincia[]> {
+    return this.request<Provincia[]>('GET', `/param-provincias?paisId=${paisId}`);
+  }
+  createProvincia(body: Partial<Provincia>): Observable<Provincia> {
+    return this.request<Provincia>('POST', '/param-provincias', body);
+  }
+  updateProvincia(id: string, body: Partial<Provincia>): Observable<Provincia> {
+    return this.request<Provincia>('PUT', `/param-provincias/${id}`, body);
+  }
+  deleteProvincia(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/param-provincias/${id}`);
+  }
+
+  // --- Parámetros: Ciudades ---
+  listCiudades(): Observable<Ciudad[]> {
+    return this.request<Ciudad[]>('GET', '/param-ciudades');
+  }
+  listCiudadesPorProvincia(provinciaId: string): Observable<Ciudad[]> {
+    return this.request<Ciudad[]>('GET', `/param-ciudades?provinciaId=${provinciaId}`);
+  }
+  createCiudad(body: Partial<Ciudad>): Observable<Ciudad> {
+    return this.request<Ciudad>('POST', '/param-ciudades', body);
+  }
+  updateCiudad(id: string, body: Partial<Ciudad>): Observable<Ciudad> {
+    return this.request<Ciudad>('PUT', `/param-ciudades/${id}`, body);
+  }
+  deleteCiudad(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/param-ciudades/${id}`);
   }
 
   uploadMatriz(file: File): Observable<{ ok: boolean; summary: string }> {

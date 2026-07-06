@@ -29,6 +29,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'parametros',
+        loadComponent: () => import('./pages/parameters-configuration/parameters-configuration.component').then(m => m.ParametersConfigurationComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'roles',
         loadComponent: () => import('./pages/roles/roles.component').then(m => m.RolesComponent),
         canActivate: [adminGuard],

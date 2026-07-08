@@ -37,7 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/acceso-usuarios', label: 'Accesos por usuario', icon: IconRolesComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true },
-  { path: '/soluciones', label: 'Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true, isSection: true },
+  { path: '/soluciones', label: 'Ordenar Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true, isSection: true },
   { path: '/accesos', label: 'Accesos efectivos', icon: IconAccessComponent, group: 'Operación', adminOnly: true },
   { path: '/auditoria', label: 'Auditoría', icon: IconAuditComponent, group: 'Operación', adminOnly: true },
 ];
@@ -55,7 +55,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/autorizador': { title: 'Módulo autorizador', sub: 'Aprobación y rechazo de solicitudes de acceso' },
   '/accesos': { title: 'Accesos efectivos', sub: 'Matriz de accesos vigentes por usuario y sistema' },
   '/auditoria': { title: 'Auditoría', sub: 'Trazabilidad de todas las acciones de la consola' },
-  '/soluciones': { title: 'Soluciones', sub: 'Navegación por aplicación y su jerarquía de seguridades' },
+  '/soluciones': { title: 'Ordenar Soluciones', sub: 'Navegación por aplicación y su jerarquía de seguridades' },
 };
 
 @Component({
@@ -117,7 +117,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
                     <span class="chevron-wrap">
                       <app-icon-chevron-right [width]="14" [height]="14" [class.rotated]="solucionesExpanded()" />
                     </span>
-                    <span>Soluciones</span>
+                    <span>Ordenar Soluciones</span>
                     <span class="apps-count">{{ solucionApps().length }}</span>
                   </button>
                   @if (solucionesExpanded()) {

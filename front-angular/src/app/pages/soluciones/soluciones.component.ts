@@ -30,7 +30,7 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
 
       <!-- breadcrumb -->
       <div class="breadcrumb">
-        <button class="btn btn-ghost btn-sm" (click)="goBack()">‹ Volver a Soluciones</button>
+        <button class="btn btn-ghost btn-sm" (click)="goBack()">‹ Volver a Ordenar Soluciones</button>
       </div>
 
       <!-- MÓDULOS -->
@@ -125,7 +125,7 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
     } @else {
       <div class="page-head">
         <div>
-          <h1>Soluciones</h1>
+          <h1>Ordenar Soluciones</h1>
           <p>Seleccione una aplicación para ver su jerarquía de seguridades.</p>
         </div>
       </div>

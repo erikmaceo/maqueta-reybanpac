@@ -21,6 +21,7 @@ export interface Modulo {
   descripcion: string;
   appCodigo: string;
   estado: 'ACTIVO' | 'INACTIVO';
+  orden?: number;
   createdAt: string;
 }
 
@@ -34,6 +35,7 @@ export interface Programa {
   modCodigo: string;
   tipo: TipoPrograma;
   estado: 'ACTIVO' | 'INACTIVO';
+  orden?: number;
   createdAt: string;
 }
 

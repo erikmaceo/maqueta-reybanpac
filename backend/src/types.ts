@@ -27,6 +27,7 @@ export interface Modulo {
   descripcion: string;
   appCodigo: string;
   estado: SegEstado;
+  orden?: number;
   createdAt: string;
 }
 
@@ -40,6 +41,7 @@ export interface Programa {
   modCodigo: string;
   tipo: TipoPrograma;
   estado: SegEstado;
+  orden?: number;
   createdAt: string;
 }
 

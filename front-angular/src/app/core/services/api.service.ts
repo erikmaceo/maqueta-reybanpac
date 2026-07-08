@@ -212,6 +212,9 @@ export class ApiService {
   deleteModulo(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-modulos/${id}`);
   }
+  reordenarModulos(orden: { id: string; orden: number }[]): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('PUT', '/seg-modulos/reordenar', { orden });
+  }
 
   // --- Seguridades: Programas ---
   listProgramas(): Observable<Programa[]> {
@@ -225,6 +228,9 @@ export class ApiService {
   }
   deletePrograma(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-programas/${id}`);
+  }
+  reordenarProgramas(orden: { id: string; orden: number }[]): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('PUT', '/seg-programas/reordenar', { orden });
   }
 
   // --- Seguridades: Perfiles ---

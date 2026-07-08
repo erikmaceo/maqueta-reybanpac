@@ -642,25 +642,51 @@ app.delete('/api/seg-aplicaciones/:id', requireAuth, requireGlobalAdmin, (req, r
 });
 
 // --- Modulos ---
-app.get('/api/seg-modulos', requireAuth, (_req, res) => res.json(db.modulos));
+function ordenarModulos(items: Modulo[]): Modulo[] {
+  return [...items].sort((a, b) => {
+    if (a.orden !== undefined && b.orden !== undefined) return a.orden - b.orden;
+    if (a.orden !== undefined) return -1;
+    if (b.orden !== undefined) return 1;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+function siguienteOrdenModulo(appCodigo: string): number {
+  const existentes = db.modulos.filter((m) => m.appCodigo === appCodigo);
+  if (existentes.length === 0) return 0;
+  return Math.max(...existentes.map((m) => m.orden ?? 0)) + 1;
+}
+
+app.get('/api/seg-modulos', requireAuth, (_req, res) => res.json(ordenarModulos(db.modulos)));
 
 app.post('/api/seg-modulos', requireAuth, requireGlobalAdmin, (req, res) => {
   const { codigo, nombre, descripcion, appCodigo, estado } = req.body || {};
   if (!codigo || !nombre || !appCodigo) return res.status(400).json({ error: 'codigo, nombre y appCodigo son obligatorios.' });
   if (!db.aplicaciones.some((a) => a.codigo === appCodigo)) return res.status(404).json({ error: 'Aplicación no encontrada.' });
   if (db.modulos.some((m) => m.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  const mod: Modulo = { id: newId('seg_mod'), codigo, nombre, descripcion: descripcion || '', appCodigo, estado: estado || 'ACTIVO', createdAt: nowIso() };
+  const mod: Modulo = { id: newId('seg_mod'), codigo, nombre, descripcion: descripcion || '', appCodigo, estado: estado || 'ACTIVO', orden: siguienteOrdenModulo(appCodigo), createdAt: nowIso() };
   db.modulos.push(mod);
   logAudit(actorName(req), 'CREATE_MODULO', 'modulo', mod.id, `Módulo "${nombre}" creado.`);
   res.status(201).json(mod);
 });
 
+app.put('/api/seg-modulos/reordenar', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { orden } = req.body || {};
+  if (!Array.isArray(orden)) return res.status(400).json({ error: 'El campo "orden" debe ser un array de { id, orden }.' });
+  for (const item of orden) {
+    const mod = db.modulos.find((m) => m.id === item.id);
+    if (mod) mod.orden = Number(item.orden);
+  }
+  logAudit(actorName(req), 'REORDER_MODULOS', 'modulo', null, `Reordenados ${orden.length} módulos.`);
+  res.json({ ok: true });
+});
+
 app.put('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const mod = db.modulos.find((m) => m.id === req.params.id);
   if (!mod) return res.status(404).json({ error: 'Módulo no encontrado.' });
-  const { codigo, nombre, descripcion, appCodigo, estado } = req.body || {};
+  const { codigo, nombre, descripcion, appCodigo, estado, orden } = req.body || {};
   if (codigo && db.modulos.some((m) => m.id !== mod.id && m.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  Object.assign(mod, definedOnly({ codigo, nombre, descripcion, appCodigo, estado }));
+  Object.assign(mod, definedOnly({ codigo, nombre, descripcion, appCodigo, estado, orden }));
   logAudit(actorName(req), 'UPDATE_MODULO', 'modulo', mod.id, `Módulo "${mod.nombre}" actualizado.`);
   res.json(mod);
 });
@@ -677,14 +703,29 @@ app.delete('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) =
 });
 
 // --- Programas ---
-app.get('/api/seg-programas', requireAuth, (_req, res) => res.json(db.programas));
+function ordenarProgramas(items: Programa[]): Programa[] {
+  return [...items].sort((a, b) => {
+    if (a.orden !== undefined && b.orden !== undefined) return a.orden - b.orden;
+    if (a.orden !== undefined) return -1;
+    if (b.orden !== undefined) return 1;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+function siguienteOrdenPrograma(modCodigo: string): number {
+  const existentes = db.programas.filter((p) => p.modCodigo === modCodigo);
+  if (existentes.length === 0) return 0;
+  return Math.max(...existentes.map((p) => p.orden ?? 0)) + 1;
+}
+
+app.get('/api/seg-programas', requireAuth, (_req, res) => res.json(ordenarProgramas(db.programas)));
 
 app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
   const { codigo, nombre, descripcion, modCodigo, tipo, estado, controles } = req.body || {};
   if (!codigo || !nombre || !modCodigo) return res.status(400).json({ error: 'codigo, nombre y modCodigo son obligatorios.' });
   if (!db.modulos.some((m) => m.codigo === modCodigo)) return res.status(404).json({ error: 'Módulo no encontrado.' });
   if (db.programas.some((p) => p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  const prg: Programa = { id: newId('seg_prg'), codigo, nombre, descripcion: descripcion || '', modCodigo, tipo: tipo || 'Transacción', estado: estado || 'ACTIVO', createdAt: nowIso() };
+  const prg: Programa = { id: newId('seg_prg'), codigo, nombre, descripcion: descripcion || '', modCodigo, tipo: tipo || 'Transacción', estado: estado || 'ACTIVO', orden: siguienteOrdenPrograma(modCodigo), createdAt: nowIso() };
   db.programas.push(prg);
   if (Array.isArray(controles) && controles.length) {
     for (const c of controles) {
@@ -704,13 +745,24 @@ app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
   res.status(201).json(prg);
 });
 
+app.put('/api/seg-programas/reordenar', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { orden } = req.body || {};
+  if (!Array.isArray(orden)) return res.status(400).json({ error: 'El campo "orden" debe ser un array de { id, orden }.' });
+  for (const item of orden) {
+    const prg = db.programas.find((p) => p.id === item.id);
+    if (prg) prg.orden = Number(item.orden);
+  }
+  logAudit(actorName(req), 'REORDER_PROGRAMAS', 'programa', null, `Reordenados ${orden.length} programas.`);
+  res.json({ ok: true });
+});
+
 app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const prg = db.programas.find((p) => p.id === req.params.id);
   if (!prg) return res.status(404).json({ error: 'Programa no encontrado.' });
-  const { codigo, nombre, descripcion, modCodigo, tipo, estado, controles } = req.body || {};
+  const { codigo, nombre, descripcion, modCodigo, tipo, estado, controles, orden } = req.body || {};
   if (codigo && db.programas.some((p) => p.id !== prg.id && p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
   const oldCodigo = prg.codigo;
-  Object.assign(prg, definedOnly({ codigo, nombre, descripcion, modCodigo, tipo, estado }));
+  Object.assign(prg, definedOnly({ codigo, nombre, descripcion, modCodigo, tipo, estado, orden }));
   if (Array.isArray(controles)) {
     db.controles = db.controles.filter((c) => c.prgCodigo !== oldCodigo);
     for (const c of controles) {

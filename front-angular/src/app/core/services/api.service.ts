@@ -254,6 +254,9 @@ export class ApiService {
   deleteControl(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-controles/${id}`);
   }
+  reordenarControles(orden: { id: string; orden: number }[]): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('PUT', '/seg-controles/reordenar', { orden });
+  }
 
   // --- Configuración: Empresas ---
   listEmpresas(): Observable<Empresa[]> {

@@ -728,7 +728,7 @@ app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
   const prg: Programa = { id: newId('seg_prg'), codigo, nombre, descripcion: descripcion || '', modCodigo, tipo: tipo || 'Transacción', estado: estado || 'ACTIVO', orden: siguienteOrdenPrograma(modCodigo), createdAt: nowIso() };
   db.programas.push(prg);
   if (Array.isArray(controles) && controles.length) {
-    for (const c of controles) {
+    controles.forEach((c, idx) => {
       const ctrl: Control = {
         id: newId('seg_ctrl'),
         prgCodigo: codigo,
@@ -736,10 +736,11 @@ app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
         descripcion: c.descripcion || '',
         estado: c.estado || 'ACTIVO',
         log: c.log || 'ACTIVO',
+        orden: idx,
         createdAt: nowIso(),
       };
       db.controles.push(ctrl);
-    }
+    });
   }
   logAudit(actorName(req), 'CREATE_PROGRAMA', 'programa', prg.id, `Programa "${nombre}" creado${Array.isArray(controles) && controles.length ? ` con ${controles.length} control(es)` : ''}.`);
   res.status(201).json(prg);
@@ -765,7 +766,7 @@ app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) =>
   Object.assign(prg, definedOnly({ codigo, nombre, descripcion, modCodigo, tipo, estado, orden }));
   if (Array.isArray(controles)) {
     db.controles = db.controles.filter((c) => c.prgCodigo !== oldCodigo);
-    for (const c of controles) {
+    controles.forEach((c, idx) => {
       const ctrl: Control = {
         id: newId('seg_ctrl'),
         prgCodigo: prg.codigo,
@@ -773,10 +774,11 @@ app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) =>
         descripcion: c.descripcion || '',
         estado: c.estado || 'ACTIVO',
         log: c.log || 'ACTIVO',
+        orden: idx,
         createdAt: nowIso(),
       };
       db.controles.push(ctrl);
-    }
+    });
   }
   logAudit(actorName(req), 'UPDATE_PROGRAMA', 'programa', prg.id, `Programa "${prg.nombre}" actualizado.`);
   res.json(prg);
@@ -834,7 +836,33 @@ app.delete('/api/seg-perfiles/:id', requireAuth, requireGlobalAdmin, (req, res) 
 });
 
 // --- Controles ---
-app.get('/api/seg-controles', requireAuth, (_req, res) => res.json(db.controles));
+function ordenarControles(items: Control[]): Control[] {
+  return [...items].sort((a, b) => {
+    if (a.orden !== undefined && b.orden !== undefined) return a.orden - b.orden;
+    if (a.orden !== undefined) return -1;
+    if (b.orden !== undefined) return 1;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+function siguienteOrdenControl(prgCodigo: string): number {
+  const existentes = db.controles.filter((c) => c.prgCodigo === prgCodigo);
+  if (existentes.length === 0) return 0;
+  return Math.max(...existentes.map((c) => c.orden ?? 0)) + 1;
+}
+
+app.get('/api/seg-controles', requireAuth, (_req, res) => res.json(ordenarControles(db.controles)));
+
+app.put('/api/seg-controles/reordenar', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { orden } = req.body || {};
+  if (!Array.isArray(orden)) return res.status(400).json({ error: 'El campo "orden" debe ser un array de { id, orden }.' });
+  for (const item of orden) {
+    const ctrl = db.controles.find((c) => c.id === item.id);
+    if (ctrl) ctrl.orden = Number(item.orden);
+  }
+  logAudit(actorName(req), 'REORDER_CONTROLES', 'control', null, `Reordenados ${orden.length} controles.`);
+  res.json({ ok: true });
+});
 
 app.delete('/api/seg-controles/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const idx = db.controles.findIndex((c) => c.id === req.params.id);

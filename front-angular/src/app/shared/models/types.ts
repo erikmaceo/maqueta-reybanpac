@@ -47,7 +47,8 @@ export interface Control {
   tipoControl: TipoControl;
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
-  log?: 'ACTIVO' | 'INACTIVO';
+  log: 'ACTIVO' | 'INACTIVO';
+  orden?: number;
   createdAt: string;
 }
 

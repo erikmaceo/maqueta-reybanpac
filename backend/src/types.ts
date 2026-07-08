@@ -54,6 +54,7 @@ export interface Control {
   descripcion: string;
   estado: SegEstado;
   log: SegEstado;
+  orden?: number;
   createdAt: string;
 }
 

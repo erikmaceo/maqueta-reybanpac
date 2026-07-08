@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DragDropModule, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ApiService } from '../../core/services/api.service';
-import { IconChevronRightComponent, IconServerComponent, IconLockComponent } from '../../shared/components/icons';
-import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/types';
+import { IconChevronRightComponent, IconServerComponent, IconSettingsComponent } from '../../shared/components/icons';
+import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/types';
 
 @Component({
   selector: 'app-soluciones',
   standalone: true,
-  imports: [CommonModule, DragDropModule, IconChevronRightComponent, IconServerComponent, IconLockComponent],
+  imports: [CommonModule, DragDropModule, IconChevronRightComponent, IconServerComponent, IconSettingsComponent],
   template: `
     @if (loading()) {
       <div class="page-head">
@@ -47,7 +47,7 @@ import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/t
         <div class="modules-list" cdkDropList (cdkDropListDropped)="dropModulo($event)">
           @for (mod of modulos(); track mod.id) {
             <div class="hierarchy-card" cdkDrag cdkDragLockAxis="y">
-              <div class="drag-handle" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
+              <div class="drag-handle" [class.hidden]="expandedMods().has(mod.id)" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
               <div class="hierarchy-header mod-header" (click)="toggleMod(mod.id)">
                 <div class="hierarchy-left">
                   <app-icon-chevron-right [width]="14" [height]="14" [class.rotated]="expandedMods().has(mod.id)" />
@@ -57,9 +57,6 @@ import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/t
                     <div class="tiny dim">{{ mod.codigo }} · {{ mod.descripcion || 'Sin descripción' }}</div>
                   </div>
                 </div>
-                <span class="badge" [class.badge-green]="mod.estado === 'ACTIVO'" [class.badge-gray]="mod.estado !== 'ACTIVO'">
-                  {{ mod.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                </span>
               </div>
 
               @if (expandedMods().has(mod.id)) {
@@ -77,7 +74,7 @@ import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/t
                          (cdkDropListDropped)="dropPrograma($event, mod.codigo)">
                       @for (prg of getProgramas(mod.codigo); track prg.id) {
                         <div class="hierarchy-header prg-header" cdkDrag cdkDragLockAxis="y" (click)="togglePrg(prg.id)">
-                          <div class="drag-handle small" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
+                          <div class="drag-handle small" [class.hidden]="expandedPrgs().has(prg.id)" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
                           <div class="hierarchy-left">
                             <app-icon-chevron-right [width]="14" [height]="14" [class.rotated]="expandedPrgs().has(prg.id)" />
                             <div>
@@ -85,34 +82,34 @@ import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/t
                               <div class="tiny dim">{{ prg.codigo }} · {{ prg.descripcion || 'Sin descripción' }}</div>
                             </div>
                           </div>
-                          <span class="badge" [class.badge-green]="prg.estado === 'ACTIVO'" [class.badge-gray]="prg.estado !== 'ACTIVO'">
-                            {{ prg.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                          </span>
                         </div>
 
                         @if (expandedPrgs().has(prg.id)) {
-                          <!-- PERFILES -->
+                          <!-- CONTROLES -->
                           <div class="hierarchy-children">
-                            <div class="child-label">Perfiles <span class="muted">({{ getPerfiles(prg.codigo).length }})</span></div>
-                            @if (loadingPerfs()) {
+                            <div class="child-label">Controles <span class="muted">({{ getControles(prg.codigo).length }})</span></div>
+                            @if (loadingCtrls()) {
                               <div class="skeleton-row"></div>
-                            } @else if (getPerfiles(prg.codigo).length === 0) {
-                              <div class="empty-hint child">No hay perfiles en este programa.</div>
+                            } @else if (getControles(prg.codigo).length === 0) {
+                              <div class="empty-hint child">No hay controles en este programa.</div>
                             } @else {
-                              @for (perf of getPerfiles(prg.codigo); track perf.id) {
-                                <div class="hierarchy-header perf-header">
-                                  <div class="hierarchy-left">
-                                    <app-icon-lock [width]="14" [height]="14" />
-                                    <div>
-                                      <div class="cell-strong">{{ perf.nombre }}</div>
-                                      <div class="tiny dim">{{ perf.codigo }} · {{ perf.descripcion || 'Sin descripción' }}</div>
+                              <div class="controls-list"
+                                   cdkDropList
+                                   [cdkDropListData]="getControles(prg.codigo)"
+                                   (cdkDropListDropped)="dropControl($event, prg.codigo)">
+                                @for (ctrl of getControles(prg.codigo); track ctrl.id) {
+                                  <div class="hierarchy-header ctrl-header" cdkDrag cdkDragLockAxis="y">
+                                    <div class="drag-handle small" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
+                                    <div class="hierarchy-left">
+                                      <app-icon-settings [width]="14" [height]="14" />
+                                      <div>
+                                        <div class="cell-strong">{{ ctrl.descripcion }}</div>
+                                        <div class="tiny dim">{{ ctrl.tipoControl }} · {{ ctrl.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}</div>
+                                      </div>
                                     </div>
                                   </div>
-                                  <span class="badge" [class.badge-green]="perf.estado === 'ACTIVO'" [class.badge-gray]="perf.estado !== 'ACTIVO'">
-                                    {{ perf.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                                  </span>
-                                </div>
-                              }
+                                }
+                              </div>
                             }
                           </div>
                         }
@@ -190,6 +187,7 @@ import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/t
       display: flex;
       align-items: center;
       gap: 10px;
+      padding-left: 18px;
     }
     .hierarchy-left app-icon-chevron-right {
       transition: transform .2s;
@@ -237,11 +235,31 @@ import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/t
       background: transparent;
       margin-bottom: 4px;
     }
-    .perf-header {
+    .controls-list {
+      display: block;
+      min-height: 8px;
+    }
+    .ctrl-header {
+      display: block;
       border: 1px solid var(--border);
       border-radius: 8px;
       margin-bottom: 4px;
       background: #fafafa;
+      position: relative;
+      cursor: default;
+    }
+    .ctrl-header:last-child {
+      margin-bottom: 0;
+    }
+    .ctrl-header.cdk-drag-preview {
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      margin-bottom: 0;
+    }
+    .ctrl-header.cdk-drag-placeholder {
+      opacity: 0.35;
+      border-style: dashed;
+      background: transparent;
+      margin-bottom: 4px;
     }
     .empty-hint {
       padding: 10px 0;
@@ -290,21 +308,23 @@ import type { Aplicacion, Modulo, Programa, Perfil } from '../../shared/models/t
       box-shadow: none;
     }
     .hierarchy-card:hover .drag-handle,
-    .prg-header:hover .drag-handle {
+    .prg-header:hover .drag-handle,
+    .ctrl-header:hover .drag-handle {
       opacity: 0.65;
     }
     .drag-handle:active {
       cursor: grabbing;
+    }
+    .drag-handle.hidden {
+      display: none !important;
     }
     .drag-handle.small {
       left: 8px;
       width: 10px;
       height: 14px;
     }
-    .hierarchy-left {
-      padding-left: 18px;
-    }
-    .prg-header .hierarchy-left {
+    .prg-header .hierarchy-left,
+    .ctrl-header .hierarchy-left {
       padding-left: 16px;
     }
 
@@ -324,12 +344,12 @@ export class SolucionesComponent implements OnInit {
   app = signal<Aplicacion | null>(null);
   modulos = signal<Modulo[]>([]);
   programas = signal<Programa[]>([]);
-  perfiles = signal<Perfil[]>([]);
+  controles = signal<Control[]>([]);
 
   loading = signal(true);
   loadingMods = signal(false);
   loadingPrgs = signal(false);
-  loadingPerfs = signal(false);
+  loadingCtrls = signal(false);
 
   expandedMods = signal<Set<string>>(new Set());
   expandedPrgs = signal<Set<string>>(new Set());
@@ -386,19 +406,18 @@ export class SolucionesComponent implements OnInit {
       },
       error: () => this.loadingPrgs.set(false),
     });
-    this.loadPerfiles();
+    this.loadControles();
   }
 
-  private loadPerfiles(): void {
-    this.loadingPerfs.set(true);
-    this.api.listPerfiles().subscribe({
-      next: (perfs) => {
-        const modCodigos = this.modulos().map(m => m.codigo);
+  private loadControles(): void {
+    this.loadingCtrls.set(true);
+    this.api.listControles().subscribe({
+      next: (ctrls) => {
         const prgCodigos = this.programas().map(p => p.codigo);
-        this.perfiles.set(perfs.filter(p => p.programas.some(pp => prgCodigos.includes(pp.prgCodigo))));
-        this.loadingPerfs.set(false);
+        this.controles.set(ctrls.filter(c => prgCodigos.includes(c.prgCodigo)));
+        this.loadingCtrls.set(false);
       },
-      error: () => this.loadingPerfs.set(false),
+      error: () => this.loadingCtrls.set(false),
     });
   }
 
@@ -406,8 +425,8 @@ export class SolucionesComponent implements OnInit {
     return this.programas().filter(p => p.modCodigo === modCodigo);
   }
 
-  getPerfiles(prgCodigo: string): Perfil[] {
-    return this.perfiles().filter(p => p.programas.some(pp => pp.prgCodigo === prgCodigo));
+  getControles(prgCodigo: string): Control[] {
+    return this.controles().filter(c => c.prgCodigo === prgCodigo);
   }
 
   dropModulo(event: CdkDragDrop<Modulo[]>): void {
@@ -433,6 +452,21 @@ export class SolucionesComponent implements OnInit {
     const payload = reordered.map((p, idx) => ({ id: p.id, orden: idx }));
     this.api.reordenarProgramas(payload).subscribe({
       error: () => this.loadProgramas(),
+    });
+  }
+
+  dropControl(event: CdkDragDrop<Control[]>, prgCodigo: string): void {
+    const reordered = [...event.container.data];
+    moveItemInArray(reordered, event.previousIndex, event.currentIndex);
+
+    this.controles.update((all) => {
+      const otros = all.filter(c => c.prgCodigo !== prgCodigo);
+      return [...otros, ...reordered];
+    });
+
+    const payload = reordered.map((c, idx) => ({ id: c.id, orden: idx }));
+    this.api.reordenarControles(payload).subscribe({
+      error: () => this.loadControles(),
     });
   }
 

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DragDropModule, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop';
 import * as XLSX from 'xlsx';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { DialogModule } from 'primeng/dialog';
@@ -27,6 +28,7 @@ interface ControlRow {
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
   log: 'ACTIVO' | 'INACTIVO';
+  orden?: number;
 }
 
 interface PerfilProgramaRow {
@@ -45,7 +47,7 @@ interface PerfilProgramaRow {
   selector: 'app-security',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
+    CommonModule, FormsModule, DragDropModule, Tabs, TabList, Tab, TabPanels, TabPanel,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
@@ -553,9 +555,10 @@ interface PerfilProgramaRow {
       @if (prgForm.tipo !== 'Menú' && prgForm.tipo !== 'Submenú') {
         <div class="field">
           <label>Controles del Programa</label>
-          <div class="controles-list">
+          <div class="controles-list" cdkDropList (cdkDropListDropped)="dropControl($event)">
             @for (c of prgControles; track $index) {
-              <div class="control-row">
+              <div class="control-row" cdkDrag cdkDragLockAxis="y">
+                <div class="drag-handle small" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
                 <select class="select control-tipo" [(ngModel)]="c.tipoControl">
                   @for (t of tiposControl; track t) {
                     <option [value]="t">{{ t }}</option>
@@ -707,6 +710,65 @@ interface PerfilProgramaRow {
 
     <p-confirmDialog></p-confirmDialog>
   `,
+  styles: [`
+    .control-row {
+      position: relative;
+      padding-left: 28px;
+    }
+    .drag-handle {
+      position: absolute;
+      left: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 18px;
+      cursor: grab;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      opacity: 0.35;
+      transition: opacity .15s;
+    }
+    .drag-handle::before,
+    .drag-handle::after {
+      content: '';
+      display: block;
+      height: 2px;
+      background: currentColor;
+      border-radius: 1px;
+      box-shadow: 0 4px 0 currentColor, 0 8px 0 currentColor;
+    }
+    .drag-handle::after {
+      box-shadow: none;
+    }
+    .control-row:hover .drag-handle {
+      opacity: 0.65;
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    .drag-handle.small {
+      left: 8px;
+      width: 10px;
+      height: 14px;
+    }
+    .control-row.cdk-drag-preview {
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      background: var(--surface);
+      border-radius: 8px;
+    }
+    .control-row.cdk-drag-placeholder {
+      opacity: 0.35;
+      border-style: dashed;
+    }
+    .cdk-drop-list-dragging .cdk-drag {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+    .cdk-drag-animating {
+      transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
+    }
+  `],
 })
 export class SecurityComponent implements OnInit {
   private api = inject(ApiService);
@@ -1052,12 +1114,13 @@ export class SecurityComponent implements OnInit {
       this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, appCodigo: appCod, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado };
       this.prgAppCodigo.set(appCod);
       this.editPrgId = p.id;
-      const ctrls = this.controlesMap.get(p.codigo) || [];
+      const ctrls = (this.controlesMap.get(p.codigo) || []).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
       this.prgControles = ctrls.map(c => ({
         tipoControl: c.tipoControl,
         descripcion: c.descripcion,
         estado: c.estado,
-        log: c.log === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO'
+        log: c.log === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO',
+        orden: c.orden
       }));
     } else {
       this.prgForm = this.blankPrg();
@@ -1070,10 +1133,13 @@ export class SecurityComponent implements OnInit {
   closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; this.prgAppCodigo.set(''); }
   changePrgApp(): void { this.prgAppCodigo.set(this.prgForm.appCodigo); this.prgForm.modCodigo = ''; }
   addControl(): void {
-    this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO' });
+    this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: this.prgControles.length });
   }
   removeControl(idx: number): void {
     this.prgControles.splice(idx, 1);
+  }
+  dropControl(event: CdkDragDrop<ControlRow[]>): void {
+    moveItemInArray(this.prgControles, event.previousIndex, event.currentIndex);
   }
   async savePrg(): Promise<void> {
     if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.appCodigo || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre, aplicación y módulo son obligatorios.'); return; }

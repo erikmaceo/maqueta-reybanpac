@@ -427,12 +427,12 @@ interface PerfilProgramaRow {
     >
       <div class="form-grid">
         <div class="field">
-          <label>Código</label>
-          <input class="input" [(ngModel)]="appForm.codigo" placeholder="APP-SAP" />
+          <label>Código <span class="required">*</span></label>
+          <input class="input" [class.invalid]="appTouched && !appForm.codigo" [(ngModel)]="appForm.codigo" placeholder="APP-SAP" />
         </div>
         <div class="field">
-          <label>Nombre</label>
-          <input class="input" [(ngModel)]="appForm.nombre" placeholder="SAP ERP" />
+          <label>Nombre <span class="required">*</span></label>
+          <input class="input" [class.invalid]="appTouched && !appForm.nombre" [(ngModel)]="appForm.nombre" placeholder="SAP ERP" />
         </div>
       </div>
       <div class="field">
@@ -462,12 +462,12 @@ interface PerfilProgramaRow {
     >
       <div class="form-grid">
         <div class="field">
-          <label>Código</label>
-          <input class="input" [(ngModel)]="modForm.codigo" placeholder="MOD-FI" />
+          <label>Código <span class="required">*</span></label>
+          <input class="input" [class.invalid]="modTouched && !modForm.codigo" [(ngModel)]="modForm.codigo" placeholder="MOD-FI" />
         </div>
         <div class="field">
-          <label>Nombre</label>
-          <input class="input" [(ngModel)]="modForm.nombre" placeholder="Finanzas (FI)" />
+          <label>Nombre <span class="required">*</span></label>
+          <input class="input" [class.invalid]="modTouched && !modForm.nombre" [(ngModel)]="modForm.nombre" placeholder="Finanzas (FI)" />
         </div>
       </div>
       <div class="field">
@@ -506,17 +506,17 @@ interface PerfilProgramaRow {
     >
       <div class="form-grid">
         <div class="field">
-          <label>Código</label>
-          <input class="input" [(ngModel)]="prgForm.codigo" placeholder="PRG-FI-DOCS" />
+          <label>Código <span class="required">*</span></label>
+          <input class="input" [class.invalid]="prgTouched && !prgForm.codigo" [(ngModel)]="prgForm.codigo" placeholder="PRG-FI-DOCS" />
         </div>
         <div class="field">
-          <label>Nombre</label>
-          <input class="input" [(ngModel)]="prgForm.nombre" placeholder="Documentos contables" />
+          <label>Nombre <span class="required">*</span></label>
+          <input class="input" [class.invalid]="prgTouched && !prgForm.nombre" [(ngModel)]="prgForm.nombre" placeholder="Documentos contables" />
         </div>
       </div>
       <div class="field">
-        <label>Aplicación</label>
-        <select class="select" [(ngModel)]="prgForm.appCodigo" (ngModelChange)="changePrgApp()">
+        <label>Aplicación <span class="required">*</span></label>
+        <select class="select" [class.invalid]="prgTouched && !prgForm.appCodigo" [(ngModel)]="prgForm.appCodigo" (ngModelChange)="changePrgApp()">
           <option value="">— Seleccione —</option>
           @for (a of aplicaciones(); track a.id) {
             <option [value]="a.codigo">{{ a.codigo }} · {{ a.nombre }}</option>
@@ -524,8 +524,8 @@ interface PerfilProgramaRow {
         </select>
       </div>
       <div class="field">
-        <label>Módulo</label>
-        <select class="select" [(ngModel)]="prgForm.modCodigo">
+        <label>Módulo <span class="required">*</span></label>
+        <select class="select" [class.invalid]="prgTouched && !prgForm.modCodigo" [(ngModel)]="prgForm.modCodigo">
           <option value="">— Seleccione —</option>
           @for (m of filteredModsForPrg(); track m.id) {
             <option [value]="m.codigo">{{ m.codigo }} · {{ m.nombre }}</option>
@@ -533,8 +533,9 @@ interface PerfilProgramaRow {
         </select>
       </div>
       <div class="field">
-        <label>Tipo de Programa</label>
-        <select class="select" [(ngModel)]="prgForm.tipo">
+        <label>Tipo de Programa <span class="required">*</span></label>
+        <select class="select" [class.invalid]="prgTouched && !prgForm.tipo" [(ngModel)]="prgForm.tipo">
+          <option value="">— Seleccione —</option>
           @for (tipo of tiposPrograma; track tipo) {
             <option [value]="tipo">{{ tipo }}</option>
           }
@@ -552,7 +553,7 @@ interface PerfilProgramaRow {
           <option value="INACTIVO">Inactivo</option>
         </select>
       </div>
-      @if (prgForm.tipo !== 'Menú' && prgForm.tipo !== 'Submenú') {
+      @if (prgForm.tipo && prgForm.tipo !== 'Menú' && prgForm.tipo !== 'Submenú') {
         <div class="field">
           <label>Controles del Programa</label>
           <div class="controles-list" cdkDropList (cdkDropListDropped)="dropControl($event)">
@@ -601,12 +602,12 @@ interface PerfilProgramaRow {
     >
       <div class="form-grid">
         <div class="field">
-          <label>Código</label>
-          <input class="input" [(ngModel)]="perfForm.codigo" placeholder="PERF-FI-VIS" />
+          <label>Código <span class="required">*</span></label>
+          <input class="input" [class.invalid]="perfTouched && !perfForm.codigo" [(ngModel)]="perfForm.codigo" placeholder="PERF-FI-VIS" />
         </div>
         <div class="field">
-          <label>Nombre</label>
-          <input class="input" [(ngModel)]="perfForm.nombre" placeholder="FI Visualizador" />
+          <label>Nombre <span class="required">*</span></label>
+          <input class="input" [class.invalid]="perfTouched && !perfForm.nombre" [(ngModel)]="perfForm.nombre" placeholder="FI Visualizador" />
         </div>
       </div>
       <div class="field">
@@ -768,6 +769,18 @@ interface PerfilProgramaRow {
     .cdk-drag-animating {
       transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
     }
+    .required {
+      color: var(--red-600, #c8102e);
+      font-weight: bold;
+    }
+    .input.invalid {
+      border-color: var(--red-600, #c8102e);
+      background-color: var(--red-50, #fef2f2);
+    }
+    .select.invalid {
+      border-color: var(--red-600, #c8102e);
+      background-color: var(--red-50, #fef2f2);
+    }
   `],
 })
 export class SecurityComponent implements OnInit {
@@ -791,10 +804,10 @@ export class SecurityComponent implements OnInit {
   errorPerf = signal<string | null>(null);
 
   // --- Diálogos ---
-  showAppDlg = false; editAppId: string | null = null;
-  showModDlg = false; editModId: string | null = null;
-  showPrgDlg = false; editPrgId: string | null = null;
-  showPerfDlg = false; editPerfId: string | null = null;
+  showAppDlg = false; editAppId: string | null = null; appTouched = false;
+  showModDlg = false; editModId: string | null = null; modTouched = false;
+  showPrgDlg = false; editPrgId: string | null = null; prgTouched = false;
+  showPerfDlg = false; editPerfId: string | null = null; perfTouched = false;
 
   // --- Filtros de búsqueda ---
   searchApp = signal('');
@@ -1048,7 +1061,7 @@ export class SecurityComponent implements OnInit {
   // ============ FORMS BLANK ============
   blankApp() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
   blankMod() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', estado: 'ACTIVO' as Estado }; }
-  blankPrg() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', modCodigo: '', tipo: 'Transacción' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
+  blankPrg() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', modCodigo: '', tipo: '' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
   blankPerf() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
   perfProgramas: PerfilProgramaRow[] = [];
 
@@ -1056,10 +1069,12 @@ export class SecurityComponent implements OnInit {
   openAppDialog(a?: Aplicacion): void {
     if (a) { this.appForm = { codigo: a.codigo, nombre: a.nombre, descripcion: a.descripcion, estado: a.estado }; this.editAppId = a.id; }
     else { this.appForm = this.blankApp(); this.editAppId = null; }
+    this.appTouched = false;
     this.showAppDlg = true;
   }
-  closeAppDialog(): void { this.showAppDlg = false; this.editAppId = null; }
+  closeAppDialog(): void { this.showAppDlg = false; this.editAppId = null; this.appTouched = false; }
   async saveApp(): Promise<void> {
+    this.appTouched = true;
     if (!this.appForm.codigo || !this.appForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
     try {
       if (this.editAppId) { await this.api.updateAplicacion(this.editAppId, this.appForm).toPromise(); this.toast.success('Aplicación actualizada'); }
@@ -1083,10 +1098,12 @@ export class SecurityComponent implements OnInit {
   openModDialog(m?: Modulo): void {
     if (m) { this.modForm = { codigo: m.codigo, nombre: m.nombre, descripcion: m.descripcion, appCodigo: m.appCodigo, estado: m.estado }; this.editModId = m.id; }
     else { this.modForm = this.blankMod(); this.editModId = null; }
+    this.modTouched = false;
     this.showModDlg = true;
   }
-  closeModDialog(): void { this.showModDlg = false; this.editModId = null; }
+  closeModDialog(): void { this.showModDlg = false; this.editModId = null; this.modTouched = false; }
   async saveMod(): Promise<void> {
+    this.modTouched = true;
     if (!this.modForm.codigo || !this.modForm.nombre || !this.modForm.appCodigo) { this.toast.error('Faltan datos', 'Código, nombre y aplicación son obligatorios.'); return; }
     try {
       if (this.editModId) { await this.api.updateModulo(this.editModId, this.modForm).toPromise(); this.toast.success('Módulo actualizado'); }
@@ -1128,9 +1145,10 @@ export class SecurityComponent implements OnInit {
       this.editPrgId = null;
       this.prgControles = [];
     }
+    this.prgTouched = false;
     this.showPrgDlg = true;
   }
-  closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; this.prgAppCodigo.set(''); }
+  closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; this.prgAppCodigo.set(''); this.prgTouched = false; }
   changePrgApp(): void { this.prgAppCodigo.set(this.prgForm.appCodigo); this.prgForm.modCodigo = ''; }
   addControl(): void {
     this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: this.prgControles.length });
@@ -1142,6 +1160,7 @@ export class SecurityComponent implements OnInit {
     moveItemInArray(this.prgControles, event.previousIndex, event.currentIndex);
   }
   async savePrg(): Promise<void> {
+    this.prgTouched = true;
     if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.appCodigo || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre, aplicación y módulo son obligatorios.'); return; }
     const controles = this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú'
       ? this.prgControles.filter(c => c.descripcion.trim() !== '')
@@ -1180,9 +1199,10 @@ export class SecurityComponent implements OnInit {
       this.editPerfId = null;
       this.perfProgramas = [];
     }
+    this.perfTouched = false;
     this.showPerfDlg = true;
   }
-  closePerfDialog(): void { this.showPerfDlg = false; this.editPerfId = null; this.perfProgramas = []; }
+  closePerfDialog(): void { this.showPerfDlg = false; this.editPerfId = null; this.perfProgramas = []; this.perfTouched = false; }
   addPerfPrograma(): void {
     this.perfProgramas.push({ appCodigo: '', modCodigo: '', prgCodigo: '', nuevo: false, modificar: false, anular: false, procesar: false, imprimir: false, consultar: false });
   }
@@ -1210,6 +1230,7 @@ export class SecurityComponent implements OnInit {
     this.perfProgramas[idx].prgCodigo = '';
   }
   async savePerf(): Promise<void> {
+    this.perfTouched = true;
     const programasValidos = this.perfProgramas.filter(pp => pp.prgCodigo.trim() !== '');
     if (!this.perfForm.codigo || !this.perfForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
     if (!programasValidos.length) { this.toast.error('Faltan datos', 'Debe agregar al menos un programa.'); return; }

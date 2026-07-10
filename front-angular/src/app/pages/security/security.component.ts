@@ -24,7 +24,7 @@ const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transac
 const TIPOS_CONTROL: TipoControl[] = ['Caja de Texto', 'Botón', 'Check', 'Combo', 'Grid', 'Option', 'Otros'];
 
 interface ControlRow {
-  tipoControl: TipoControl;
+  tipoControl: TipoControl | '';
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
   log: 'ACTIVO' | 'INACTIVO';
@@ -560,12 +560,13 @@ interface PerfilProgramaRow {
             @for (c of prgControles; track $index) {
               <div class="control-row" cdkDrag cdkDragLockAxis="y">
                 <div class="drag-handle small" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
-                <select class="select control-tipo" [(ngModel)]="c.tipoControl">
+                <select class="select control-tipo" [class.invalid]="prgTouched && !c.tipoControl" [(ngModel)]="c.tipoControl">
+                  <option value="">— Seleccione —</option>
                   @for (t of tiposControl; track t) {
                     <option [value]="t">{{ t }}</option>
                   }
                 </select>
-                <input class="input control-desc" [(ngModel)]="c.descripcion" placeholder="Descripción del control" />
+                <input class="input control-desc" [class.invalid]="prgTouched && !c.descripcion" [(ngModel)]="c.descripcion" placeholder="Descripción del control *" />
                 <label class="control-check">
                   <input type="checkbox" [checked]="c.estado === 'ACTIVO'"
                     (change)="c.estado = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
@@ -778,6 +779,11 @@ interface PerfilProgramaRow {
       background-color: var(--red-50, #fef2f2);
     }
     .select.invalid {
+      border-color: var(--red-600, #c8102e);
+      background-color: var(--red-50, #fef2f2);
+    }
+    .control-tipo.invalid,
+    .control-desc.invalid {
       border-color: var(--red-600, #c8102e);
       background-color: var(--red-50, #fef2f2);
     }
@@ -1151,7 +1157,7 @@ export class SecurityComponent implements OnInit {
   closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; this.prgAppCodigo.set(''); this.prgTouched = false; }
   changePrgApp(): void { this.prgAppCodigo.set(this.prgForm.appCodigo); this.prgForm.modCodigo = ''; }
   addControl(): void {
-    this.prgControles.push({ tipoControl: 'Caja de Texto', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: this.prgControles.length });
+    this.prgControles.push({ tipoControl: '', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: this.prgControles.length });
   }
   removeControl(idx: number): void {
     this.prgControles.splice(idx, 1);
@@ -1163,8 +1169,11 @@ export class SecurityComponent implements OnInit {
     this.prgTouched = true;
     if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.appCodigo || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre, aplicación y módulo son obligatorios.'); return; }
     const controles = this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú'
-      ? this.prgControles.filter(c => c.descripcion.trim() !== '')
+      ? this.prgControles.filter(c => c.descripcion.trim() !== '' && c.tipoControl)
       : [];
+    if (this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú' && this.prgControles.length > 0 && controles.length !== this.prgControles.length) {
+      this.toast.error('Faltan datos', 'Todos los controles deben tener tipo y descripción.'); return;
+    }
     try {
       const body: any = { ...this.prgForm, controles };
       if (this.editPrgId) { await this.api.updatePrograma(this.editPrgId, body).toPromise(); this.toast.success('Programa actualizado'); }

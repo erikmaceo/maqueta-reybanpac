@@ -402,6 +402,8 @@ interface PerfilProgramaRow {
                           <th>Código</th>
                           <th>Tipo de Control</th>
                           <th>Descripción del Control</th>
+                          <th style="text-align:center;width:90px;">Visualizar</th>
+                          <th style="text-align:center;width:90px;">Modificar</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -411,9 +413,11 @@ interface PerfilProgramaRow {
                             <td class="mono">{{ c.codigo }}</td>
                             <td><span class="badge badge-blue">{{ c.tipoControl }}</span></td>
                             <td>{{ c.descripcion }}</td>
+                            <td style="text-align:center;"><span [class.check-yes]="c.visualizar" [class.check-no]="!c.visualizar">{{ c.visualizar ? '✓' : '—' }}</span></td>
+                            <td style="text-align:center;"><span [class.check-yes]="c.modificar" [class.check-no]="!c.modificar">{{ c.modificar ? '✓' : '—' }}</span></td>
                           </tr>
                         } @empty {
-                          <tr><td colspan="4" class="muted center" style="padding: 24px;">No hay controles asociados a los programas de este perfil.</td></tr>
+                          <tr><td colspan="6" class="muted center" style="padding: 24px;">No hay controles asociados a los programas de este perfil.</td></tr>
                         }
                       </tbody>
                     </table>
@@ -444,7 +448,7 @@ interface PerfilProgramaRow {
                 <tr>
                   <th>Código</th>
                   <th>Nombre</th>
-                  <th>Programa</th>
+                  <th>Descripcion del perfil</th>
                   <th>Estado</th>
                   <th></th>
                 </tr>
@@ -455,15 +459,8 @@ interface PerfilProgramaRow {
                     <td class="mono">{{ p.codigo }}</td>
                     <td>
                       <a class="perfil-link" (click)="openPerfilDetail(p)">{{ p.nombre }}</a>
-                      <div class="tiny dim">{{ p.descripcion }}</div>
                     </td>
-                    <td>
-                      <div class="perf-prgs">
-                        @for (pp of p.programas; track pp.prgCodigo) {
-                          <span class="badge badge-blue">{{ pp.prgCodigo }}</span>
-                        }
-                      </div>
-                    </td>
+                    <td class="desc-col">{{ p.descripcion }}</td>
                     <td>
                       <span class="badge" [class.badge-green]="p.estado === 'ACTIVO'" [class.badge-gray]="p.estado !== 'ACTIVO'">
                         {{ p.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
@@ -1029,7 +1026,6 @@ interface PerfilProgramaRow {
     }
     .perm-info-label {
       font-size: 0.7rem;
-      text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--muted, #6b7280);
       font-weight: 600;
@@ -1046,7 +1042,6 @@ interface PerfilProgramaRow {
     .perm-section-title {
       font-size: 0.8rem;
       font-weight: 700;
-      text-transform: uppercase;
       letter-spacing: 0.04em;
       color: var(--muted, #6b7280);
       margin-bottom: 10px;
@@ -1068,6 +1063,8 @@ interface PerfilProgramaRow {
       height: 16px;
       cursor: pointer;
     }
+    .check-yes { color: #22c55e; font-weight: 700; }
+    .check-no { color: #d1d5db; }
   `],
 })
 export class SecurityComponent implements OnInit {
@@ -1104,11 +1101,20 @@ export class SecurityComponent implements OnInit {
   perfilDetalleControles = computed(() => {
     const perf = this.selectedPerfil();
     if (!perf) return [];
-    const result: { prgCodigo: string; codigo: string; tipoControl: string; descripcion: string }[] = [];
+    const result: { prgCodigo: string; codigo: string; tipoControl: string; descripcion: string; visualizar: boolean; modificar: boolean }[] = [];
     for (const pp of perf.programas) {
       const ctrls = this.controlesMap().get(pp.prgCodigo) || [];
       for (const c of ctrls) {
-        result.push({ prgCodigo: pp.prgCodigo, codigo: c.codigo, tipoControl: c.tipoControl, descripcion: c.descripcion });
+        const ctrlIndex = ctrls.indexOf(c);
+        const perfilCtrl = pp.controles?.find(pc => pc.ctrlIndex === ctrlIndex);
+        result.push({
+          prgCodigo: pp.prgCodigo,
+          codigo: c.codigo,
+          tipoControl: c.tipoControl,
+          descripcion: c.descripcion,
+          visualizar: perfilCtrl?.visualizar ?? false,
+          modificar: perfilCtrl?.modificar ?? false,
+        });
       }
     }
     return result;

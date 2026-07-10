@@ -1651,3 +1651,10 @@ textarea.input {
   flex-wrap: wrap;
   gap: 4px;
 }
+
+.desc-col {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

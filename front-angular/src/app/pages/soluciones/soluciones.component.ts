@@ -103,7 +103,7 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
                                     <div class="hierarchy-left">
                                       <app-icon-settings [width]="14" [height]="14" />
                                       <div>
-                                        <div class="cell-strong">{{ ctrl.descripcion }}</div>
+                                        <div class="cell-strong">{{ ctrl.codigo }} · {{ ctrl.descripcion }}</div>
                                         <div class="tiny dim">{{ ctrl.tipoControl }} · {{ ctrl.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}</div>
                                       </div>
                                     </div>

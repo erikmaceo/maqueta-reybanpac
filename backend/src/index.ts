@@ -732,6 +732,7 @@ app.post('/api/seg-programas', requireAuth, requireGlobalAdmin, (req, res) => {
       const ctrl: Control = {
         id: newId('seg_ctrl'),
         prgCodigo: codigo,
+        codigo: c.codigo || '',
         tipoControl: c.tipoControl || 'Otros',
         descripcion: c.descripcion || '',
         estado: c.estado || 'ACTIVO',
@@ -770,6 +771,7 @@ app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) =>
       const ctrl: Control = {
         id: newId('seg_ctrl'),
         prgCodigo: prg.codigo,
+        codigo: c.codigo || '',
         tipoControl: c.tipoControl || 'Otros',
         descripcion: c.descripcion || '',
         estado: c.estado || 'ACTIVO',

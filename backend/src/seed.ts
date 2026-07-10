@@ -414,15 +414,15 @@ export const perfiles: Perfil[] = [
 ];
 
 export const controles: Control[] = [
-  { id: 'seg_ctrl_1', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Caja de Texto', descripcion: 'Número de documento', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(70) },
-  { id: 'seg_ctrl_2', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Botón', descripcion: 'Buscar documento', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(70) },
-  { id: 'seg_ctrl_3', prgCodigo: 'PRG-FI-DOCS', tipoControl: 'Grid', descripcion: 'Resultados de búsqueda', estado: 'ACTIVO', log: 'ACTIVO', orden: 2, createdAt: iso(70) },
-  { id: 'seg_ctrl_4', prgCodigo: 'PRG-MM-PED', tipoControl: 'Combo', descripcion: 'Seleccionar proveedor', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(72) },
-  { id: 'seg_ctrl_5', prgCodigo: 'PRG-MM-PED', tipoControl: 'Botón', descripcion: 'Crear pedido', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(72) },
-  { id: 'seg_ctrl_6', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Option', descripcion: 'Seleccionar ambiente (DEV/QAS/PROD)', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(65) },
-  { id: 'seg_ctrl_7', prgCodigo: 'PRG-KS8-DEP', tipoControl: 'Grid', descripcion: 'Lista de deployments', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(65) },
-  { id: 'seg_ctrl_8', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Botón', descripcion: 'Ejecutar bot', estado: 'ACTIVO', log: 'INACTIVO', orden: 0, createdAt: iso(55) },
-  { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', log: 'INACTIVO', orden: 1, createdAt: iso(55) },
+  { id: 'seg_ctrl_1', prgCodigo: 'PRG-FI-DOCS', codigo: 'CTRL-DOC-NUM', tipoControl: 'Caja de Texto', descripcion: 'Número de documento', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(70) },
+  { id: 'seg_ctrl_2', prgCodigo: 'PRG-FI-DOCS', codigo: 'CTRL-DOC-BUS', tipoControl: 'Botón', descripcion: 'Buscar documento', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(70) },
+  { id: 'seg_ctrl_3', prgCodigo: 'PRG-FI-DOCS', codigo: 'CTRL-DOC-GRD', tipoControl: 'Grid', descripcion: 'Resultados de búsqueda', estado: 'ACTIVO', log: 'ACTIVO', orden: 2, createdAt: iso(70) },
+  { id: 'seg_ctrl_4', prgCodigo: 'PRG-MM-PED', codigo: 'CTRL-PED-PRV', tipoControl: 'Combo', descripcion: 'Seleccionar proveedor', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(72) },
+  { id: 'seg_ctrl_5', prgCodigo: 'PRG-MM-PED', codigo: 'CTRL-PED-CRE', tipoControl: 'Botón', descripcion: 'Crear pedido', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(72) },
+  { id: 'seg_ctrl_6', prgCodigo: 'PRG-KS8-DEP', codigo: 'CTRL-DEP-AMB', tipoControl: 'Option', descripcion: 'Seleccionar ambiente (DEV/QAS/PROD)', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(65) },
+  { id: 'seg_ctrl_7', prgCodigo: 'PRG-KS8-DEP', codigo: 'CTRL-DEP-LST', tipoControl: 'Grid', descripcion: 'Lista de deployments', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(65) },
+  { id: 'seg_ctrl_8', prgCodigo: 'PRG-RPA-LAUNCH', codigo: 'CTRL-RPA-EJE', tipoControl: 'Botón', descripcion: 'Ejecutar bot', estado: 'ACTIVO', log: 'INACTIVO', orden: 0, createdAt: iso(55) },
+  { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', codigo: 'CTRL-RPA-LOG', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', log: 'INACTIVO', orden: 1, createdAt: iso(55) },
 ];
 
 // --- Configuración: Empresas ------------------------------------------------

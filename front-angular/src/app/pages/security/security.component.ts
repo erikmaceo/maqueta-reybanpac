@@ -24,6 +24,7 @@ const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transac
 const TIPOS_CONTROL: TipoControl[] = ['Caja de Texto', 'Botón', 'Check', 'Combo', 'Grid', 'Option', 'Otros'];
 
 interface ControlRow {
+  codigo: string;
   tipoControl: TipoControl | '';
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
@@ -331,6 +332,96 @@ interface PerfilProgramaRow {
           <app-table-skeleton [rows]="5" [cols]="5" />
         } @else if (errorPerf()) {
           <app-error-state [message]="errorPerf()!" [onRetry]="loadPerfiles" />
+        } @else if (selectedPerfil(); as perf) {
+          <div class="perfil-detail">
+            <div class="perfil-detail-header">
+              <div>
+                <h2 style="margin:8px 0 2px;">{{ perf.nombre }}</h2>
+                <span class="muted small">{{ perf.codigo }} · {{ perf.descripcion }}</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" (click)="backToPerfiles()">
+                <i class="pi pi-arrow-left mr-1"></i> Volver a Perfiles
+              </button>
+            </div>
+            <p-tabs value="0">
+              <p-tablist>
+                <p-tab value="0"><i class="pi pi-th-large mr-2"></i>Programas por perfil</p-tab>
+                <p-tab value="1"><i class="pi pi-lock mr-2"></i>Controles por perfil</p-tab>
+              </p-tablist>
+              <p-tabpanels>
+                <p-tabpanel value="0">
+                  <div class="card table-wrap">
+                    <table class="data">
+                      <thead>
+                        <tr>
+                          <th>Código de Programa</th>
+                          <th>Nombre</th>
+                          <th>Tipo de Programa</th>
+                          <th>Nuevo</th>
+                          <th>Modificar</th>
+                          <th>Anular</th>
+                          <th>Procesar</th>
+                          <th>Imprimir</th>
+                          <th>Consultar</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (pp of perfilDetalleProgramas(); track pp.prgCodigo) {
+                          <tr>
+                            <td class="mono">{{ pp.prgCodigo }}</td>
+                            <td><div class="cell-strong">{{ pp.prgNombre }}</div></td>
+                            <td><span class="badge badge-blue">{{ pp.tipo }}</span></td>
+                            <td><span class="badge" [class.badge-green]="pp.nuevo" [class.badge-gray]="!pp.nuevo">{{ pp.nuevo ? 'Sí' : 'No' }}</span></td>
+                            <td><span class="badge" [class.badge-green]="pp.modificar" [class.badge-gray]="!pp.modificar">{{ pp.modificar ? 'Sí' : 'No' }}</span></td>
+                            <td><span class="badge" [class.badge-green]="pp.anular" [class.badge-gray]="!pp.anular">{{ pp.anular ? 'Sí' : 'No' }}</span></td>
+                            <td><span class="badge" [class.badge-green]="pp.procesar" [class.badge-gray]="!pp.procesar">{{ pp.procesar ? 'Sí' : 'No' }}</span></td>
+                            <td><span class="badge" [class.badge-green]="pp.imprimir" [class.badge-gray]="!pp.imprimir">{{ pp.imprimir ? 'Sí' : 'No' }}</span></td>
+                            <td><span class="badge" [class.badge-green]="pp.consultar" [class.badge-gray]="!pp.consultar">{{ pp.consultar ? 'Sí' : 'No' }}</span></td>
+                            <td>
+                              <div class="cell-actions">
+                                <button class="btn btn-ghost btn-sm btn-icon" title="Editar permisos" (click)="openPermDialog(pp.prgCodigo)">
+                                  <app-icon-edit [width]="15" [height]="15" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        } @empty {
+                          <tr><td colspan="10" class="muted center" style="padding: 24px;">Este perfil no tiene programas asociados.</td></tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </p-tabpanel>
+                <p-tabpanel value="1">
+                  <div class="card table-wrap">
+                    <table class="data">
+                      <thead>
+                        <tr>
+                          <th>Código de Programa</th>
+                          <th>Código</th>
+                          <th>Tipo de Control</th>
+                          <th>Descripción del Control</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (c of perfilDetalleControles(); track $index) {
+                          <tr>
+                            <td class="mono">{{ c.prgCodigo }}</td>
+                            <td class="mono">{{ c.codigo }}</td>
+                            <td><span class="badge badge-blue">{{ c.tipoControl }}</span></td>
+                            <td>{{ c.descripcion }}</td>
+                          </tr>
+                        } @empty {
+                          <tr><td colspan="4" class="muted center" style="padding: 24px;">No hay controles asociados a los programas de este perfil.</td></tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </p-tabpanel>
+              </p-tabpanels>
+            </p-tabs>
+          </div>
         } @else {
           <div class="row between mb-4">
             <div class="search">
@@ -362,7 +453,10 @@ interface PerfilProgramaRow {
                 @for (p of paginatedPerfs(); track p.id) {
                   <tr>
                     <td class="mono">{{ p.codigo }}</td>
-                    <td><div class="cell-strong">{{ p.nombre }}</div><div class="tiny dim">{{ p.descripcion }}</div></td>
+                    <td>
+                      <a class="perfil-link" (click)="openPerfilDetail(p)">{{ p.nombre }}</a>
+                      <div class="tiny dim">{{ p.descripcion }}</div>
+                    </td>
                     <td>
                       <div class="perf-prgs">
                         @for (pp of p.programas; track pp.prgCodigo) {
@@ -560,26 +654,31 @@ interface PerfilProgramaRow {
             @for (c of prgControles; track $index) {
               <div class="control-row" cdkDrag cdkDragLockAxis="y">
                 <div class="drag-handle small" title="Arrastrar para reordenar" (click)="$event.stopPropagation()"></div>
-                <select class="select control-tipo" [class.invalid]="prgTouched && !c.tipoControl" [(ngModel)]="c.tipoControl">
-                  <option value="">— Seleccione —</option>
-                  @for (t of tiposControl; track t) {
-                    <option [value]="t">{{ t }}</option>
-                  }
-                </select>
-                <input class="input control-desc" [class.invalid]="prgTouched && !c.descripcion" [(ngModel)]="c.descripcion" placeholder="Descripción del control *" />
-                <label class="control-check">
-                  <input type="checkbox" [checked]="c.estado === 'ACTIVO'"
-                    (change)="c.estado = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
-                  <span>{{ c.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}</span>
-                </label>
-                <label class="control-check">
-                  <input type="checkbox" [checked]="c.log === 'ACTIVO'"
-                    (change)="c.log = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
-                  <span>Log</span>
-                </label>
-                <button class="btn btn-danger btn-sm btn-icon" title="Quitar control" (click)="removeControl($index)">
+                <button class="btn btn-danger btn-sm btn-icon control-delete" title="Quitar control" (click)="removeControl($index)">
                   <app-icon-trash [width]="14" [height]="14" />
                 </button>
+                <div class="control-row-content">
+                  <div class="control-row-top">
+                    <input class="input control-codigo" [class.invalid]="prgTouched && !c.codigo" [(ngModel)]="c.codigo" placeholder="Código *" />
+                    <select class="select control-tipo" [class.invalid]="prgTouched && !c.tipoControl" [(ngModel)]="c.tipoControl">
+                      <option value="">— Seleccione —</option>
+                      @for (t of tiposControl; track t) {
+                        <option [value]="t">{{ t }}</option>
+                      }
+                    </select>
+                    <label class="control-check">
+                      <input type="checkbox" [checked]="c.estado === 'ACTIVO'"
+                        (change)="c.estado = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
+                      <span>{{ c.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}</span>
+                    </label>
+                    <label class="control-check">
+                      <input type="checkbox" [checked]="c.log === 'ACTIVO'"
+                        (change)="c.log = $any($event.target).checked ? 'ACTIVO' : 'INACTIVO'" />
+                      <span>Log</span>
+                    </label>
+                  </div>
+                  <input class="input control-desc-full" [class.invalid]="prgTouched && !c.descripcion" [(ngModel)]="c.descripcion" placeholder="Descripción del control *" />
+                </div>
               </div>
             }
           </div>
@@ -710,12 +809,104 @@ interface PerfilProgramaRow {
       </ng-template>
     </p-dialog>
 
+    <!-- ============ DIÁLOGO PERMISOS POR PROGRAMA ============ -->
+    <p-dialog
+      [(visible)]="showPermDlg"
+      [header]="'Permisos del Programa'"
+      [modal]="true" [style]="{ width: '640px' }" [closable]="true"
+      (onHide)="closePermDialog()"
+    >
+      <!-- Info general -->
+      <div class="perm-info-grid">
+        <div class="perm-info-item">
+          <span class="perm-info-label">Cod. Perfil</span>
+          <span class="perm-info-value mono">{{ selectedPerfil()?.codigo }}</span>
+        </div>
+        <div class="perm-info-item">
+          <span class="perm-info-label">Nombre del Perfil</span>
+          <span class="perm-info-value">{{ selectedPerfil()?.nombre }}</span>
+        </div>
+        <div class="perm-info-item">
+          <span class="perm-info-label">Cod. Programa</span>
+          <span class="perm-info-value mono">{{ editingPrgCodigo }}</span>
+        </div>
+        <div class="perm-info-item">
+          <span class="perm-info-label">Nombre del Programa</span>
+          <span class="perm-info-value">{{ editingPrgNombre }}</span>
+        </div>
+      </div>
+
+      <hr class="perm-divider" />
+
+      <!-- Permisos del programa -->
+      <div class="perm-section-title">Permisos del Programa</div>
+      <div class="perm-grid">
+        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.nuevo" /><span>Nuevo</span></label>
+        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.modificar" /><span>Modificar</span></label>
+        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.anular" /><span>Anular</span></label>
+        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.procesar" /><span>Procesar</span></label>
+        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.imprimir" /><span>Imprimir</span></label>
+        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.consultar" /><span>Consultar</span></label>
+      </div>
+
+      <hr class="perm-divider" />
+
+      <!-- Controles del programa -->
+      <div class="perm-section-title">Controles del Programa</div>
+      @if (permControles.length) {
+        <div class="card table-wrap" style="margin-top:8px;">
+          <table class="data" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Tipo de Control</th>
+                <th>Descripción</th>
+                <th style="text-align:center;width:90px;">Visualizar</th>
+                <th style="text-align:center;width:90px;">Modificar</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of permControles; track $index) {
+                <tr>
+                  <td class="mono">{{ c.codigo }}</td>
+                  <td><span class="badge badge-blue">{{ c.tipoControl }}</span></td>
+                  <td>{{ c.descripcion }}</td>
+                  <td style="text-align:center;"><input type="checkbox" [(ngModel)]="c.visualizar" style="width:16px;height:16px;cursor:pointer;" /></td>
+                  <td style="text-align:center;"><input type="checkbox" [(ngModel)]="c.modificar" style="width:16px;height:16px;cursor:pointer;" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="muted small" style="margin-top:8px;">Este programa no tiene controles registrados.</p>
+      }
+
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closePermDialog()">Cancelar</button>
+        <button class="btn btn-primary" (click)="savePermDialog()">Guardar</button>
+      </ng-template>
+    </p-dialog>
+
     <p-confirmDialog></p-confirmDialog>
   `,
   styles: [`
     .control-row {
       position: relative;
       padding-left: 28px;
+      padding-right: 28px;
+      display: flex;
+      flex-direction: column;
+    }
+    .control-delete {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .control-row-content {
+      width: 100%;
     }
     .drag-handle {
       position: absolute;
@@ -783,9 +974,99 @@ interface PerfilProgramaRow {
       background-color: var(--red-50, #fef2f2);
     }
     .control-tipo.invalid,
-    .control-desc.invalid {
+    .control-desc-full.invalid,
+    .control-codigo.invalid {
       border-color: var(--red-600, #c8102e);
       background-color: var(--red-50, #fef2f2);
+    }
+    .control-codigo {
+      width: 140px;
+      flex-shrink: 0;
+    }
+    .control-row-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .control-desc-full {
+      width: calc(100% - 32px);
+      margin-top: 6px;
+      box-sizing: border-box;
+    }
+    .perfil-link {
+      color: var(--primary, #2563eb);
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .perfil-link:hover {
+      text-decoration: underline;
+    }
+    .perfil-detail {
+      padding: 0;
+    }
+    .perfil-detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .perfil-detail-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .perm-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .perm-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .perm-info-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted, #6b7280);
+      font-weight: 600;
+    }
+    .perm-info-value {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .perm-divider {
+      border: none;
+      border-top: 1px solid var(--border, #e5e7eb);
+      margin: 16px 0;
+    }
+    .perm-section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted, #6b7280);
+      margin-bottom: 10px;
+    }
+    .perm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .perm-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .perm-check input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
     }
   `],
 })
@@ -799,6 +1080,39 @@ export class SecurityComponent implements OnInit {
   modulos = signal<Modulo[]>([]);
   programas = signal<Programa[]>([]);
   perfiles = signal<Perfil[]>([]);
+  selectedPerfil = signal<Perfil | null>(null);
+
+  perfilDetalleProgramas = computed(() => {
+    const perf = this.selectedPerfil();
+    if (!perf) return [];
+    return perf.programas.map(pp => {
+      const prg = this.programas().find(p => p.codigo === pp.prgCodigo);
+      return {
+        prgCodigo: pp.prgCodigo,
+        prgNombre: prg?.nombre || '',
+        tipo: prg?.tipo || '',
+        nuevo: pp.nuevo,
+        modificar: pp.modificar,
+        anular: pp.anular,
+        procesar: pp.procesar,
+        imprimir: pp.imprimir,
+        consultar: pp.consultar,
+      };
+    });
+  });
+
+  perfilDetalleControles = computed(() => {
+    const perf = this.selectedPerfil();
+    if (!perf) return [];
+    const result: { prgCodigo: string; codigo: string; tipoControl: string; descripcion: string }[] = [];
+    for (const pp of perf.programas) {
+      const ctrls = this.controlesMap().get(pp.prgCodigo) || [];
+      for (const c of ctrls) {
+        result.push({ prgCodigo: pp.prgCodigo, codigo: c.codigo, tipoControl: c.tipoControl, descripcion: c.descripcion });
+      }
+    }
+    return result;
+  });
 
   loadingApp = signal(true);
   loadingMod = signal(true);
@@ -995,7 +1309,7 @@ export class SecurityComponent implements OnInit {
   tiposPrograma = TIPOS_PROGRAMA;
   tiposControl = TIPOS_CONTROL;
   prgControles: ControlRow[] = [];
-  controlesMap: Map<string, Control[]> = new Map();
+  controlesMap = signal<Map<string, Control[]>>(new Map());
 
   // --- Refs para retry ---
   loadAplicaciones = () => this._loadApp();
@@ -1050,7 +1364,7 @@ export class SecurityComponent implements OnInit {
           arr.push(c);
           map.set(c.prgCodigo, arr);
         }
-        this.controlesMap = map;
+        this.controlesMap.set(map);
       },
       error: () => {},
     });
@@ -1137,8 +1451,9 @@ export class SecurityComponent implements OnInit {
       this.prgForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, appCodigo: appCod, modCodigo: p.modCodigo, tipo: p.tipo, estado: p.estado };
       this.prgAppCodigo.set(appCod);
       this.editPrgId = p.id;
-      const ctrls = (this.controlesMap.get(p.codigo) || []).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
+      const ctrls = (this.controlesMap().get(p.codigo) || []).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
       this.prgControles = ctrls.map(c => ({
+        codigo: c.codigo,
         tipoControl: c.tipoControl,
         descripcion: c.descripcion,
         estado: c.estado,
@@ -1157,7 +1472,7 @@ export class SecurityComponent implements OnInit {
   closePrgDialog(): void { this.showPrgDlg = false; this.editPrgId = null; this.prgControles = []; this.prgAppCodigo.set(''); this.prgTouched = false; }
   changePrgApp(): void { this.prgAppCodigo.set(this.prgForm.appCodigo); this.prgForm.modCodigo = ''; }
   addControl(): void {
-    this.prgControles.push({ tipoControl: '', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: this.prgControles.length });
+    this.prgControles.push({ codigo: '', tipoControl: '', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: this.prgControles.length });
   }
   removeControl(idx: number): void {
     this.prgControles.splice(idx, 1);
@@ -1169,10 +1484,10 @@ export class SecurityComponent implements OnInit {
     this.prgTouched = true;
     if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.appCodigo || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre, aplicación y módulo son obligatorios.'); return; }
     const controles = this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú'
-      ? this.prgControles.filter(c => c.descripcion.trim() !== '' && c.tipoControl)
+      ? this.prgControles.filter(c => c.codigo.trim() !== '' && c.descripcion.trim() !== '' && c.tipoControl)
       : [];
     if (this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú' && this.prgControles.length > 0 && controles.length !== this.prgControles.length) {
-      this.toast.error('Faltan datos', 'Todos los controles deben tener tipo y descripción.'); return;
+      this.toast.error('Faltan datos', 'Todos los controles deben tener código, tipo y descripción.'); return;
     }
     try {
       const body: any = { ...this.prgForm, controles };
@@ -1190,6 +1505,58 @@ export class SecurityComponent implements OnInit {
         next: () => { this.toast.success('Programa eliminado'); this.events.emitDataChanged(); this._loadPrg(); this._loadPerf(); },
         error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
+    }
+  }
+
+  // ============ PERFIL DETAIL ============
+  openPerfilDetail(p: Perfil): void {
+    this.selectedPerfil.set(p);
+  }
+  backToPerfiles(): void {
+    this.selectedPerfil.set(null);
+  }
+
+  // --- Diálogo permisos por programa ---
+  showPermDlg = false;
+  editingPrgCodigo = '';
+  editingPrgNombre = '';
+  permForm = { nuevo: false, modificar: false, anular: false, procesar: false, imprimir: false, consultar: false };
+  permControles: { codigo: string; tipoControl: string; descripcion: string; visualizar: boolean; modificar: boolean }[] = [];
+
+  openPermDialog(prgCodigo: string): void {
+    const perf = this.selectedPerfil();
+    if (!perf) return;
+    const pp = perf.programas.find(p => p.prgCodigo === prgCodigo);
+    if (!pp) return;
+    const prg = this.programas().find(p => p.codigo === prgCodigo);
+    this.editingPrgCodigo = prgCodigo;
+    this.editingPrgNombre = prg?.nombre || '';
+    this.permForm = { nuevo: pp.nuevo, modificar: pp.modificar, anular: pp.anular, procesar: pp.procesar, imprimir: pp.imprimir, consultar: pp.consultar };
+    const ctrls = (this.controlesMap().get(prgCodigo) || []).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
+    this.permControles = ctrls.map((c, i) => {
+      const existing = (pp.controles || []).find(x => x.ctrlIndex === i);
+      return { codigo: c.codigo, tipoControl: c.tipoControl, descripcion: c.descripcion, visualizar: existing?.visualizar ?? false, modificar: existing?.modificar ?? false };
+    });
+    this.showPermDlg = true;
+  }
+  closePermDialog(): void { this.showPermDlg = false; this.editingPrgCodigo = ''; this.editingPrgNombre = ''; this.permControles = []; }
+  async savePermDialog(): Promise<void> {
+    const perf = this.selectedPerfil();
+    if (!perf) return;
+    const idx = perf.programas.findIndex(p => p.prgCodigo === this.editingPrgCodigo);
+    if (idx === -1) return;
+    const controles = this.permControles.map((c, i) => ({ ctrlIndex: i, visualizar: c.visualizar, modificar: c.modificar }));
+    perf.programas[idx] = { ...perf.programas[idx], ...this.permForm, controles };
+    try {
+      await this.api.updatePerfil(perf.id, { programas: perf.programas }).toPromise();
+      this.toast.success('Permisos actualizados');
+      this.events.emitDataChanged();
+      this.selectedPerfil.set({ ...perf });
+      this._loadPerf();
+      this.closePermDialog();
+    } catch (e: any) {
+      const msg = e?.error?.error || e?.message || 'Error inesperado.';
+      this.toast.error('Error', msg);
     }
   }
 

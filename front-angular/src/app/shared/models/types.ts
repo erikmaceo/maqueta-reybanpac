@@ -44,12 +44,19 @@ export type TipoControl = 'Caja de Texto' | 'Botón' | 'Check' | 'Combo' | 'Grid
 export interface Control {
   id: string;
   prgCodigo: string;
+  codigo: string;
   tipoControl: TipoControl;
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
   log: 'ACTIVO' | 'INACTIVO';
   orden?: number;
   createdAt: string;
+}
+
+export interface PerfilProgramaControl {
+  ctrlIndex: number;
+  visualizar: boolean;
+  modificar: boolean;
 }
 
 export interface PerfilPrograma {
@@ -60,6 +67,7 @@ export interface PerfilPrograma {
   procesar: boolean;
   imprimir: boolean;
   consultar: boolean;
+  controles?: PerfilProgramaControl[];
 }
 
 export interface Perfil {

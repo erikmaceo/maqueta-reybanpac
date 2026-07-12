@@ -48,6 +48,9 @@ Central Access Manager (CAM) es una consola de gobierno de accesos para Reybanpa
   - `GET/POST/PUT/DELETE /api/seg-modulos` — CRUD Módulos
   - `GET/POST/PUT/DELETE /api/seg-programas` — CRUD Programas (con campo `tipo`)
   - `GET/POST/PUT/DELETE /api/seg-perfiles` — CRUD Perfiles
+  - `GET/POST/PUT/DELETE /api/niveles-segregacion` — CRUD Niveles de Segregación
+  - `GET/POST/PUT/DELETE /api/nodos-segregacion` — CRUD Nodos de Segregación
+  - `GET /api/nodos-segregacion/arbol` — Árbol jerárquico de nodos
   - `POST /api/seg-matriz/upload` — Carga masiva desde Excel
   - `GET /api/users`, `GET /api/roles`, `GET /api/grants`, `GET /api/audit`
   - `GET /api/ldap/people` — Usuarios desde OpenLDAP
@@ -106,6 +109,20 @@ Aplicacion (app_codigo)
       └── Programa (prg_codigo, mod_codigo, tipo)
           └── Perfil (perf_codigo, prg_codigo)
 ```
+
+### Segregación dinámica
+
+La jerarquía de segregación ya no está fija. Se modela con dos entidades genéricas:
+
+```
+NivelSegregacion (id, codigo, nombre, orden, estado)
+  └── NodoSegregacion (id, codigo, nombre, nivelId, padreId, estado)
+```
+
+- `NivelSegregacion` define los tipos de nivel: Empresa (1), Sucursal (2), Punto de Venta (3), Caja de Venta (4), etc.
+- `NodoSegregacion` son las instancias concretas. `padreId` apunta al nodo del nivel anterior.
+- `User.nodoIds` asocia un usuario a uno o varios nodos.
+- El modelo permite 0, 3 o N niveles sin cambiar código.
 
 ### Tipos de Programa
 `Menú` | `Submenú` | `Maestro` | `Transacción` | `Proceso` | `Consulta` | `Reporte` | `Objeto`

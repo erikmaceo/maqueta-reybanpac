@@ -14,7 +14,7 @@ import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/compon
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
-import type { User, Empresa, Perfil } from '../../shared/models/types';
+import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shared/models/types';
 
 @Component({
   selector: 'app-user-access',
@@ -29,7 +29,7 @@ import type { User, Empresa, Perfil } from '../../shared/models/types';
     <div class="page-head">
       <div>
         <h1>Accesos por usuario</h1>
-        <p>Gestión de Empresa y Perfiles asignados a cada usuario.</p>
+        <p>Gestión de Nodos de Segregación y Perfiles asignados a cada usuario.</p>
       </div>
     </div>
 
@@ -59,7 +59,7 @@ import type { User, Empresa, Perfil } from '../../shared/models/types';
             <tr>
               <th>Usuario</th>
               <th>Nombre</th>
-              <th>Empresa</th>
+              <th>Nodos de Segregación</th>
               <th>Perfiles</th>
               <th>Estado</th>
               <th></th>
@@ -71,11 +71,13 @@ import type { User, Empresa, Perfil } from '../../shared/models/types';
                 <td class="mono">{{ u.username }}</td>
                 <td><div class="cell-strong">{{ u.firstName }} {{ u.lastName }}</div><div class="tiny dim">{{ u.email }}</div></td>
                 <td>
-                  @if (u.empresaCodigo) {
-                    <span class="badge badge-blue">{{ u.empresaCodigo }}</span>
-                  } @else {
-                    <span class="muted small">—</span>
-                  }
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    @for (nodoId of u.nodoIds; track nodoId) {
+                      <span class="badge badge-blue">{{ getNodoLabel(nodoId) }}</span>
+                    } @empty {
+                      <span class="muted small">—</span>
+                    }
+                  </div>
                 </td>
                 <td>
                   <div style="display:flex;flex-wrap:wrap;gap:4px;">
@@ -137,13 +139,18 @@ import type { User, Empresa, Perfil } from '../../shared/models/types';
         </div>
       }
       <div class="field">
-        <label>Empresa</label>
-        <select class="select" [(ngModel)]="editForm.empresaCodigo">
-          <option value="">— Sin empresa —</option>
-          @for (e of empresas(); track e.id) {
-            <option [value]="e.codigo">{{ e.codigo }} · {{ e.nombre }}</option>
+        <label>Nodos de Segregación</label>
+        <div style="display:flex;flex-direction:column;gap:8px;max-height:240px;overflow:auto;">
+          @for (n of nodosOrdenados(); track n.id) {
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" [checked]="isNodoSelected(n.id)"
+                (change)="toggleNodo(n.id)" style="width:16px;height:16px;cursor:pointer;" />
+              <span><b>{{ getNodoLabel(n.id) }}</b></span>
+            </label>
+          } @empty {
+            <span class="muted small">No hay nodos configurados.</span>
           }
-        </select>
+        </div>
       </div>
       <div class="field">
         <label>Perfiles</label>
@@ -172,7 +179,8 @@ export class UserAccessComponent implements OnInit {
   private events = inject(EventsService);
 
   users = signal<User[]>([]);
-  empresas = signal<Empresa[]>([]);
+  niveles = signal<NivelSegregacion[]>([]);
+  nodos = signal<NodoSegregacion[]>([]);
   perfiles = signal<Perfil[]>([]);
 
   loading = signal(true);
@@ -182,7 +190,7 @@ export class UserAccessComponent implements OnInit {
   isNew = false;
   editUser: User | null = null;
   selectedUserId = '';
-  editForm = { empresaCodigo: '', perfilCodigos: [] as string[] };
+  editForm = { nodoIds: [] as string[], perfilCodigos: [] as string[] };
 
   search = signal('');
   pageSize = signal(10);
@@ -195,7 +203,7 @@ export class UserAccessComponent implements OnInit {
       u.username.toLowerCase().includes(q) ||
       u.firstName.toLowerCase().includes(q) ||
       u.lastName.toLowerCase().includes(q) ||
-      u.empresaCodigo.toLowerCase().includes(q) ||
+      u.nodoIds.some(id => this.getNodoLabel(id).toLowerCase().includes(q)) ||
       u.perfilCodigos.some(pc => pc.toLowerCase().includes(q))
     );
   });
@@ -206,6 +214,15 @@ export class UserAccessComponent implements OnInit {
   });
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())));
+
+  nodosOrdenados = computed(() => {
+    return [...this.nodos()].sort((a, b) => {
+      const oa = this.getNivelOrden(a.nivelId);
+      const ob = this.getNivelOrden(b.nivelId);
+      if (oa !== ob) return oa - ob;
+      return a.codigo.localeCompare(b.codigo);
+    });
+  });
 
   setPage(p: number): void {
     if (p < 0 || p >= this.totalPages()) return;
@@ -230,14 +247,15 @@ export class UserAccessComponent implements OnInit {
       next: (data) => { this.users.set(data); this.loading.set(false); },
       error: () => { this.error.set('No se pudieron cargar los usuarios.'); this.loading.set(false); },
     });
-    this.api.listEmpresas().subscribe({ next: (data) => this.empresas.set(data) });
+    this.api.listNivelesSegregacion().subscribe({ next: (data) => this.niveles.set(data) });
+    this.api.listNodosSegregacion().subscribe({ next: (data) => this.nodos.set(data) });
     this.api.listPerfiles().subscribe({ next: (data) => this.perfiles.set(data) });
   }
 
   openDialog(u: User): void {
     this.isNew = false;
     this.editUser = u;
-    this.editForm = { empresaCodigo: u.empresaCodigo || '', perfilCodigos: [...(u.perfilCodigos || [])] };
+    this.editForm = { nodoIds: [...(u.nodoIds || [])], perfilCodigos: [...(u.perfilCodigos || [])] };
     this.showDlg = true;
   }
 
@@ -245,7 +263,7 @@ export class UserAccessComponent implements OnInit {
     this.isNew = true;
     this.editUser = null;
     this.selectedUserId = '';
-    this.editForm = { empresaCodigo: '', perfilCodigos: [] };
+    this.editForm = { nodoIds: [], perfilCodigos: [] };
     this.showDlg = true;
   }
 
@@ -255,6 +273,27 @@ export class UserAccessComponent implements OnInit {
     const idx = this.editForm.perfilCodigos.indexOf(codigo);
     if (idx >= 0) this.editForm.perfilCodigos.splice(idx, 1);
     else this.editForm.perfilCodigos.push(codigo);
+  }
+
+  getNivelOrden(nivelId: string): number {
+    return this.niveles().find(n => n.id === nivelId)?.orden ?? 0;
+  }
+
+  getNodoLabel(nodoId: string): string {
+    const nodo = this.nodos().find(n => n.id === nodoId);
+    if (!nodo) return nodoId;
+    const nivel = this.niveles().find(n => n.id === nodo.nivelId);
+    return `${nodo.codigo} · ${nodo.nombre}${nivel ? ` (${nivel.nombre})` : ''}`;
+  }
+
+  isNodoSelected(nodoId: string): boolean {
+    return this.editForm.nodoIds.includes(nodoId);
+  }
+
+  toggleNodo(nodoId: string): void {
+    const idx = this.editForm.nodoIds.indexOf(nodoId);
+    if (idx >= 0) this.editForm.nodoIds.splice(idx, 1);
+    else this.editForm.nodoIds.push(nodoId);
   }
 
   async save(): Promise<void> {
@@ -288,7 +327,7 @@ export class UserAccessComponent implements OnInit {
       usuario: u.username,
       nombre: `${u.firstName} ${u.lastName}`,
       email: u.email,
-      empresa: u.empresaCodigo || '',
+      nodos: u.nodoIds.map(id => this.getNodoLabel(id)).join('; '),
       perfiles: u.perfilCodigos.join(', '),
       estado: u.status,
     }));

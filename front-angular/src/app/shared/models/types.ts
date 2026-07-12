@@ -80,6 +80,25 @@ export interface Perfil {
   createdAt: string;
 }
 
+export interface NivelSegregacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  orden: number;
+  estado: 'ACTIVO' | 'INACTIVO';
+  createdAt: string;
+}
+
+export interface NodoSegregacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  nivelId: string;
+  padreId: string | null;
+  estado: 'ACTIVO' | 'INACTIVO';
+  createdAt: string;
+}
+
 export interface SystemApp {
   id: string;
   code: string;
@@ -122,7 +141,7 @@ export interface User {
   cargo: string;
   department: string;
   company: string;
-  empresaCodigo: string;
+  nodoIds: string[];
   perfilCodigos: string[];
   type: UserType;
   source: UserSource;
@@ -199,50 +218,6 @@ export interface Stats {
   usersByType: { ADMIN: number; CLIENTE_FINAL: number };
   rolesPerSystem: { systemId: string; code: string; name: string; color: string; roles: number }[];
   recentAudit: AuditEntry[];
-}
-
-// --- Configuración ----------------------------------------------------------
-export interface Empresa {
-  id: string;
-  codigo: string;
-  nombre: string;
-  razonSocial: string;
-  ruc: string;
-  direccion: string;
-  telefono: string;
-  email: string;
-  paginaWeb: string;
-  customFields: string[];
-  logo: string;
-  paisId: string;
-  paisDescripcion?: string;
-  provinciaId: string;
-  provinciaDescripcion?: string;
-  ciudadId: string;
-  ciudadDescripcion?: string;
-  estado: 'ACTIVO' | 'INACTIVO';
-  createdAt: string;
-}
-
-export interface Sucursal {
-  id: string;
-  codigo: string;
-  nombre: string;
-  empresaCodigo: string;
-  direccion: string;
-  telefono: string;
-  estado: 'ACTIVO' | 'INACTIVO';
-  createdAt: string;
-}
-
-export interface PuntoVenta {
-  id: string;
-  codigo: string;
-  nombre: string;
-  sucursalCodigo: string;
-  direccion: string;
-  estado: 'ACTIVO' | 'INACTIVO';
-  createdAt: string;
 }
 
 // --- Parámetros y Configuración ------------------------------------------------

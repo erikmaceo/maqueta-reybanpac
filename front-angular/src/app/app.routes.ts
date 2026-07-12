@@ -24,10 +24,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
-        path: 'configuracion',
-        loadComponent: () => import('./pages/configuration/configuration.component').then(m => m.ConfigurationComponent),
+        path: 'niveles-segregacion',
+        loadComponent: () => import('./pages/segregation-levels/segregation-levels.component').then(m => m.SegregationLevelsComponent),
         canActivate: [adminGuard],
       },
+      { path: 'configuracion', redirectTo: 'niveles-segregacion', pathMatch: 'full' },
       {
         path: 'parametros',
         loadComponent: () => import('./pages/parameters-configuration/parameters-configuration.component').then(m => m.ParametersConfigurationComponent),

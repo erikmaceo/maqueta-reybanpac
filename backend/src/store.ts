@@ -16,9 +16,8 @@ import type {
   Programa,
   Perfil,
   Control,
-  Empresa,
-  Sucursal,
-  PuntoVenta,
+  NivelSegregacion,
+  NodoSegregacion,
   Pais,
   Provincia,
   Ciudad,
@@ -36,9 +35,8 @@ import {
   programas as seedProgramas,
   perfiles as seedPerfiles,
   controles as seedControles,
-  empresas as seedEmpresas,
-  sucursales as seedSucursales,
-  puntosVenta as seedPuntosVenta,
+  nivelesSegregacion as seedNivelesSegregacion,
+  nodosSegregacion as seedNodosSegregacion,
   paises as seedPaises,
   provincias as seedProvincias,
   ciudades as seedCiudades,
@@ -57,9 +55,8 @@ interface DB {
   programas: Programa[];
   perfiles: Perfil[];
   controles: Control[];
-  empresas: Empresa[];
-  sucursales: Sucursal[];
-  puntosVenta: PuntoVenta[];
+  nivelesSegregacion: NivelSegregacion[];
+  nodosSegregacion: NodoSegregacion[];
   paises: Pais[];
   provincias: Provincia[];
   ciudades: Ciudad[];
@@ -81,9 +78,8 @@ export const db: DB = {
   programas: clone(seedProgramas),
   perfiles: clone(seedPerfiles),
   controles: clone(seedControles),
-  empresas: clone(seedEmpresas),
-  sucursales: clone(seedSucursales),
-  puntosVenta: clone(seedPuntosVenta),
+  nivelesSegregacion: clone(seedNivelesSegregacion),
+  nodosSegregacion: clone(seedNodosSegregacion),
   paises: clone(seedPaises),
   provincias: clone(seedProvincias),
   ciudades: clone(seedCiudades),
@@ -102,9 +98,8 @@ export function resetDb() {
   db.programas = clone(seedProgramas);
   db.perfiles = clone(seedPerfiles);
   db.controles = clone(seedControles);
-  db.empresas = clone(seedEmpresas);
-  db.sucursales = clone(seedSucursales);
-  db.puntosVenta = clone(seedPuntosVenta);
+  db.nivelesSegregacion = clone(seedNivelesSegregacion);
+  db.nodosSegregacion = clone(seedNodosSegregacion);
   db.paises = clone(seedPaises);
   db.provincias = clone(seedProvincias);
   db.ciudades = clone(seedCiudades);

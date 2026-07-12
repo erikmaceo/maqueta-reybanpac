@@ -14,7 +14,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
     <div class="page-head">
       <div>
         <h1>Matriz de Acceso</h1>
-        <p>Carga masiva de Empresas, Sucursales, Puntos de Venta, Usuarios, Aplicaciones, Módulos, Programas y Perfiles desde un archivo Excel.</p>
+        <p>Carga masiva de Usuarios, Aplicaciones, Módulos, Programas y Perfiles desde un archivo Excel.</p>
       </div>
       <div class="row gap-2">
         <button class="btn btn-ghost" (click)="downloadTemplate()">
@@ -55,8 +55,8 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
       <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">Importar matriz de seguridades</h2>
       <p class="muted" style="max-width:520px;margin:0 auto 20px;">
         Seleccione un archivo Excel (.xlsx) con la estructura de columnas indicada abajo.
-        El sistema creará automáticamente las Empresas, Sucursales, Puntos de Venta, Usuarios,
-        Aplicaciones, Módulos, Programas y Perfiles que no existan. Los que ya existan (por código) se mantendrán sin duplicar.
+        El sistema creará automáticamente los Usuarios, Aplicaciones, Módulos, Programas y Perfiles que no existan.
+        Los que ya existan (por código) se mantendrán sin duplicar.
       </p>
       <button class="btn btn-primary" (click)="triggerFileInput()" [disabled]="uploading()">
         <app-icon-upload [width]="15" [height]="15" />
@@ -71,13 +71,6 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
         <table class="data">
           <thead>
             <tr>
-              <th>emp_codigo</th>
-              <th>emp_nombre</th>
-              <th>emp_ruc</th>
-              <th>suc_codigo</th>
-              <th>suc_nombre</th>
-              <th>pv_codigo</th>
-              <th>pv_nombre</th>
               <th>usr_codigo</th>
               <th>usr_nombre</th>
               <th>usr_email</th>
@@ -95,13 +88,6 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
           </thead>
           <tbody>
             <tr>
-              <td class="mono">EMP-001</td>
-              <td>Reybanpac</td>
-              <td>0992345678001</td>
-              <td class="mono">SUC-GYE</td>
-              <td>Guayaquil Matriz</td>
-              <td class="mono">PV-001</td>
-              <td>Caja Principal</td>
               <td class="mono">USR-001</td>
               <td>Juan Pérez</td>
               <td>juan.perez&#64;reybanpac.com</td>
@@ -117,13 +103,6 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td><span class="badge badge-green">ACTIVO</span></td>
             </tr>
             <tr>
-              <td class="mono">EMP-001</td>
-              <td>Reybanpac</td>
-              <td>0992345678001</td>
-              <td class="mono">SUC-GYE</td>
-              <td>Guayaquil Matriz</td>
-              <td class="mono">PV-001</td>
-              <td>Caja Principal</td>
               <td class="mono">USR-001</td>
               <td>Juan Pérez</td>
               <td>juan.perez&#64;reybanpac.com</td>
@@ -139,13 +118,6 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
               <td><span class="badge badge-green">ACTIVO</span></td>
             </tr>
             <tr>
-              <td class="mono">EMP-001</td>
-              <td>Reybanpac</td>
-              <td>0992345678001</td>
-              <td class="mono">SUC-UIO</td>
-              <td>Quito Sucursal</td>
-              <td class="mono">PV-002</td>
-              <td>Caja Norte</td>
               <td class="mono">USR-002</td>
               <td>María García</td>
               <td>maria.garcia&#64;reybanpac.com</td>
@@ -208,9 +180,6 @@ export class MatrixAccessComponent {
 
   downloadTemplate(): void {
     const headers = [
-      'emp_codigo', 'emp_nombre', 'emp_ruc', 'emp_direccion', 'emp_telefono', 'emp_email', 'emp_estado',
-      'suc_codigo', 'suc_nombre', 'suc_direccion', 'suc_telefono', 'suc_estado',
-      'pv_codigo', 'pv_nombre', 'pv_direccion', 'pv_estado',
       'usr_codigo', 'usr_nombre', 'usr_email', 'usr_estado',
       'app_codigo', 'app_nombre', 'app_descripcion',
       'mod_codigo', 'mod_nombre', 'mod_descripcion',
@@ -221,9 +190,6 @@ export class MatrixAccessComponent {
 
     const rows = [
       [
-        'EMP-001', 'Reybanpac', '0992345678001', 'Av. Carlos Luis Sáenz', '04-600-1234', 'info@reybanpac.com', 'ACTIVO',
-        'SUC-GYE', 'Guayaquil Matriz', 'Av. Carlos Luis Sáenz, Guayaquil', '04-600-1234', 'ACTIVO',
-        'PV-001', 'Caja Principal', 'Av. Carlos Luis Sáenz y 9 de Octubre', 'ACTIVO',
         'USR-001', 'Juan Pérez', 'juan.perez@reybanpac.com', 'ACTIVO',
         'APP-SAP', 'SAP ERP', 'Sistema ERP corporativo',
         'MOD-FI', 'Finanzas (FI)', 'Módulo de Finanzas',
@@ -232,9 +198,6 @@ export class MatrixAccessComponent {
         'ACTIVO'
       ],
       [
-        'EMP-001', 'Reybanpac', '0992345678001', 'Av. Carlos Luis Sáenz', '04-600-1234', 'info@reybanpac.com', 'ACTIVO',
-        'SUC-GYE', 'Guayaquil Matriz', 'Av. Carlos Luis Sáenz, Guayaquil', '04-600-1234', 'ACTIVO',
-        'PV-001', 'Caja Principal', 'Av. Carlos Luis Sáenz y 9 de Octubre', 'ACTIVO',
         'USR-001', 'Juan Pérez', 'juan.perez@reybanpac.com', 'ACTIVO',
         'APP-SAP', 'SAP ERP', 'Sistema ERP corporativo',
         'MOD-FI', 'Finanzas (FI)', 'Módulo de Finanzas',
@@ -243,9 +206,6 @@ export class MatrixAccessComponent {
         'ACTIVO'
       ],
       [
-        'EMP-001', 'Reybanpac', '0992345678001', 'Av. Carlos Luis Sáenz', '04-600-1234', 'info@reybanpac.com', 'ACTIVO',
-        'SUC-UIO', 'Quito Sucursal', 'Av. Amazonas y NNUU, Quito', '02-200-5678', 'ACTIVO',
-        'PV-002', 'Caja Norte', 'Av. Amazonas N35-42', 'ACTIVO',
         'USR-002', 'María García', 'maria.garcia@reybanpac.com', 'ACTIVO',
         'APP-CRM', 'Salesforce CRM', 'CRM de ventas',
         'MOD-VE', 'Ventas', 'Gestión comercial',

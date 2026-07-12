@@ -154,7 +154,66 @@
  - Decisiones de diseño, bugs encontrados, trade-offs, etc.
  ```
 
-### Convenciones
+  ---
+
+  ## 2026-07-12 — Niveles de Segregación dinámicos
+
+  ### Resumen
+
+  Se reemplazó el modelo rígido de `Empresa`/`Sucursal`/`PuntoVenta` por un modelo dinámico de `NivelSegregacion` + `NodoSegregacion`, permitiendo configurar 0, 3 o N niveles de segregación sin cambiar código. Se agregó una página de administración en el sidebar y se actualizó la asignación de usuarios a nodos.
+
+  ### Cambios realizados
+
+  #### Backend
+  - **Nuevos tipos**: `NivelSegregacion` (id, codigo, nombre, orden, estado) y `NodoSegregacion` (id, codigo, nombre, nivelId, padreId, estado).
+  - **Usuario**: `empresaCodigo` se reemplazó por `nodoIds: string[]`.
+  - **Store en memoria**: se eliminaron los arrays `empresas`, `sucursales`, `puntosVenta`; se agregaron `nivelesSegregacion` y `nodosSegregacion`.
+  - **Seed**: los 3 niveles base (Empresa, Sucursal, Punto de Venta) y sus nodos se crean dinámicamente; los usuarios de ejemplo se asignan a los nodos empresa correspondientes.
+  - **Endpoints nuevos**: CRUD para `/api/niveles-segregacion` y `/api/nodos-segregacion`, más `GET /api/nodos-segregacion/arbol`.
+  - **Endpoints eliminados**: `/api/config-empresas`, `/api/config-sucursales`, `/api/config-puntos-venta`.
+  - **Validaciones**: orden único por nivel, padre obligatorio del nivel anterior, detección de ciclos, eliminación en cascada de descendientes y limpieza de `nodoIds` en usuarios.
+  - **Upload de matriz**: ya no procesa empresas/sucursales/puntos de venta; la plantilla Excel se redujo a usuarios + seguridades.
+  - **Accesos por usuario**: el endpoint `/api/user-access/:id` ahora recibe `nodoIds`.
+
+  #### Frontend Angular
+  - **Tipos**: se eliminaron `Empresa`, `Sucursal`, `PuntoVenta`; se agregaron `NivelSegregacion`, `NodoSegregacion` y `User.nodoIds`.
+  - **ApiService**: métodos CRUD para niveles/nodos; se eliminaron métodos de empresas/sucursales/PV; `updateUserAccess` usa `nodoIds`.
+  - **Nueva página**: `SegregationLevelsComponent` en `/niveles-segregacion` con dos pestañas: Niveles y Nodos.
+  - **Sidebar**: entrada "Niveles de Segregación" reemplazó a "Empresas y Sucursales"; `/configuracion` redirige a `/niveles-segregacion`.
+  - **Accesos por usuario**: selector de nodos con checkboxes en lugar de select de empresa; columna y exportación actualizadas.
+  - **Matriz de Acceso**: ejemplo y plantilla Excel sin columnas de empresa/sucursal/punto de venta.
+
+  #### Documentación
+  - `ARCHITECTURE.md`: modelo de segregación dinámica y endpoints nuevos.
+  - `DEV-GUIDE.md`: rutas, endpoints y plantilla Excel actualizados.
+  - `CHANGES.md`: esta entrada.
+
+  ### Archivos principales modificados
+
+  | Archivo | Descripción |
+  |---------|-------------|
+  | `backend/src/types.ts` | Nuevos tipos de segregación; `User.nodoIds`; eliminados `Empresa`/`Sucursal`/`PuntoVenta` |
+  | `backend/src/store.ts` | Arrays `nivelesSegregacion` y `nodosSegregacion` |
+  | `backend/src/seed.ts` | Seed dinámico de niveles/nodos; usuarios con `nodoIds` |
+  | `backend/src/index.ts` | Endpoints de segregación; ajustes en user-access y upload matriz |
+  | `front-angular/src/app/shared/models/types.ts` | Tipos frontend sincronizados |
+  | `front-angular/src/app/core/services/api.service.ts` | Métodos de API para niveles/nodos |
+  | `front-angular/src/app/pages/segregation-levels/segregation-levels.component.ts` | Nueva página de administración |
+  | `front-angular/src/app/pages/user-access/user-access.component.ts` | Asignación de nodos a usuarios |
+  | `front-angular/src/app/pages/matrix-access/matrix-access.component.ts` | Plantilla sin columnas legacy |
+  | `front-angular/src/app/pages/layout/layout.component.ts` | Sidebar y metadatos de página |
+  | `front-angular/src/app/app.routes.ts` | Ruta `/niveles-segregacion` y redirección `/configuracion` |
+  | `front-angular/src/app/pages/configuration/configuration.component.ts` | Wrapper de compatibilidad |
+  | `docs/ARCHITECTURE.md` | Arquitectura de segregación dinámica |
+  | `docs/DEV-GUIDE.md` | Endpoints, rutas y plantilla Excel |
+  | `docs/CHANGES.md` | Registro de cambios |
+
+  ### Notas técnicas
+  - El modelo utiliza Adjacency List (`padreId`) con validación de nivel anterior; es suficiente para las jerarquías planas esperadas y se puede migrar fácilmente a Closure Table si se requieren consultas de ancestros muy frecuentes.
+  - La eliminación de un nodo elimina sus descendientes en cascada y limpia las referencias de usuarios.
+  - Los perfiles/accesos por nodo quedan preparados a nivel de modelo (`User.nodoIds`) pero no se implementaron en esta entrega.
+
+  ### Convenciones
 - Las entradas más recientes van al **final** del archivo.
 - Usar español.
 - Mantener el formato de tabla para archivos modificados.

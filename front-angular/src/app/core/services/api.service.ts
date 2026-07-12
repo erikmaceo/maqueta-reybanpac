@@ -6,7 +6,7 @@ import type {
   SystemApp, Permission, Role, User, AccessRequest, Grant, AuditEntry,
   LdapResponse, Stats,
   Aplicacion, Modulo, Programa, Perfil, Control,
-  Empresa, Sucursal, PuntoVenta,
+  NivelSegregacion, NodoSegregacion,
   Pais, Provincia, Ciudad,
 } from '../../shared/models/types';
 
@@ -173,7 +173,7 @@ export class ApiService {
   listUserAccess(): Observable<User[]> {
     return this.request<User[]>('GET', '/user-access');
   }
-  updateUserAccess(id: string, body: { empresaCodigo: string; perfilCodigos: string[] }): Observable<User> {
+  updateUserAccess(id: string, body: { nodoIds: string[]; perfilCodigos: string[] }): Observable<User> {
     return this.request<User>('PUT', `/user-access/${id}`, body);
   }
 
@@ -258,46 +258,35 @@ export class ApiService {
     return this.request<{ ok: boolean }>('PUT', '/seg-controles/reordenar', { orden });
   }
 
-  // --- Configuración: Empresas ---
-  listEmpresas(): Observable<Empresa[]> {
-    return this.request<Empresa[]>('GET', '/config-empresas');
+  // --- Configuración: Niveles de Segregación ---
+  listNivelesSegregacion(): Observable<NivelSegregacion[]> {
+    return this.request<NivelSegregacion[]>('GET', '/niveles-segregacion');
   }
-  createEmpresa(body: Partial<Empresa>): Observable<Empresa> {
-    return this.request<Empresa>('POST', '/config-empresas', body);
+  createNivelSegregacion(body: Partial<NivelSegregacion>): Observable<NivelSegregacion> {
+    return this.request<NivelSegregacion>('POST', '/niveles-segregacion', body);
   }
-  updateEmpresa(id: string, body: Partial<Empresa>): Observable<Empresa> {
-    return this.request<Empresa>('PUT', `/config-empresas/${id}`, body);
+  updateNivelSegregacion(id: string, body: Partial<NivelSegregacion>): Observable<NivelSegregacion> {
+    return this.request<NivelSegregacion>('PUT', `/niveles-segregacion/${id}`, body);
   }
-  deleteEmpresa(id: string): Observable<{ ok: boolean }> {
-    return this.request<{ ok: boolean }>('DELETE', `/config-empresas/${id}`);
-  }
-
-  // --- Configuración: Sucursales ---
-  listSucursales(): Observable<Sucursal[]> {
-    return this.request<Sucursal[]>('GET', '/config-sucursales');
-  }
-  createSucursal(body: Partial<Sucursal>): Observable<Sucursal> {
-    return this.request<Sucursal>('POST', '/config-sucursales', body);
-  }
-  updateSucursal(id: string, body: Partial<Sucursal>): Observable<Sucursal> {
-    return this.request<Sucursal>('PUT', `/config-sucursales/${id}`, body);
-  }
-  deleteSucursal(id: string): Observable<{ ok: boolean }> {
-    return this.request<{ ok: boolean }>('DELETE', `/config-sucursales/${id}`);
+  deleteNivelSegregacion(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/niveles-segregacion/${id}`);
   }
 
-  // --- Configuración: Puntos de Venta ---
-  listPuntosVenta(): Observable<PuntoVenta[]> {
-    return this.request<PuntoVenta[]>('GET', '/config-puntos-venta');
+  // --- Configuración: Nodos de Segregación ---
+  listNodosSegregacion(): Observable<NodoSegregacion[]> {
+    return this.request<NodoSegregacion[]>('GET', '/nodos-segregacion');
   }
-  createPuntoVenta(body: Partial<PuntoVenta>): Observable<PuntoVenta> {
-    return this.request<PuntoVenta>('POST', '/config-puntos-venta', body);
+  getArbolNodosSegregacion(): Observable<NodoSegregacion[]> {
+    return this.request<NodoSegregacion[]>('GET', '/nodos-segregacion/arbol');
   }
-  updatePuntoVenta(id: string, body: Partial<PuntoVenta>): Observable<PuntoVenta> {
-    return this.request<PuntoVenta>('PUT', `/config-puntos-venta/${id}`, body);
+  createNodoSegregacion(body: Partial<NodoSegregacion>): Observable<NodoSegregacion> {
+    return this.request<NodoSegregacion>('POST', '/nodos-segregacion', body);
   }
-  deletePuntoVenta(id: string): Observable<{ ok: boolean }> {
-    return this.request<{ ok: boolean }>('DELETE', `/config-puntos-venta/${id}`);
+  updateNodoSegregacion(id: string, body: Partial<NodoSegregacion>): Observable<NodoSegregacion> {
+    return this.request<NodoSegregacion>('PUT', `/nodos-segregacion/${id}`, body);
+  }
+  deleteNodoSegregacion(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/nodos-segregacion/${id}`);
   }
 
   // --- Parámetros: Países ---

@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
-import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, Empresa, Sucursal, PuntoVenta, Pais, Provincia, Ciudad } from './types.js';
+import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, NivelSegregacion, NodoSegregacion, Pais, Provincia, Ciudad } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -307,7 +307,7 @@ app.post('/api/users', requireAuth, requireGlobalAdmin, (req, res) => {
     cargo: body.cargo || '',
     department: body.department || '',
     company: body.company || 'Reybanpac',
-    empresaCodigo: body.empresaCodigo || '',
+    nodoIds: Array.isArray(body.nodoIds) ? body.nodoIds : [],
     perfilCodigos: [],
     type,
     source: 'LOCAL',
@@ -391,7 +391,7 @@ app.put('/api/users/:id/roles', requireAuth, requireGlobalAdmin, (req, res) => {
 });
 
 // ===========================================================================
-// Acceso por usuario: Empresa + Perfiles
+// Acceso por usuario: Nodos de Segregación + Perfiles
 // ===========================================================================
 app.get('/api/user-access', requireAuth, requireGlobalAdmin, (_req, res) => {
   res.json(db.users.map(u => publicUser(u)));
@@ -401,10 +401,10 @@ app.put('/api/user-access/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const user = db.users.find(u => u.id === req.params.id);
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
   const b = definedOnly(req.body);
-  if (b.empresaCodigo !== undefined) user.empresaCodigo = b.empresaCodigo;
+  if (b.nodoIds !== undefined) user.nodoIds = b.nodoIds;
   if (b.perfilCodigos !== undefined) user.perfilCodigos = b.perfilCodigos;
   logAudit(actorName(req), 'UPDATE_USER_ACCESS', 'user', user.id,
-    `Acceso actualizado para "${user.username}": empresa=${user.empresaCodigo}, perfiles=${user.perfilCodigos.length}.`);
+    `Acceso actualizado para "${user.username}": nodos=${user.nodoIds.length}, perfiles=${user.perfilCodigos.length}.`);
   res.json(publicUser(user));
 });
 
@@ -446,7 +446,7 @@ app.post('/api/ldap/import', requireAuth, requireGlobalAdmin, async (req, res) =
     cargo: person.cargo,
     department: person.department,
     company: 'Reybanpac',
-    empresaCodigo: '',
+    nodoIds: [],
     perfilCodigos: [],
     type: 'CLIENTE_FINAL',
     source: 'LDAP',
@@ -889,7 +889,7 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
 
     const normalize = (v: any) => String(v ?? '').trim();
 
-    let created = { paises: 0, provincias: 0, ciudades: 0, empresas: 0, sucursales: 0, puntosVenta: 0, usuarios: 0, apps: 0, mods: 0, prgs: 0, perfs: 0 };
+    let created = { paises: 0, provincias: 0, ciudades: 0, usuarios: 0, apps: 0, mods: 0, prgs: 0, perfs: 0 };
     let skipped = 0;
     const errors: string[] = [];
 
@@ -938,91 +938,6 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
         }
       }
 
-      // --- Empresa (upsert por codigo) ---
-      const empCodigo = normalize(r['emp_codigo']);
-      const empNombre = normalize(r['emp_nombre']);
-      const empRuc = normalize(r['emp_ruc']);
-      if (empCodigo && empNombre && empRuc) {
-        let pais = db.paises.find(p => p.codigo === paisCodigo);
-        let prov = db.provincias.find(p => p.codigo === provCodigo);
-        let ciu = db.ciudades.find(c => c.codigo === ciuCodigo);
-        let emp = db.empresas.find(e => e.codigo === empCodigo);
-        if (!emp) {
-          emp = {
-            id: newId('cfg_emp'),
-            codigo: empCodigo,
-            nombre: empNombre,
-            razonSocial: normalize(r['emp_razon_social']) || empNombre,
-            ruc: empRuc,
-            direccion: normalize(r['emp_direccion']) || '',
-            telefono: normalize(r['emp_telefono']) || '',
-            email: normalize(r['emp_email']) || '',
-            paginaWeb: normalize(r['emp_pagina_web']) || '',
-            customFields: [],
-            logo: '',
-            paisId: pais?.id || '',
-            paisDescripcion: pais?.descripcion || '',
-            provinciaId: prov?.id || '',
-            provinciaDescripcion: prov?.descripcion || '',
-            ciudadId: ciu?.id || '',
-            ciudadDescripcion: ciu?.descripcion || '',
-            estado,
-            createdAt: nowIso(),
-          };
-          db.empresas.push(emp);
-          created.empresas++;
-        } else {
-          emp.paisId = pais?.id || emp.paisId;
-          emp.paisDescripcion = pais?.descripcion || emp.paisDescripcion;
-          emp.provinciaId = prov?.id || emp.provinciaId;
-          emp.provinciaDescripcion = prov?.descripcion || emp.provinciaDescripcion;
-          emp.ciudadId = ciu?.id || emp.ciudadId;
-          emp.ciudadDescripcion = ciu?.descripcion || emp.ciudadDescripcion;
-        }
-      }
-
-      // --- Sucursal (upsert por codigo) ---
-      const sucCodigo = normalize(r['suc_codigo']);
-      const sucNombre = normalize(r['suc_nombre']);
-      if (sucCodigo && sucNombre && empCodigo) {
-        let emp = db.empresas.find(e => e.codigo === empCodigo);
-        let suc = db.sucursales.find(s => s.codigo === sucCodigo);
-        if (!suc) {
-          suc = {
-            id: newId('cfg_suc'),
-            codigo: sucCodigo,
-            nombre: sucNombre,
-            empresaCodigo: empCodigo,
-            direccion: normalize(r['suc_direccion']) || '',
-            telefono: normalize(r['suc_telefono']) || '',
-            estado,
-            createdAt: nowIso(),
-          };
-          db.sucursales.push(suc);
-          created.sucursales++;
-        }
-      }
-
-      // --- Punto de Venta (upsert por codigo) ---
-      const pvCodigo = normalize(r['pv_codigo']);
-      const pvNombre = normalize(r['pv_nombre']);
-      if (pvCodigo && pvNombre && sucCodigo) {
-        let pv = db.puntosVenta.find(p => p.codigo === pvCodigo);
-        if (!pv) {
-          pv = {
-            id: newId('cfg_pv'),
-            codigo: pvCodigo,
-            nombre: pvNombre,
-            sucursalCodigo: sucCodigo,
-            direccion: normalize(r['pv_direccion']) || '',
-            estado,
-            createdAt: nowIso(),
-          };
-          db.puntosVenta.push(pv);
-          created.puntosVenta++;
-        }
-      }
-
       // --- Usuario (upsert por username/email) ---
       const usrCodigo = normalize(r['usr_codigo']);
       const usrNombre = normalize(r['usr_nombre']);
@@ -1039,7 +954,7 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
             cargo: '',
             department: '',
             company: 'Reybanpac',
-            empresaCodigo: empCodigo || '',
+            nodoIds: [],
             perfilCodigos: [],
             type: 'ADMIN' as const,
             source: 'LOCAL' as const,
@@ -1122,10 +1037,10 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
       'UPLOAD_MATRIZ',
       'matriz',
       'excel',
-      `Carga masiva: ${created.paises} países, ${created.provincias} provincias, ${created.ciudades} ciudades, ${created.empresas} empresas, ${created.sucursales} sucursales, ${created.puntosVenta} puntos venta, ${created.usuarios} usuarios, ${created.apps} apps, ${created.mods} mods, ${created.prgs} prgs, ${created.perfs} perfs. Omitidas: ${skipped}.`,
+      `Carga masiva: ${created.paises} países, ${created.provincias} provincias, ${created.ciudades} ciudades, ${created.usuarios} usuarios, ${created.apps} apps, ${created.mods} mods, ${created.prgs} prgs, ${created.perfs} perfs. Omitidas: ${skipped}.`,
     );
 
-    const summary = `Creados: ${created.paises} países, ${created.provincias} provincias, ${created.ciudades} ciudades, ${created.empresas} empresas, ${created.sucursales} sucursales, ${created.puntosVenta} puntos de venta, ${created.usuarios} usuarios, ${created.apps} aplicaciones, ${created.mods} módulos, ${created.prgs} programas, ${created.perfs} perfiles.${skipped ? ` Filas omitidas: ${skipped}.` : ''}`;
+    const summary = `Creados: ${created.paises} países, ${created.provincias} provincias, ${created.ciudades} ciudades, ${created.usuarios} usuarios, ${created.apps} aplicaciones, ${created.mods} módulos, ${created.prgs} programas, ${created.perfs} perfiles.${skipped ? ` Filas omitidas: ${skipped}.` : ''}`;
     res.json({ ok: true, summary });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Error al procesar el archivo.' });
@@ -1133,118 +1048,235 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
 });
 
 // ==========================================================================
-// Configuración: Empresas / Sucursales / Puntos de Venta
+// Configuración: Niveles y Nodos de Segregación
 // ==========================================================================
 
-// --- Empresas ---
-app.get('/api/config-empresas', requireAuth, (_req, res) => { res.json(db.empresas); });
+function ordenarNiveles(items: NivelSegregacion[]): NivelSegregacion[] {
+  return [...items].sort((a, b) => a.orden - b.orden || a.createdAt.localeCompare(b.createdAt));
+}
 
-app.post('/api/config-empresas', requireAuth, requireGlobalAdmin, (req, res) => {
-  const body = req.body;
-  if (!body?.codigo || !body?.nombre || !body?.ruc) { res.status(400).json({ error: 'codigo, nombre y ruc son obligatorios.' }); return; }
-  const empresa: Empresa = {
-    id: newId('cfg_emp'),
-    codigo: body.codigo,
-    nombre: body.nombre,
-    razonSocial: body.razonSocial || '',
-    ruc: body.ruc,
-    direccion: body.direccion || '',
-    telefono: body.telefono || '',
-    email: body.email || '',
-    paginaWeb: body.paginaWeb || '',
-    customFields: [],
-    logo: '',
-    paisId: body.paisId || '',
-    paisDescripcion: body.paisDescripcion || '',
-    provinciaId: body.provinciaId || '',
-    provinciaDescripcion: body.provinciaDescripcion || '',
-    ciudadId: body.ciudadId || '',
-    ciudadDescripcion: body.ciudadDescripcion || '',
-    estado: body.estado || 'ACTIVO',
+function ordenarNodos(items: NodoSegregacion[]): NodoSegregacion[] {
+  return [...items].sort((a, b) => a.codigo.localeCompare(b.codigo) || a.nombre.localeCompare(b.nombre));
+}
+
+/** Devuelve el nivel anterior en la jerarquía (null si es el primero). */
+function nivelPadre(nivelId: string): NivelSegregacion | null {
+  const nivel = db.nivelesSegregacion.find(n => n.id === nivelId);
+  if (!nivel || nivel.orden <= 1) return null;
+  return db.nivelesSegregacion
+    .filter(n => n.orden < nivel.orden)
+    .sort((a, b) => b.orden - a.orden)[0] || null;
+}
+
+/** Verifica que un nodo padre pertenezca al nivel inmediatamente anterior. */
+function padreValido(nivelId: string, padreId: string | null): { ok: boolean; error?: string } {
+  if (padreId === null || padreId === undefined) return { ok: true };
+  const nivel = db.nivelesSegregacion.find(n => n.id === nivelId);
+  if (!nivel) return { ok: false, error: 'Nivel no encontrado.' };
+  const padre = db.nodosSegregacion.find(n => n.id === padreId);
+  if (!padre) return { ok: false, error: 'Nodo padre no encontrado.' };
+  const nivelPadreReq = nivelPadre(nivelId);
+  if (!nivelPadreReq) return { ok: false, error: 'El nivel seleccionado no admite padre.' };
+  if (padre.nivelId !== nivelPadreReq.id) {
+    return { ok: false, error: `El padre debe pertenecer al nivel "${nivelPadreReq.nombre}".` };
+  }
+  return { ok: true };
+}
+
+/** Detecta ciclos en la jerarquía de nodos. */
+function detectaCiclo(nodoId: string, padreId: string | null): boolean {
+  if (!padreId) return false;
+  let actual: string | null = padreId;
+  const visitados = new Set<string>();
+  while (actual) {
+    if (actual === nodoId) return true;
+    if (visitados.has(actual)) return true;
+    visitados.add(actual);
+    const n = db.nodosSegregacion.find(x => x.id === actual);
+    actual = n?.padreId || null;
+  }
+  return false;
+}
+
+/** Recolecta recursivamente los IDs de los descendientes de un nodo. */
+function descendientesNodo(nodoId: string): string[] {
+  const hijos = db.nodosSegregacion.filter(n => n.padreId === nodoId).map(n => n.id);
+  const result = [...hijos];
+  for (const h of hijos) result.push(...descendientesNodo(h));
+  return result;
+}
+
+/** Construye el árbol de nodos a partir de la lista plana. */
+function buildTree(nodos: NodoSegregacion[]): any[] {
+  const niveles = ordenarNiveles(db.nivelesSegregacion);
+  const nivelMap = new Map(niveles.map(n => [n.id, n]));
+  const nodosPorId = new Map(nodos.map(n => [n.id, { ...n, children: [] as any[], nivel: nivelMap.get(n.nivelId) }]));
+  const roots: any[] = [];
+  for (const n of nodosPorId.values()) {
+    if (!n.padreId) {
+      roots.push(n);
+    } else {
+      const padre = nodosPorId.get(n.padreId);
+      if (padre) padre.children.push(n);
+    }
+  }
+  // Ordenar por nivel y código
+  const sortRec = (items: any[]) => {
+    items.sort((a, b) => {
+      const oa = a.nivel?.orden ?? 0;
+      const ob = b.nivel?.orden ?? 0;
+      if (oa !== ob) return oa - ob;
+      return a.codigo.localeCompare(b.codigo);
+    });
+    items.forEach(i => sortRec(i.children));
+  };
+  sortRec(roots);
+  return roots;
+}
+
+// --- Niveles de Segregación ---
+app.get('/api/niveles-segregacion', requireAuth, (_req, res) => {
+  res.json(ordenarNiveles(db.nivelesSegregacion));
+});
+
+app.post('/api/niveles-segregacion', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { codigo, nombre, orden, estado } = req.body || {};
+  if (!codigo || !nombre || orden === undefined || orden === null) {
+    return res.status(400).json({ error: 'codigo, nombre y orden son obligatorios.' });
+  }
+  const ordenNum = Number(orden);
+  if (!Number.isFinite(ordenNum) || ordenNum < 1) {
+    return res.status(400).json({ error: 'El orden debe ser un número mayor o igual a 1.' });
+  }
+  if (db.nivelesSegregacion.some(n => n.codigo === codigo)) {
+    return res.status(409).json({ error: 'El código de nivel ya existe.' });
+  }
+  if (db.nivelesSegregacion.some(n => n.orden === ordenNum)) {
+    return res.status(409).json({ error: 'Ya existe un nivel con ese orden.' });
+  }
+  const nivel: NivelSegregacion = {
+    id: newId('niv_seg'),
+    codigo,
+    nombre,
+    orden: ordenNum,
+    estado: estado || 'ACTIVO',
     createdAt: nowIso(),
   };
-  db.empresas.push(empresa);
-  logAudit('api', 'CREATE', 'config-empresa', empresa.id, `Empresa ${empresa.codigo}`);
-  res.status(201).json(empresa);
+  db.nivelesSegregacion.push(nivel);
+  logAudit(actorName(req), 'CREATE_NIVEL_SEGREGACION', 'nivel-segregacion', nivel.id, `Nivel "${nombre}" creado con orden ${ordenNum}.`);
+  res.status(201).json(nivel);
 });
 
-app.put('/api/config-empresas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
-  const empresa = db.empresas.find(e => e.id === req.params.id);
-  if (!empresa) { res.status(404).json({ error: 'Empresa no encontrada.' }); return; }
-  const b = definedOnly(req.body);
-  Object.assign(empresa, b);
-  logAudit('api', 'UPDATE', 'config-empresa', empresa.id, `Empresa ${empresa.codigo}`);
-  res.json(empresa);
+app.put('/api/niveles-segregacion/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const nivel = db.nivelesSegregacion.find(n => n.id === req.params.id);
+  if (!nivel) return res.status(404).json({ error: 'Nivel no encontrado.' });
+  const { codigo, nombre, orden, estado } = req.body || {};
+  const patch = definedOnly({ codigo, nombre, orden, estado });
+  if (patch.orden !== undefined) {
+    patch.orden = Number(patch.orden);
+    if (!Number.isFinite(patch.orden) || patch.orden < 1) {
+      return res.status(400).json({ error: 'El orden debe ser un número mayor o igual a 1.' });
+    }
+    if (db.nivelesSegregacion.some(n => n.id !== nivel.id && n.orden === patch.orden)) {
+      return res.status(409).json({ error: 'Ya existe un nivel con ese orden.' });
+    }
+  }
+  if (patch.codigo && db.nivelesSegregacion.some(n => n.id !== nivel.id && n.codigo === patch.codigo)) {
+    return res.status(409).json({ error: 'El código de nivel ya existe.' });
+  }
+  Object.assign(nivel, patch);
+  logAudit(actorName(req), 'UPDATE_NIVEL_SEGREGACION', 'nivel-segregacion', nivel.id, `Nivel "${nivel.nombre}" actualizado.`);
+  res.json(nivel);
 });
 
-app.delete('/api/config-empresas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
-  const idx = db.empresas.findIndex(e => e.id === req.params.id);
-  if (idx === -1) { res.status(404).json({ error: 'Empresa no encontrada.' }); return; }
-  const removed = db.empresas.splice(idx, 1)[0];
-  const sucursalesEliminadas = db.sucursales.filter(s => s.empresaCodigo === removed.codigo);
-  const sucCodigos = sucursalesEliminadas.map(s => s.codigo);
-  db.sucursales = db.sucursales.filter(s => s.empresaCodigo !== removed.codigo);
-  db.puntosVenta = db.puntosVenta.filter(p => !sucCodigos.includes(p.sucursalCodigo));
-  logAudit('api', 'DELETE', 'config-empresa', removed.id, `Empresa ${removed.codigo}. Sucursales eliminadas: ${sucursalesEliminadas.length}.`);
+app.delete('/api/niveles-segregacion/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.nivelesSegregacion.findIndex(n => n.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Nivel no encontrado.' });
+  const nivel = db.nivelesSegregacion[idx];
+  if (db.nodosSegregacion.some(n => n.nivelId === nivel.id)) {
+    return res.status(400).json({ error: 'No se puede eliminar un nivel que tiene nodos asociados.' });
+  }
+  db.nivelesSegregacion.splice(idx, 1);
+  logAudit(actorName(req), 'DELETE_NIVEL_SEGREGACION', 'nivel-segregacion', nivel.id, `Nivel "${nivel.nombre}" eliminado.`);
   res.json({ ok: true });
 });
 
-// --- Sucursales ---
-app.get('/api/config-sucursales', requireAuth, (_req, res) => { res.json(db.sucursales); });
-
-app.post('/api/config-sucursales', requireAuth, requireGlobalAdmin, (req, res) => {
-  const body = req.body;
-  if (!body?.codigo || !body?.nombre || !body?.empresaCodigo) { res.status(400).json({ error: 'codigo, nombre y empresaCodigo son obligatorios.' }); return; }
-  const sucursal: Sucursal = { id: newId('cfg_suc'), codigo: body.codigo, nombre: body.nombre, empresaCodigo: body.empresaCodigo, direccion: body.direccion || '', telefono: body.telefono || '', estado: body.estado || 'ACTIVO', createdAt: nowIso() };
-  db.sucursales.push(sucursal);
-  logAudit('api', 'CREATE', 'config-sucursal', sucursal.id, `Sucursal ${sucursal.codigo}`);
-  res.status(201).json(sucursal);
+// --- Nodos de Segregación ---
+app.get('/api/nodos-segregacion', requireAuth, (_req, res) => {
+  res.json(ordenarNodos(db.nodosSegregacion));
 });
 
-app.put('/api/config-sucursales/:id', requireAuth, requireGlobalAdmin, (req, res) => {
-  const sucursal = db.sucursales.find(s => s.id === req.params.id);
-  if (!sucursal) { res.status(404).json({ error: 'Sucursal no encontrada.' }); return; }
-  const b = definedOnly(req.body);
-  Object.assign(sucursal, b);
-  logAudit('api', 'UPDATE', 'config-sucursal', sucursal.id, `Sucursal ${sucursal.codigo}`);
-  res.json(sucursal);
+app.get('/api/nodos-segregacion/arbol', requireAuth, (_req, res) => {
+  res.json(buildTree(db.nodosSegregacion));
 });
 
-app.delete('/api/config-sucursales/:id', requireAuth, requireGlobalAdmin, (req, res) => {
-  const idx = db.sucursales.findIndex(s => s.id === req.params.id);
-  if (idx === -1) { res.status(404).json({ error: 'Sucursal no encontrada.' }); return; }
-  const removed = db.sucursales.splice(idx, 1)[0];
-  db.puntosVenta = db.puntosVenta.filter(p => p.sucursalCodigo !== removed.codigo);
-  logAudit('api', 'DELETE', 'config-sucursal', removed.id, `Sucursal ${removed.codigo}. Puntos de venta eliminados.`);
-  res.json({ ok: true });
+app.post('/api/nodos-segregacion', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { codigo, nombre, nivelId, padreId, estado } = req.body || {};
+  if (!codigo || !nombre || !nivelId) {
+    return res.status(400).json({ error: 'codigo, nombre y nivelId son obligatorios.' });
+  }
+  if (!db.nivelesSegregacion.some(n => n.id === nivelId)) {
+    return res.status(404).json({ error: 'Nivel no encontrado.' });
+  }
+  if (db.nodosSegregacion.some(n => n.codigo === codigo)) {
+    return res.status(409).json({ error: 'El código de nodo ya existe.' });
+  }
+  const validacion = padreValido(nivelId, padreId);
+  if (!validacion.ok) return res.status(400).json({ error: validacion.error });
+  const nodo: NodoSegregacion = {
+    id: newId('nod_seg'),
+    codigo,
+    nombre,
+    nivelId,
+    padreId: padreId || null,
+    estado: estado || 'ACTIVO',
+    createdAt: nowIso(),
+  };
+  db.nodosSegregacion.push(nodo);
+  logAudit(actorName(req), 'CREATE_NODO_SEGREGACION', 'nodo-segregacion', nodo.id, `Nodo "${nombre}" creado.`);
+  res.status(201).json(nodo);
 });
 
-// --- Puntos de Venta ---
-app.get('/api/config-puntos-venta', requireAuth, (_req, res) => { res.json(db.puntosVenta); });
+app.put('/api/nodos-segregacion/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const nodo = db.nodosSegregacion.find(n => n.id === req.params.id);
+  if (!nodo) return res.status(404).json({ error: 'Nodo no encontrado.' });
+  const { codigo, nombre, nivelId, padreId, estado } = req.body || {};
+  const patch = definedOnly({ codigo, nombre, nivelId, padreId, estado });
 
-app.post('/api/config-puntos-venta', requireAuth, requireGlobalAdmin, (req, res) => {
-  const body = req.body;
-  if (!body?.codigo || !body?.nombre || !body?.sucursalCodigo) { res.status(400).json({ error: 'codigo, nombre y sucursalCodigo son obligatorios.' }); return; }
-  const pv: PuntoVenta = { id: newId('cfg_pv'), codigo: body.codigo, nombre: body.nombre, sucursalCodigo: body.sucursalCodigo, direccion: body.direccion || '', estado: body.estado || 'ACTIVO', createdAt: nowIso() };
-  db.puntosVenta.push(pv);
-  logAudit('api', 'CREATE', 'config-punto-venta', pv.id, `Punto de Venta ${pv.codigo}`);
-  res.status(201).json(pv);
+  if (patch.nivelId && !db.nivelesSegregacion.some(n => n.id === patch.nivelId)) {
+    return res.status(404).json({ error: 'Nivel no encontrado.' });
+  }
+  const nivelFinal = patch.nivelId || nodo.nivelId;
+  const padreFinal = patch.padreId !== undefined ? patch.padreId : nodo.padreId;
+  const validacion = padreValido(nivelFinal, padreFinal);
+  if (!validacion.ok) return res.status(400).json({ error: validacion.error });
+  if (detectaCiclo(nodo.id, padreFinal)) {
+    return res.status(400).json({ error: 'No se puede formar un ciclo en la jerarquía.' });
+  }
+  if (patch.codigo && db.nodosSegregacion.some(n => n.id !== nodo.id && n.codigo === patch.codigo)) {
+    return res.status(409).json({ error: 'El código de nodo ya existe.' });
+  }
+  // Si cambia de nivel, los descendientes quedarían huérfanos; los eliminamos en cascada.
+  if (patch.nivelId && patch.nivelId !== nodo.nivelId) {
+    const desc = descendientesNodo(nodo.id);
+    db.nodosSegregacion = db.nodosSegregacion.filter(n => !desc.includes(n.id));
+    // Limpiar referencias de usuarios a nodos eliminados
+    db.users.forEach(u => { u.nodoIds = u.nodoIds.filter(id => id !== nodo.id && !desc.includes(id)); });
+  }
+  Object.assign(nodo, patch);
+  logAudit(actorName(req), 'UPDATE_NODO_SEGREGACION', 'nodo-segregacion', nodo.id, `Nodo "${nodo.nombre}" actualizado.`);
+  res.json(nodo);
 });
 
-app.put('/api/config-puntos-venta/:id', requireAuth, requireGlobalAdmin, (req, res) => {
-  const pv = db.puntosVenta.find(p => p.id === req.params.id);
-  if (!pv) { res.status(404).json({ error: 'Punto de Venta no encontrado.' }); return; }
-  const b = definedOnly(req.body);
-  Object.assign(pv, b);
-  logAudit('api', 'UPDATE', 'config-punto-venta', pv.id, `Punto de Venta ${pv.codigo}`);
-  res.json(pv);
-});
-
-app.delete('/api/config-puntos-venta/:id', requireAuth, requireGlobalAdmin, (req, res) => {
-  const idx = db.puntosVenta.findIndex(p => p.id === req.params.id);
-  if (idx === -1) { res.status(404).json({ error: 'Punto de Venta no encontrado.' }); return; }
-  const removed = db.puntosVenta.splice(idx, 1)[0];
-  logAudit('api', 'DELETE', 'config-punto-venta', removed.id, `Punto de Venta ${removed.codigo}`);
+app.delete('/api/nodos-segregacion/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.nodosSegregacion.findIndex(n => n.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Nodo no encontrado.' });
+  const removed = db.nodosSegregacion[idx];
+  const desc = descendientesNodo(removed.id);
+  const eliminados = [removed.id, ...desc];
+  db.nodosSegregacion = db.nodosSegregacion.filter(n => !eliminados.includes(n.id));
+  db.users.forEach(u => { u.nodoIds = u.nodoIds.filter(id => !eliminados.includes(id)); });
+  logAudit(actorName(req), 'DELETE_NODO_SEGREGACION', 'nodo-segregacion', removed.id, `Nodo "${removed.nombre}" eliminado con ${desc.length} descendiente(s).`);
   res.json({ ok: true });
 });
 

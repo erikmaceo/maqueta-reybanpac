@@ -86,6 +86,26 @@ export interface Perfil {
   createdAt: string;
 }
 
+// --- Segregación dinámica --------------------------------------------------
+export interface NivelSegregacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  orden: number;
+  estado: SegEstado;
+  createdAt: string;
+}
+
+export interface NodoSegregacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  nivelId: string;
+  padreId: string | null;
+  estado: SegEstado;
+  createdAt: string;
+}
+
 export type UserType = 'ADMIN' | 'CLIENTE_FINAL';
 export type UserSource = 'LOCAL' | 'LDAP';
 export type UserStatus = 'ACTIVE' | 'INACTIVE';
@@ -137,7 +157,7 @@ export interface User {
   cargo: string;
   department: string;
   company: string;
-  empresaCodigo: string;
+  nodoIds: string[];
   perfilCodigos: string[];
   type: UserType;
   source: UserSource;
@@ -185,50 +205,6 @@ export interface AuditEntry {
 }
 
 export interface AuthUser extends Omit<User, 'password'> {}
-
-// --- Configuración ----------------------------------------------------------
-export interface Empresa {
-  id: string;
-  codigo: string;
-  nombre: string;
-  razonSocial: string;
-  ruc: string;
-  direccion: string;
-  telefono: string;
-  email: string;
-  paginaWeb: string;
-  customFields: string[];
-  logo: string;
-  paisId: string;
-  paisDescripcion: string;
-  provinciaId: string;
-  provinciaDescripcion: string;
-  ciudadId: string;
-  ciudadDescripcion: string;
-  estado: SegEstado;
-  createdAt: string;
-}
-
-export interface Sucursal {
-  id: string;
-  codigo: string;
-  nombre: string;
-  empresaCodigo: string;
-  direccion: string;
-  telefono: string;
-  estado: SegEstado;
-  createdAt: string;
-}
-
-export interface PuntoVenta {
-  id: string;
-  codigo: string;
-  nombre: string;
-  sucursalCodigo: string;
-  direccion: string;
-  estado: SegEstado;
-  createdAt: string;
-}
 
 // --- Parámetros y Configuración -----------------------------------------------
 export interface Pais {

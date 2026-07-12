@@ -20,9 +20,8 @@ import type {
   Programa,
   Perfil,
   Control,
-  Empresa,
-  Sucursal,
-  PuntoVenta,
+  NivelSegregacion,
+  NodoSegregacion,
   Pais,
   Provincia,
   Ciudad,
@@ -121,7 +120,7 @@ const mkUser = (u: Partial<User> & Pick<User, 'id' | 'username' | 'firstName' | 
   cargo: '',
   department: '',
   company: 'Reybanpac',
-  empresaCodigo: '',
+  nodoIds: [],
   perfilCodigos: [],
   status: 'ACTIVE',
   roleIds: [],
@@ -142,7 +141,7 @@ export const users: User[] = [
     source: 'LOCAL',
     password: 'admin123',
     roleIds: ['r_global_admin'],
-    empresaCodigo: 'EMP-001',
+    nodoIds: ['nod_emp_1'],
     perfilCodigos: ['PERF-FI-VIS', 'PERF-MM-CR'],
     lastLogin: iso(0),
   }),
@@ -157,7 +156,7 @@ export const users: User[] = [
     source: 'LOCAL',
     password: 'admin123',
     roleIds: ['r_ks8_edit'],
-    empresaCodigo: 'EMP-001',
+    nodoIds: ['nod_emp_1'],
     perfilCodigos: ['PERF-KS8-OPS'],
   }),
   // Clientes finales — provienen de LDAP (espejo de ldap/bootstrap.ldif)
@@ -171,7 +170,7 @@ export const users: User[] = [
     type: 'CLIENTE_FINAL',
     source: 'LDAP',
     roleIds: ['r_ks8_view'],
-    empresaCodigo: 'EMP-002',
+    nodoIds: ['nod_emp_2'],
     perfilCodigos: [],
   }),
   // Osniel Torres es Dueño Técnico (autorizador) del grupo View, por lo que es
@@ -187,7 +186,7 @@ export const users: User[] = [
     source: 'LOCAL',
     password: 'admin123',
     roleIds: ['r_ks8_view'],
-    empresaCodigo: 'EMP-001',
+    nodoIds: ['nod_emp_1'],
     perfilCodigos: ['PERF-FI-ED'],
   }),
   mkUser({
@@ -200,7 +199,7 @@ export const users: User[] = [
     type: 'CLIENTE_FINAL',
     source: 'LDAP',
     roleIds: [],
-    empresaCodigo: 'EMP-002',
+    nodoIds: ['nod_emp_2'],
     perfilCodigos: ['PERF-FI-VIS'],
   }),
 ];
@@ -425,27 +424,29 @@ export const controles: Control[] = [
   { id: 'seg_ctrl_9', prgCodigo: 'PRG-RPA-LAUNCH', codigo: 'CTRL-RPA-LOG', tipoControl: 'Otros', descripcion: 'Log de ejecución', estado: 'ACTIVO', log: 'INACTIVO', orden: 1, createdAt: iso(55) },
 ];
 
-// --- Configuración: Empresas ------------------------------------------------
-export const empresas: Empresa[] = [
-  { id: 'cfg_emp_1', codigo: 'EMP-001', nombre: 'Reybanpac', razonSocial: 'Reybanpac S.A.', ruc: '0992345678001', direccion: 'Av. Carlos Luis Sáenz, Guayaquil', telefono: '04-600-1234', email: 'info@reybanpac.com', paginaWeb: 'www.reybanpac.com', customFields: [], logo: '', paisId: '', paisDescripcion: 'Ecuador', provinciaId: '', provinciaDescripcion: 'Guayas', ciudadId: '', ciudadDescripcion: 'Guayaquil', estado: 'ACTIVO', createdAt: iso(100) },
-  { id: 'cfg_emp_2', codigo: 'EMP-002', nombre: 'Favorita Fruit', razonSocial: 'Favorita Fruit Company C.A.', ruc: '0998765432001', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', email: 'contacto@favoritafruit.com', paginaWeb: 'www.favoritafruit.com', customFields: [], logo: '', paisId: '', paisDescripcion: 'Ecuador', provinciaId: '', provinciaDescripcion: 'Pichincha', ciudadId: '', ciudadDescripcion: 'Quito', estado: 'ACTIVO', createdAt: iso(95) },
+// --- Configuración: Niveles de Segregación ----------------------------------
+export const nivelesSegregacion: NivelSegregacion[] = [
+  { id: 'niv_emp', codigo: 'EMP', nombre: 'Empresa', orden: 1, estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'niv_suc', codigo: 'SUC', nombre: 'Sucursal', orden: 2, estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'niv_pv', codigo: 'PV', nombre: 'Punto de Venta', orden: 3, estado: 'ACTIVO', createdAt: iso(100) },
 ];
 
-// --- Configuración: Sucursales ----------------------------------------------
-export const sucursales: Sucursal[] = [
-  { id: 'cfg_suc_1', codigo: 'SUC-GYE-01', nombre: 'Matriz Guayaquil', empresaCodigo: 'EMP-001', direccion: 'Av. Carlos Luis Sáenz y 9 de Octubre, Guayaquil', telefono: '04-600-1234', estado: 'ACTIVO', createdAt: iso(90) },
-  { id: 'cfg_suc_2', codigo: 'SUC-GYE-02', nombre: 'Sucursal Aeropuerto', empresaCodigo: 'EMP-001', direccion: 'Av. Francisco de Orellana, Guayaquil', telefono: '04-600-5678', estado: 'ACTIVO', createdAt: iso(85) },
-  { id: 'cfg_suc_3', codigo: 'SUC-UIO-01', nombre: 'Matriz Quito', empresaCodigo: 'EMP-002', direccion: 'Av. Quito 1234, Quito', telefono: '02-600-5678', estado: 'ACTIVO', createdAt: iso(88) },
-  { id: 'cfg_suc_4', codigo: 'SUC-UIO-02', nombre: 'Sucursal Cumbayá', empresaCodigo: 'EMP-002', direccion: 'Av. Interoceánica y Cumbayá, Quito', telefono: '02-600-9012', estado: 'ACTIVO', createdAt: iso(80) },
-];
-
-// --- Configuración: Puntos de Venta -----------------------------------------
-export const puntosVenta: PuntoVenta[] = [
-  { id: 'cfg_pv_1', codigo: 'PV-001', nombre: 'Caja Principal', sucursalCodigo: 'SUC-GYE-01', direccion: 'Av. Carlos Luis Sáenz y 9 de Octubre', estado: 'ACTIVO', createdAt: iso(88) },
-  { id: 'cfg_pv_2', codigo: 'PV-002', nombre: 'Caja Secundaria', sucursalCodigo: 'SUC-GYE-01', direccion: 'Av. Carlos Luis Sáenz y 9 de Octubre', estado: 'ACTIVO', createdAt: iso(87) },
-  { id: 'cfg_pv_3', codigo: 'PV-003', nombre: 'Caja Aeropuerto', sucursalCodigo: 'SUC-GYE-02', direccion: 'Av. Francisco de Orellana', estado: 'ACTIVO', createdAt: iso(84) },
-  { id: 'cfg_pv_4', codigo: 'PV-004', nombre: 'Caja Matriz', sucursalCodigo: 'SUC-UIO-01', direccion: 'Av. Quito 1234', estado: 'ACTIVO', createdAt: iso(86) },
-  { id: 'cfg_pv_5', codigo: 'PV-005', nombre: 'Caja Cumbayá', sucursalCodigo: 'SUC-UIO-02', direccion: 'Av. Interoceánica y Cumbayá', estado: 'ACTIVO', createdAt: iso(78) },
+// --- Configuración: Nodos de Segregación (árbol Empresa → Sucursal → PV) ----
+export const nodosSegregacion: NodoSegregacion[] = [
+  // Empresas
+  { id: 'nod_emp_1', codigo: 'EMP-001', nombre: 'Reybanpac', nivelId: 'niv_emp', padreId: null, estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'nod_emp_2', codigo: 'EMP-002', nombre: 'Favorita Fruit', nivelId: 'niv_emp', padreId: null, estado: 'ACTIVO', createdAt: iso(95) },
+  // Sucursales
+  { id: 'nod_suc_1', codigo: 'SUC-GYE-01', nombre: 'Matriz Guayaquil', nivelId: 'niv_suc', padreId: 'nod_emp_1', estado: 'ACTIVO', createdAt: iso(90) },
+  { id: 'nod_suc_2', codigo: 'SUC-GYE-02', nombre: 'Sucursal Aeropuerto', nivelId: 'niv_suc', padreId: 'nod_emp_1', estado: 'ACTIVO', createdAt: iso(85) },
+  { id: 'nod_suc_3', codigo: 'SUC-UIO-01', nombre: 'Matriz Quito', nivelId: 'niv_suc', padreId: 'nod_emp_2', estado: 'ACTIVO', createdAt: iso(88) },
+  { id: 'nod_suc_4', codigo: 'SUC-UIO-02', nombre: 'Sucursal Cumbayá', nivelId: 'niv_suc', padreId: 'nod_emp_2', estado: 'ACTIVO', createdAt: iso(80) },
+  // Puntos de Venta
+  { id: 'nod_pv_1', codigo: 'PV-001', nombre: 'Caja Principal', nivelId: 'niv_pv', padreId: 'nod_suc_1', estado: 'ACTIVO', createdAt: iso(88) },
+  { id: 'nod_pv_2', codigo: 'PV-002', nombre: 'Caja Secundaria', nivelId: 'niv_pv', padreId: 'nod_suc_1', estado: 'ACTIVO', createdAt: iso(87) },
+  { id: 'nod_pv_3', codigo: 'PV-003', nombre: 'Caja Aeropuerto', nivelId: 'niv_pv', padreId: 'nod_suc_2', estado: 'ACTIVO', createdAt: iso(84) },
+  { id: 'nod_pv_4', codigo: 'PV-004', nombre: 'Caja Matriz', nivelId: 'niv_pv', padreId: 'nod_suc_3', estado: 'ACTIVO', createdAt: iso(86) },
+  { id: 'nod_pv_5', codigo: 'PV-005', nombre: 'Caja Cumbayá', nivelId: 'niv_pv', padreId: 'nod_suc_4', estado: 'ACTIVO', createdAt: iso(78) },
 ];
 
 // --- Parámetros y Configuración: Países ----------------------------------------

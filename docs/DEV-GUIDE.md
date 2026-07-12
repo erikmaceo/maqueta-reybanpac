@@ -56,8 +56,12 @@ docker ps --filter "name=cam-backend" --format "{{.Status}}"
 | `/login` | LoginComponent | guestGuard | Inicio de sesión |
 | `/sistemas` | SystemsComponent | adminGuard | Catálogo de aplicaciones |
 | `/seguridades` | SecurityComponent | adminGuard | CRUD seguridades (4 tabs) |
+| `/niveles-segregacion` | SegregationLevelsComponent | adminGuard | Gestión dinámica de niveles y nodos de segregación |
+| `/configuracion` | redirectTo: `/niveles-segregacion` | — | Redirección por compatibilidad |
+| `/parametros` | ParametersConfigurationComponent | adminGuard | Países, provincias y ciudades |
 | `/roles` | RolesComponent | adminGuard | Roles y accesos |
 | `/usuarios` | UsersComponent | adminGuard | Usuarios |
+| `/acceso-usuarios` | UserAccessComponent | adminGuard | Nodos y perfiles por usuario |
 | `/matriz-acceso` | MatrixAccessComponent | adminGuard | Carga masiva Excel |
 | `/directorio` | DirectoryComponent | adminGuard | Directorio LDAP |
 | `/soluciones` | SolucionesComponent | adminGuard | Vista jerárquica por app |
@@ -86,28 +90,43 @@ docker ps --filter "name=cam-backend" --format "{{.Status}}"
 | POST | `/api/seg-perfiles` | Crear perfil |
 | PUT | `/api/seg-perfiles/:id` | Actualizar perfil |
 | DELETE | `/api/seg-perfiles/:id` | Eliminar perfil |
+| GET | `/api/niveles-segregacion` | Listar niveles de segregación |
+| POST | `/api/niveles-segregacion` | Crear nivel de segregación |
+| PUT | `/api/niveles-segregacion/:id` | Actualizar nivel de segregación |
+| DELETE | `/api/niveles-segregacion/:id` | Eliminar nivel de segregación |
+| GET | `/api/nodos-segregacion` | Listar nodos de segregación |
+| GET | `/api/nodos-segregacion/arbol` | Obtener árbol jerárquico de nodos |
+| POST | `/api/nodos-segregacion` | Crear nodo de segregación |
+| PUT | `/api/nodos-segregacion/:id` | Actualizar nodo de segregación |
+| DELETE | `/api/nodos-segregacion/:id` | Eliminar nodo de segregación |
 | POST | `/api/seg-matriz/upload` | Carga masiva desde Excel |
 
 ## Plantilla Excel — Matriz de Acceso
 
-14 columnas (A-N):
+18 columnas (A-R):
 
 | Col | Campo | Obligatorio | Descripción |
 |-----|-------|-------------|-------------|
-| A | app_codigo | Sí | Código único de la aplicación |
-| B | app_nombre | Sí | Nombre de la aplicación |
-| C | app_descripcion | No | Descripción de la aplicación |
-| D | mod_codigo | Sí | Código único del módulo |
-| E | mod_nombre | Sí | Nombre del módulo |
-| F | mod_descripcion | No | Descripción del módulo |
-| G | prg_codigo | Sí | Código único del programa |
-| H | prg_nombre | Sí | Nombre del programa |
-| I | prg_descripcion | No | Descripción del programa |
-| J | prg_tipo | No | Tipo: Menú, Submenú, Maestro, Transacción, Proceso, Consulta, Reporte, Objeto. Default: Transacción |
-| K | perf_codigo | Sí | Código único del perfil |
-| L | perf_nombre | Sí | Nombre del perfil |
-| M | perf_descripcion | No | Descripción del perfil |
-| N | estado | No | ACTIVO o INACTIVO. Default: ACTIVO |
+| A | usr_codigo | Sí | Código único del usuario |
+| B | usr_nombre | Sí | Nombre del usuario |
+| C | usr_email | No | Email del usuario |
+| D | usr_estado | No | ACTIVE o INACTIVE. Default: ACTIVE |
+| E | app_codigo | Sí | Código único de la aplicación |
+| F | app_nombre | Sí | Nombre de la aplicación |
+| G | app_descripcion | No | Descripción de la aplicación |
+| H | mod_codigo | Sí | Código único del módulo |
+| I | mod_nombre | Sí | Nombre del módulo |
+| J | mod_descripcion | No | Descripción del módulo |
+| K | prg_codigo | Sí | Código único del programa |
+| L | prg_nombre | Sí | Nombre del programa |
+| M | prg_descripcion | No | Descripción del programa |
+| N | prg_tipo | No | Tipo: Menú, Submenú, Maestro, Transacción, Proceso, Consulta, Reporte, Objeto. Default: Transacción |
+| O | perf_codigo | Sí | Código único del perfil |
+| P | perf_nombre | Sí | Nombre del perfil |
+| Q | perf_descripcion | No | Descripción del perfil |
+| R | estado | No | ACTIVO o INACTIVO. Default: ACTIVO |
+
+> Nota: La segregación territorial/comercial (Empresas, Sucursales, Puntos de Venta) se gestiona ahora de forma dinámica en el módulo **Niveles de Segregación**.
 
 ## Convenciones de código
 

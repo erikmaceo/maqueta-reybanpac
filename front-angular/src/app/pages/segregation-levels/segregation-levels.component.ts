@@ -309,7 +309,9 @@ export class SegregationLevelsComponent implements OnInit {
     if (!nivelId) return [];
     const nivel = this.nivelMap().get(nivelId);
     if (!nivel || nivel.orden <= 1) return [];
-    const nivelAnterior = this.nivelesOrdenados().find(n => n.orden < nivel.orden);
+    const nivelAnterior = this.nivelesOrdenados()
+      .filter(n => n.orden < nivel.orden)
+      .sort((a, b) => b.orden - a.orden)[0];
     if (!nivelAnterior) return [];
     return this.nodos().filter(n => n.nivelId === nivelAnterior.id).sort((a, b) => a.codigo.localeCompare(b.codigo));
   });

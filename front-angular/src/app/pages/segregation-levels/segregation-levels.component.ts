@@ -15,7 +15,7 @@ import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
   IconDownloadComponent,
 } from '../../shared/components/icons';
-import type { NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor } from '../../shared/models/types';
+import type { NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad } from '../../shared/models/types';
 
 type TabValue = 'niveles' | 'nodos' | 'atributos';
 type Estado = 'ACTIVO' | 'INACTIVO';
@@ -23,7 +23,8 @@ type Estado = 'ACTIVO' | 'INACTIVO';
 interface NodoView extends NodoSegregacion {
   nivelNombre?: string;
   padreNombre?: string;
-  atributos: Record<string, string>;
+  atributos: Record<string, string>; // valores formateados para visualización
+  atributosRaw: Record<string, string>; // valores crudos (ids) para edición
 }
 
 @Component({
@@ -347,11 +348,36 @@ interface NodoView extends NodoSegregacion {
               <label [class.error-text]="nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]">
                 {{ attr.nombre }} {{ attr.obligatorio ? '*' : '' }}
               </label>
-              <input class="input"
-                [type]="attr.tipo === 'numero' ? 'number' : attr.tipo === 'email' ? 'email' : 'text'"
-                [(ngModel)]="nodoForm.atributos[attr.id]"
-                [placeholder]="attr.nombre"
-                [class.input-error]="nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]" />
+              @if (attr.tipo === 'select') {
+                <select class="select"
+                  [(ngModel)]="nodoForm.atributos[attr.id]"
+                  [class.input-error]="nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]">
+                  <option value="">— Seleccione —</option>
+                  @switch (attr.config?.fuente) {
+                    @case ('paises') {
+                      @for (p of paises(); track p.id) {
+                        <option [value]="p.id">{{ p.descripcion }}</option>
+                      }
+                    }
+                    @case ('provincias') {
+                      @for (p of provincias(); track p.id) {
+                        <option [value]="p.id">{{ p.descripcion }}</option>
+                      }
+                    }
+                    @case ('ciudades') {
+                      @for (c of ciudades(); track c.id) {
+                        <option [value]="c.id">{{ c.descripcion }}</option>
+                      }
+                    }
+                  }
+                </select>
+              } @else {
+                <input class="input"
+                  [type]="attr.tipo === 'numero' ? 'number' : attr.tipo === 'email' ? 'email' : 'text'"
+                  [(ngModel)]="nodoForm.atributos[attr.id]"
+                  [placeholder]="attr.nombre"
+                  [class.input-error]="nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]" />
+              }
               @if (nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]) {
                 <div class="error-text">Este campo es obligatorio.</div>
               }
@@ -411,6 +437,7 @@ interface NodoView extends NodoSegregacion {
             <option value="numero">Número</option>
             <option value="telefono">Teléfono</option>
             <option value="email">Email</option>
+            <option value="select">Selección</option>
           </select>
         </div>
         <div class="field">
@@ -421,6 +448,17 @@ interface NodoView extends NodoSegregacion {
           </select>
         </div>
       </div>
+      @if (atributoForm.tipo === 'select') {
+        <div class="field">
+          <label>Fuente de opciones</label>
+          <select class="select" [(ngModel)]="atributoForm.configFuente">
+            <option value="">— Seleccione —</option>
+            <option value="paises">Países</option>
+            <option value="provincias">Provincias</option>
+            <option value="ciudades">Ciudades</option>
+          </select>
+        </div>
+      }
       <div class="field">
         <label>Estado</label>
         <select class="select" [(ngModel)]="atributoForm.estado">
@@ -446,6 +484,9 @@ export class SegregationLevelsComponent implements OnInit {
   nodos = signal<NodoSegregacion[]>([]);
   atributos = signal<NivelAtributo[]>([]);
   valoresAtributos = signal<NodoAtributoValor[]>([]);
+  paises = signal<Pais[]>([]);
+  provincias = signal<Provincia[]>([]);
+  ciudades = signal<Ciudad[]>([]);
 
   loadingNiveles = signal(true);
   loadingNodos = signal(true);
@@ -477,6 +518,9 @@ export class SegregationLevelsComponent implements OnInit {
   nivelMap = computed(() => new Map(this.niveles().map(n => [n.id, n])));
   nodoMap = computed(() => new Map(this.nodos().map(n => [n.id, n])));
   atributoMap = computed(() => new Map(this.atributos().map(a => [a.id, a])));
+  paisMap = computed(() => new Map(this.paises().map(p => [p.id, p])));
+  provinciaMap = computed(() => new Map(this.provincias().map(p => [p.id, p])));
+  ciudadMap = computed(() => new Map(this.ciudades().map(c => [c.id, c])));
 
   nivelSeleccionadoOrden = computed(() => {
     const nivel = this.nivelMap().get(this.nivelFormId());
@@ -536,16 +580,32 @@ export class SegregationLevelsComponent implements OnInit {
   nodosView = computed<NodoView[]>(() => {
     return this.nodos().map(n => {
       const valores = this.valoresAtributos().filter(v => v.nodoId === n.id);
-      const attrs: Record<string, string> = {};
+      const attrsRaw: Record<string, string> = {};
+      const attrsDisplay: Record<string, string> = {};
       for (const v of valores) {
         const attr = this.atributoMap().get(v.atributoId);
-        if (attr) attrs[attr.id] = v.valor;
+        if (!attr) continue;
+        attrsRaw[attr.id] = v.valor;
+        if (attr.tipo === 'select') {
+          if (attr.config?.fuente === 'paises') {
+            attrsDisplay[attr.id] = this.paisMap().get(v.valor)?.descripcion || v.valor;
+          } else if (attr.config?.fuente === 'provincias') {
+            attrsDisplay[attr.id] = this.provinciaMap().get(v.valor)?.descripcion || v.valor;
+          } else if (attr.config?.fuente === 'ciudades') {
+            attrsDisplay[attr.id] = this.ciudadMap().get(v.valor)?.descripcion || v.valor;
+          } else {
+            attrsDisplay[attr.id] = v.valor;
+          }
+        } else {
+          attrsDisplay[attr.id] = v.valor;
+        }
       }
       return {
         ...n,
         nivelNombre: this.nivelMap().get(n.nivelId)?.nombre || n.nivelId,
         padreNombre: n.padreId ? (this.nodoMap().get(n.padreId)?.nombre || n.padreId) : undefined,
-        atributos: attrs,
+        atributos: attrsDisplay,
+        atributosRaw: attrsRaw,
       };
     }).sort((a, b) => {
       const oa = this.nivelMap().get(a.nivelId)?.orden ?? 0;
@@ -587,10 +647,16 @@ export class SegregationLevelsComponent implements OnInit {
     this.loadNiveles();
     this.loadNodos();
     this.loadAtributos();
+    this.loadPaises();
+    this.loadProvincias();
+    this.loadCiudades();
     this.events.onDataChanged(() => {
       this.loadNiveles();
       this.loadNodos();
       this.loadAtributos();
+      this.loadPaises();
+      this.loadProvincias();
+      this.loadCiudades();
     });
   }
 
@@ -624,6 +690,27 @@ export class SegregationLevelsComponent implements OnInit {
   loadValoresAtributos = (): void => {
     this.api.listNodosAtributoValores().subscribe({
       next: (data) => { this.valoresAtributos.set(data); },
+      error: () => { /* no crítico */ },
+    });
+  };
+
+  loadPaises = (): void => {
+    this.api.listPaises().subscribe({
+      next: (data) => { this.paises.set(data); },
+      error: () => { /* no crítico */ },
+    });
+  };
+
+  loadProvincias = (): void => {
+    this.api.listProvincias().subscribe({
+      next: (data) => { this.provincias.set(data); },
+      error: () => { /* no crítico */ },
+    });
+  };
+
+  loadCiudades = (): void => {
+    this.api.listCiudades().subscribe({
+      next: (data) => { this.ciudades.set(data); },
       error: () => { /* no crítico */ },
     });
   };
@@ -683,7 +770,7 @@ export class SegregationLevelsComponent implements OnInit {
   openNodoDialog(n?: NodoView): void {
     if (n) {
       const attrValues: Record<string, string> = {};
-      for (const [atributoId, valor] of Object.entries(n.atributos)) {
+      for (const [atributoId, valor] of Object.entries(n.atributosRaw)) {
         const attr = this.atributoMap().get(atributoId);
         if (attr && attr.nivelId === n.nivelId) attrValues[attr.id] = valor;
       }
@@ -753,6 +840,7 @@ export class SegregationLevelsComponent implements OnInit {
       codigo: '',
       nombre: '',
       tipo: 'texto',
+      configFuente: '',
       obligatorio: false,
       orden: 0,
       estado: 'ACTIVO' as Estado,
@@ -773,7 +861,11 @@ export class SegregationLevelsComponent implements OnInit {
 
   openAtributoDialog(a?: NivelAtributo): void {
     if (a) {
-      this.atributoForm = { ...a, obligatorio: a.obligatorio ? 'true' : 'false' };
+      this.atributoForm = {
+        ...a,
+        obligatorio: a.obligatorio ? 'true' : 'false',
+        configFuente: a.config?.fuente || '',
+      };
       this.editAtributoId = a.id;
     } else {
       this.atributoForm = this.blankAtributo();
@@ -789,11 +881,16 @@ export class SegregationLevelsComponent implements OnInit {
       this.toast.error('Faltan datos', 'Nivel, código y nombre son obligatorios.');
       return;
     }
+    const config = this.atributoForm.tipo === 'select' && this.atributoForm.configFuente
+      ? { fuente: this.atributoForm.configFuente }
+      : undefined;
     const body = {
       ...this.atributoForm,
+      config,
       orden: Number(this.atributoForm.orden ?? 0),
       obligatorio: this.atributoForm.obligatorio === true || this.atributoForm.obligatorio === 'true',
     };
+    delete (body as any).configFuente;
     try {
       if (this.editAtributoId) {
         await this.api.updateNivelAtributo(this.editAtributoId, body).toPromise();

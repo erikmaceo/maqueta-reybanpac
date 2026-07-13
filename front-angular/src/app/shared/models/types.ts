@@ -99,7 +99,11 @@ export interface NodoSegregacion {
   createdAt: string;
 }
 
-export type TipoAtributo = 'texto' | 'numero' | 'telefono' | 'email';
+export type TipoAtributo = 'texto' | 'numero' | 'telefono' | 'email' | 'select';
+
+export interface NivelAtributoConfig {
+  fuente?: string; // ej: 'paises', 'provincias', 'ciudades'
+}
 
 export interface NivelAtributo {
   id: string;
@@ -107,6 +111,7 @@ export interface NivelAtributo {
   codigo: string;
   nombre: string;
   tipo: TipoAtributo;
+  config?: NivelAtributoConfig;
   obligatorio: boolean;
   orden: number;
   estado: 'ACTIVO' | 'INACTIVO';

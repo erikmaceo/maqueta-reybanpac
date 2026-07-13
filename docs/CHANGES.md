@@ -17,6 +17,7 @@
  - **Store en memoria**: arrays `nivelesAtributos` y `nodosAtributosValores` en `backend/src/store.ts`.
  - **Seed inicial**: atributos de ejemplo para Empresa (RUC, dirección, teléfono, nombre comercial), Sucursal (código interno, dirección) y Punto de Venta (código interno, tipo) en `backend/src/seed.ts`.
  - **Tipos frontend**: `NivelAtributo`, `NodoAtributoValor` y `TipoAtributo` en `front-angular/src/app/shared/models/types.ts`.
+ - **Configuración de selects**: `NivelAtributo` incluye `config?: { fuente?: string }` para soportar atributos tipo `select` con opciones dinámicas.
 
  #### 2. Backend: endpoints
  - `GET /api/niveles-atributos` — lista todos los atributos, opcionalmente filtrados por `nivelId`.
@@ -30,18 +31,20 @@
 
  #### 3. Frontend: pestaña "Atributos"
  - Nueva pestaña en `Niveles de Segregación` para CRUD de atributos.
- - Selector de nivel para filtrar atributos.
- - Diálogo de creación/edición con código, nombre, tipo (`texto`, `numero`, `telefono`, `email`), obligatorio, orden y estado.
+ - Diálogo de creación/edición con código, nombre, tipo (`texto`, `numero`, `telefono`, `email`, `select`), obligatorio, orden y estado.
+ - Para atributos tipo `select` se puede configurar la fuente de opciones (`paises`, `provincias`, `ciudades`).
  - Búsqueda reactiva por código, nombre, tipo o nivel.
 
  #### 4. Frontend: nodos con campos dinámicos
  - El diálogo de crear/editar nodo muestra automáticamente los campos de atributos activos del nivel seleccionado.
+ - Los atributos tipo `select` renderizan un dropdown con la lista de países, provincias o ciudades registradas según la fuente configurada.
  - Los valores se envían al backend como array de `{ atributoId, valor }`.
  - Al editar se precargan los valores existentes.
 
  #### 5. Frontend: tabla y exportación Excel
  - La tabla de nodos incluye columnas dinámicas con los atributos activos.
  - Si el mismo nombre de atributo existe en varios niveles, el encabezado se diferencia con el prefijo del nivel (por ejemplo: "Empresa - Dirección", "Sucursal - Dirección").
+ - Para atributos tipo `select`, la tabla y el Excel muestran la descripción del país, provincia o ciudad; el valor subyacente guardado es el `id` correspondiente.
  - La búsqueda de nodos también busca dentro de los valores de atributos.
  - Botón "Exportar" genera `nodos-segregacion.xlsx` con columnas base (código, nombre, nivel, padre, estado) más una columna por atributo activo, usando los nombres diferenciados.
 

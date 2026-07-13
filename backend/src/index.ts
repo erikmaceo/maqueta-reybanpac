@@ -1326,7 +1326,7 @@ app.get('/api/niveles-atributos', requireAuth, (req, res) => {
 });
 
 app.post('/api/niveles-atributos', requireAuth, requireGlobalAdmin, (req, res) => {
-  const { nivelId, codigo, nombre, tipo, obligatorio, orden, estado } = req.body || {};
+  const { nivelId, codigo, nombre, tipo, config, obligatorio, orden, estado } = req.body || {};
   if (!nivelId || !codigo || !nombre) {
     return res.status(400).json({ error: 'nivelId, codigo y nombre son obligatorios.' });
   }
@@ -1342,6 +1342,7 @@ app.post('/api/niveles-atributos', requireAuth, requireGlobalAdmin, (req, res) =
     codigo,
     nombre,
     tipo: tipo || 'texto',
+    config: config && typeof config === 'object' ? config : undefined,
     obligatorio: !!obligatorio,
     orden: orden !== undefined ? Number(orden) : db.nivelesAtributos.filter(a => a.nivelId === nivelId).length,
     estado: estado || 'ACTIVO',
@@ -1355,8 +1356,8 @@ app.post('/api/niveles-atributos', requireAuth, requireGlobalAdmin, (req, res) =
 app.put('/api/niveles-atributos/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const attr = db.nivelesAtributos.find(a => a.id === req.params.id);
   if (!attr) return res.status(404).json({ error: 'Atributo no encontrado.' });
-  const { nivelId, codigo, nombre, tipo, obligatorio, orden, estado } = req.body || {};
-  const patch = definedOnly({ nivelId, codigo, nombre, tipo, obligatorio, orden, estado });
+  const { nivelId, codigo, nombre, tipo, config, obligatorio, orden, estado } = req.body || {};
+  const patch = definedOnly({ nivelId, codigo, nombre, tipo, config, obligatorio, orden, estado });
   if (patch.nivelId && !db.nivelesSegregacion.some(n => n.id === patch.nivelId)) {
     return res.status(404).json({ error: 'Nivel no encontrado.' });
   }

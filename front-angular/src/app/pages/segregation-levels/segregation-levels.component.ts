@@ -353,11 +353,17 @@ interface NodoView extends NodoSegregacion {
           <h4 class="mb-3" style="font-size: 0.95rem;">Atributos del nivel</h4>
           @for (attr of atributosDelNivelEnEdicion(); track attr.id) {
             <div class="field">
-              <label>{{ attr.nombre }} {{ attr.obligatorio ? '*' : '' }}</label>
+              <label [class.error-text]="nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]">
+                {{ attr.nombre }} {{ attr.obligatorio ? '*' : '' }}
+              </label>
               <input class="input"
                 [type]="attr.tipo === 'numero' ? 'number' : attr.tipo === 'email' ? 'email' : 'text'"
                 [(ngModel)]="nodoForm.atributos[attr.id]"
-                [placeholder]="attr.nombre" />
+                [placeholder]="attr.nombre"
+                [class.input-error]="nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]" />
+              @if (nodoFormSubmitted() && attr.obligatorio && !nodoForm.atributos[attr.id]) {
+                <div class="error-text">Este campo es obligatorio.</div>
+              }
             </div>
           }
         </div>
@@ -470,6 +476,7 @@ export class SegregationLevelsComponent implements OnInit {
   editNodoId: string | null = null;
   nodoForm: any = {};
   nivelFormId = signal('');
+  nodoFormSubmitted = signal(false);
 
   showAtributoDlg = false;
   editAtributoId: string | null = null;
@@ -702,10 +709,11 @@ export class SegregationLevelsComponent implements OnInit {
       this.editNodoId = null;
       this.nivelFormId.set('');
     }
+    this.nodoFormSubmitted.set(false);
     this.showNodoDlg = true;
   }
 
-  closeNodoDialog(): void { this.showNodoDlg = false; this.editNodoId = null; this.nivelFormId.set(''); }
+  closeNodoDialog(): void { this.showNodoDlg = false; this.editNodoId = null; this.nivelFormId.set(''); this.nodoFormSubmitted.set(false); }
 
   onNodoNivelChange(): void {
     this.nivelFormId.set(this.nodoForm.nivelId || '');
@@ -714,8 +722,14 @@ export class SegregationLevelsComponent implements OnInit {
   }
 
   async saveNodo(): Promise<void> {
+    this.nodoFormSubmitted.set(true);
     if (!this.nodoForm.codigo || !this.nodoForm.nombre || !this.nodoForm.nivelId) {
       this.toast.error('Faltan datos', 'Código, nombre y nivel son obligatorios.');
+      return;
+    }
+    const faltantes = this.atributosDelNivelEnEdicion().filter(a => a.obligatorio && !this.nodoForm.atributos?.[a.id]);
+    if (faltantes.length > 0) {
+      this.toast.error('Faltan datos', `Complete los atributos obligatorios: ${faltantes.map(a => a.nombre).join(', ')}.`);
       return;
     }
     const atributosPayload = Object.entries(this.nodoForm.atributos || {})

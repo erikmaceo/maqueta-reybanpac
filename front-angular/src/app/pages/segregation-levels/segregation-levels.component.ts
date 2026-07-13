@@ -211,15 +211,6 @@ interface NodoView extends NodoSegregacion {
                 <app-icon-plus [width]="14" [height]="14" /> Nuevo atributo
               </button>
             </div>
-            <div class="field mb-4" style="max-width: 360px;">
-              <label>Nivel</label>
-              <select class="select" [(ngModel)]="atributosNivelFilter" (ngModelChange)="searchAtributo.set('')">
-                <option value="">— Todos los niveles —</option>
-                @for (n of nivelesOrdenados(); track n.id) {
-                  <option [value]="n.id">{{ n.orden }} · {{ n.nombre }}</option>
-                }
-              </select>
-            </div>
             <div class="card table-wrap">
               <table class="data">
                 <thead>
@@ -391,7 +382,7 @@ interface NodoView extends NodoSegregacion {
     >
       <div class="field">
         <label>Nivel</label>
-        <select class="select" [(ngModel)]="atributoForm.nivelId" [disabled]="!!editAtributoId">
+        <select class="select" [(ngModel)]="atributoForm.nivelId" [disabled]="!!editAtributoId" (ngModelChange)="onAtributoNivelChange()">
           <option value="">— Seleccione —</option>
           @for (n of nivelesOrdenados(); track n.id) {
             <option [value]="n.id">{{ n.orden }} · {{ n.nombre }}</option>
@@ -466,7 +457,6 @@ export class SegregationLevelsComponent implements OnInit {
   searchNivel = signal('');
   searchNodo = signal('');
   searchAtributo = signal('');
-  atributosNivelFilter = '';
 
   showNivelDlg = false;
   editNivelId: string | null = null;
@@ -578,11 +568,7 @@ export class SegregationLevelsComponent implements OnInit {
   });
 
   filteredAtributos = computed(() => {
-    let list = this.atributos();
-    if (this.atributosNivelFilter) {
-      list = list.filter(a => a.nivelId === this.atributosNivelFilter);
-    }
-    list = list.sort((a, b) => {
+    let list = this.atributos().slice().sort((a, b) => {
       const nivelDiff = (this.nivelMap().get(a.nivelId)?.orden ?? 0) - (this.nivelMap().get(b.nivelId)?.orden ?? 0);
       if (nivelDiff !== 0) return nivelDiff;
       return a.orden - b.orden || a.createdAt.localeCompare(b.createdAt);
@@ -763,22 +749,26 @@ export class SegregationLevelsComponent implements OnInit {
 
   blankAtributo() {
     return {
-      nivelId: this.atributosNivelFilter || '',
+      nivelId: '',
       codigo: '',
       nombre: '',
       tipo: 'texto',
       obligatorio: false,
-      orden: this.siguienteOrdenAtributo(),
+      orden: 0,
       estado: 'ACTIVO' as Estado,
     };
   }
 
-  siguienteOrdenAtributo(): number {
-    const base = this.atributosNivelFilter
-      ? this.atributos().filter(a => a.nivelId === this.atributosNivelFilter)
-      : this.atributos();
+  siguienteOrdenAtributo(nivelId: string): number {
+    const base = this.atributos().filter(a => a.nivelId === nivelId);
     if (base.length === 0) return 0;
     return Math.max(...base.map(a => a.orden)) + 1;
+  }
+
+  onAtributoNivelChange(): void {
+    if (!this.editAtributoId && this.atributoForm.nivelId) {
+      this.atributoForm.orden = this.siguienteOrdenAtributo(this.atributoForm.nivelId);
+    }
   }
 
   openAtributoDialog(a?: NivelAtributo): void {

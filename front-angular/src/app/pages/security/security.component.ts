@@ -14,6 +14,7 @@ import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
+  IconCheckComponent, IconCloseComponent,
 } from '../../shared/components/icons';
 import type { Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, TipoPrograma, TipoControl, Control } from '../../shared/models/types';
 
@@ -52,6 +53,7 @@ interface PerfilProgramaRow {
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
+    IconCheckComponent, IconCloseComponent,
   ],
   template: `
     <div class="page-head">
@@ -357,12 +359,11 @@ interface PerfilProgramaRow {
                           <th>Código de Programa</th>
                           <th>Nombre</th>
                           <th>Tipo de Programa</th>
-                          <th>Nuevo</th>
-                          <th>Modificar</th>
-                          <th>Anular</th>
-                          <th>Procesar</th>
-                          <th>Imprimir</th>
-                          <th>Consultar</th>
+                          <th style="text-align:center;">Nuevo</th>
+                          <th style="text-align:center;">Modificar</th>
+                          <th style="text-align:center;">Eliminar</th>
+                          <th style="text-align:center;">Imprimir</th>
+                          <th style="text-align:center;">Consultar</th>
                           <th>Acciones</th>
                         </tr>
                       </thead>
@@ -372,12 +373,26 @@ interface PerfilProgramaRow {
                             <td class="mono">{{ pp.prgCodigo }}</td>
                             <td><div class="cell-strong">{{ pp.prgNombre }}</div></td>
                             <td><span class="badge badge-blue">{{ pp.tipo }}</span></td>
-                            <td><span class="badge" [class.badge-green]="pp.nuevo" [class.badge-gray]="!pp.nuevo">{{ pp.nuevo ? 'Sí' : 'No' }}</span></td>
-                            <td><span class="badge" [class.badge-green]="pp.modificar" [class.badge-gray]="!pp.modificar">{{ pp.modificar ? 'Sí' : 'No' }}</span></td>
-                            <td><span class="badge" [class.badge-green]="pp.anular" [class.badge-gray]="!pp.anular">{{ pp.anular ? 'Sí' : 'No' }}</span></td>
-                            <td><span class="badge" [class.badge-green]="pp.procesar" [class.badge-gray]="!pp.procesar">{{ pp.procesar ? 'Sí' : 'No' }}</span></td>
-                            <td><span class="badge" [class.badge-green]="pp.imprimir" [class.badge-gray]="!pp.imprimir">{{ pp.imprimir ? 'Sí' : 'No' }}</span></td>
-                            <td><span class="badge" [class.badge-green]="pp.consultar" [class.badge-gray]="!pp.consultar">{{ pp.consultar ? 'Sí' : 'No' }}</span></td>
+                            <td style="text-align:center;">
+                              @if (pp.nuevo) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
+                              @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
+                            </td>
+                            <td style="text-align:center;">
+                              @if (pp.modificar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
+                              @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
+                            </td>
+                            <td style="text-align:center;">
+                              @if (pp.anular) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
+                              @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
+                            </td>
+                            <td style="text-align:center;">
+                              @if (pp.imprimir) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
+                              @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
+                            </td>
+                            <td style="text-align:center;">
+                              @if (pp.consultar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
+                              @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
+                            </td>
                             <td>
                               <div class="cell-actions">
                                 <button class="btn btn-ghost btn-sm btn-icon" title="Editar permisos" (click)="openPermDialog(pp.prgCodigo)">
@@ -387,7 +402,7 @@ interface PerfilProgramaRow {
                             </td>
                           </tr>
                         } @empty {
-                          <tr><td colspan="10" class="muted center" style="padding: 24px;">Este perfil no tiene programas asociados.</td></tr>
+                          <tr><td colspan="9" class="muted center" style="padding: 24px;">Este perfil no tiene programas asociados.</td></tr>
                         }
                       </tbody>
                     </table>
@@ -413,8 +428,14 @@ interface PerfilProgramaRow {
                             <td class="mono">{{ c.codigo }}</td>
                             <td><span class="badge badge-blue">{{ c.tipoControl }}</span></td>
                             <td>{{ c.descripcion }}</td>
-                            <td style="text-align:center;"><span [class.check-yes]="c.visualizar" [class.check-no]="!c.visualizar">{{ c.visualizar ? '✓' : '—' }}</span></td>
-                            <td style="text-align:center;"><span [class.check-yes]="c.modificar" [class.check-no]="!c.modificar">{{ c.modificar ? '✓' : '—' }}</span></td>
+                            <td style="text-align:center;">
+                              @if (c.visualizar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
+                              @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
+                            </td>
+                            <td style="text-align:center;">
+                              @if (c.modificar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
+                              @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
+                            </td>
                           </tr>
                         } @empty {
                           <tr><td colspan="6" class="muted center" style="padding: 24px;">No hay controles asociados a los programas de este perfil.</td></tr>
@@ -761,8 +782,7 @@ interface PerfilProgramaRow {
                       <th>Tipo Programa</th>
                       <th>Nuevo</th>
                       <th>Modificar</th>
-                      <th>Anular</th>
-                      <th>Procesar</th>
+                      <th>Eliminar</th>
                       <th>Imprimir</th>
                       <th>Consultar</th>
                       <th>Acciones</th>
@@ -780,7 +800,6 @@ interface PerfilProgramaRow {
                       <td><input type="checkbox" [(ngModel)]="pp.nuevo" style="width:16px;height:16px;cursor:pointer;" /></td>
                       <td><input type="checkbox" [(ngModel)]="pp.modificar" style="width:16px;height:16px;cursor:pointer;" /></td>
                       <td><input type="checkbox" [(ngModel)]="pp.anular" style="width:16px;height:16px;cursor:pointer;" /></td>
-                      <td><input type="checkbox" [(ngModel)]="pp.procesar" style="width:16px;height:16px;cursor:pointer;" /></td>
                       <td><input type="checkbox" [(ngModel)]="pp.imprimir" style="width:16px;height:16px;cursor:pointer;" /></td>
                       <td><input type="checkbox" [(ngModel)]="pp.consultar" style="width:16px;height:16px;cursor:pointer;" /></td>
                       <td>
@@ -840,8 +859,7 @@ interface PerfilProgramaRow {
       <div class="perm-grid">
         <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.nuevo" /><span>Nuevo</span></label>
         <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.modificar" /><span>Modificar</span></label>
-        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.anular" /><span>Anular</span></label>
-        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.procesar" /><span>Procesar</span></label>
+        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.anular" /><span>Eliminar</span></label>
         <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.imprimir" /><span>Imprimir</span></label>
         <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.consultar" /><span>Consultar</span></label>
       </div>
@@ -1065,6 +1083,8 @@ interface PerfilProgramaRow {
     }
     .check-yes { color: #22c55e; font-weight: 700; }
     .check-no { color: #d1d5db; }
+    .perm-icon-yes { color: #22c55e; display: inline-flex; align-items: center; justify-content: center; }
+    .perm-icon-no { color: #ef4444; display: inline-flex; align-items: center; justify-content: center; }
   `],
 })
 export class SecurityComponent implements OnInit {
@@ -1192,8 +1212,7 @@ export class SecurityComponent implements OnInit {
       p.programas.some(pp => pp.prgCodigo.toLowerCase().includes(q) ||
         (pp.nuevo ? 'nuevo' : '').includes(q) ||
         (pp.modificar ? 'modificar' : '').includes(q) ||
-        (pp.anular ? 'anular' : '').includes(q) ||
-        (pp.procesar ? 'procesar' : '').includes(q) ||
+        (pp.anular ? 'eliminar' : '').includes(q) ||
         (pp.imprimir ? 'imprimir' : '').includes(q) ||
         (pp.consultar ? 'consultar' : '').includes(q))
     );
@@ -1293,7 +1312,6 @@ export class SecurityComponent implements OnInit {
         nuevo: pp.nuevo ? 'Sí' : 'No',
         modificar: pp.modificar ? 'Sí' : 'No',
         anular: pp.anular ? 'Sí' : 'No',
-        procesar: pp.procesar ? 'Sí' : 'No',
         imprimir: pp.imprimir ? 'Sí' : 'No',
         consultar: pp.consultar ? 'Sí' : 'No',
         estado: p.estado,
@@ -1301,8 +1319,8 @@ export class SecurityComponent implements OnInit {
     );
     this.exportXlsx(
       rows,
-      ['Código', 'Nombre', 'Descripción', 'Programa', 'Nuevo', 'Modificar', 'Anular', 'Procesar', 'Imprimir', 'Consultar', 'Estado'],
-      ['codigo', 'nombre', 'descripcion', 'programa', 'nuevo', 'modificar', 'anular', 'procesar', 'imprimir', 'consultar', 'estado'],
+      ['Código', 'Nombre', 'Descripción', 'Programa', 'Nuevo', 'Modificar', 'Eliminar', 'Imprimir', 'Consultar', 'Estado'],
+      ['codigo', 'nombre', 'descripcion', 'programa', 'nuevo', 'modificar', 'anular', 'imprimir', 'consultar', 'estado'],
       'perfiles'
     );
   }
@@ -1552,7 +1570,7 @@ export class SecurityComponent implements OnInit {
     const idx = perf.programas.findIndex(p => p.prgCodigo === this.editingPrgCodigo);
     if (idx === -1) return;
     const controles = this.permControles.map((c, i) => ({ ctrlIndex: i, visualizar: c.visualizar, modificar: c.modificar }));
-    perf.programas[idx] = { ...perf.programas[idx], ...this.permForm, controles };
+    perf.programas[idx] = { ...perf.programas[idx], ...this.permForm, procesar: false, controles };
     try {
       await this.api.updatePerfil(perf.id, { programas: perf.programas }).toPromise();
       this.toast.success('Permisos actualizados');

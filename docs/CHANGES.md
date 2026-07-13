@@ -66,6 +66,59 @@
 
  ---
 
+ ## 2026-07-13 — Ajuste de permisos del Programa en Perfil
+
+ ### Resumen
+
+ Se ajustó el diálogo de permisos del Programa dentro de un perfil: se eliminó el permiso "Procesar" y el permiso "Anular" ahora se denomina "Eliminar", manteniendo coherencia con las operaciones CRUD del sistema.
+
+ ### Cambios realizados
+
+ #### Frontend (`security.component.ts`)
+ - **Diálogo de permisos del Programa**: ahora muestra las opciones `Nuevo`, `Modificar`, `Eliminar`, `Imprimir`, `Consultar`.
+ - Se eliminó la opción `Procesar` de los checkboxes de permisos.
+ - Se renombró la etiqueta y encabezados de tabla/exportación de `Anular` a `Eliminar`.
+ - Se actualizaron las columnas de la tabla de permisos asignados al perfil y la exportación Excel.
+ - El campo de búsqueda de permisos también usa "Eliminar" en su placeholder/mensajes.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `front-angular/src/app/pages/security/security.component.ts` | Ajuste de labels y opciones de permisos del programa en el diálogo, tabla y exportación |
+
+ ### Validación
+ - Build de frontend Angular exitoso.
+ - Contenedor `cam-front-angular` reconstruido y corriendo en `http://localhost:5174`.
+
+ ---
+
+ ## 2026-07-13 — Iconos en columnas booleanas de permisos
+
+ ### Resumen
+
+ Se reemplazaron los textos `Sí`/`No` de las columnas booleanas en las pestañas de detalle de un perfil por iconos: un check verde para `true` y una cruz roja para `false`.
+
+ ### Cambios realizados
+
+ #### Frontend (`security.component.ts`)
+ - **Pestaña "Programas por perfil"**: las columnas `Nuevo`, `Modificar`, `Eliminar`, `Imprimir` y `Consultar` ahora muestran iconos centrados.
+ - **Pestaña "Controles por perfil"**: las columnas `Visualizar` y `Modificar` también usan los nuevos iconos.
+ - Se importaron los componentes `IconCheckComponent` y `IconCloseComponent`.
+ - Se agregaron las clases CSS `.perm-icon-yes` (verde) y `.perm-icon-no` (rojo) para estilizar los iconos.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `front-angular/src/app/pages/security/security.component.ts` | Renderizado de iconos en columnas booleanas y estilos asociados |
+
+ ### Validación
+ - Build de frontend Angular exitoso.
+ - Contenedor `cam-front-angular` reconstruido y corriendo en `http://localhost:5174`.
+
+ ---
+
  ## 2026-06-24 — Migración y mejora de la SPA Angular
 
  ### Resumen

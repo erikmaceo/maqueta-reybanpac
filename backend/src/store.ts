@@ -18,6 +18,8 @@ import type {
   Control,
   NivelSegregacion,
   NodoSegregacion,
+  NivelAtributo,
+  NodoAtributoValor,
   Pais,
   Provincia,
   Ciudad,
@@ -37,6 +39,8 @@ import {
   controles as seedControles,
   nivelesSegregacion as seedNivelesSegregacion,
   nodosSegregacion as seedNodosSegregacion,
+  nivelesAtributos as seedNivelesAtributos,
+  nodosAtributosValores as seedNodosAtributosValores,
   paises as seedPaises,
   provincias as seedProvincias,
   ciudades as seedCiudades,
@@ -57,6 +61,8 @@ interface DB {
   controles: Control[];
   nivelesSegregacion: NivelSegregacion[];
   nodosSegregacion: NodoSegregacion[];
+  nivelesAtributos: NivelAtributo[];
+  nodosAtributosValores: NodoAtributoValor[];
   paises: Pais[];
   provincias: Provincia[];
   ciudades: Ciudad[];
@@ -80,6 +86,8 @@ export const db: DB = {
   controles: clone(seedControles),
   nivelesSegregacion: clone(seedNivelesSegregacion),
   nodosSegregacion: clone(seedNodosSegregacion),
+  nivelesAtributos: clone(seedNivelesAtributos),
+  nodosAtributosValores: clone(seedNodosAtributosValores),
   paises: clone(seedPaises),
   provincias: clone(seedProvincias),
   ciudades: clone(seedCiudades),
@@ -100,6 +108,8 @@ export function resetDb() {
   db.controles = clone(seedControles);
   db.nivelesSegregacion = clone(seedNivelesSegregacion);
   db.nodosSegregacion = clone(seedNodosSegregacion);
+  db.nivelesAtributos = clone(seedNivelesAtributos);
+  db.nodosAtributosValores = clone(seedNodosAtributosValores);
   db.paises = clone(seedPaises);
   db.provincias = clone(seedProvincias);
   db.ciudades = clone(seedCiudades);

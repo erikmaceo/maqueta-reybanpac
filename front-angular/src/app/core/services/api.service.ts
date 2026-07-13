@@ -6,7 +6,7 @@ import type {
   SystemApp, Permission, Role, User, AccessRequest, Grant, AuditEntry,
   LdapResponse, Stats,
   Aplicacion, Modulo, Programa, Perfil, Control,
-  NivelSegregacion, NodoSegregacion,
+  NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor,
   Pais, Provincia, Ciudad,
 } from '../../shared/models/types';
 
@@ -279,14 +279,35 @@ export class ApiService {
   getArbolNodosSegregacion(): Observable<NodoSegregacion[]> {
     return this.request<NodoSegregacion[]>('GET', '/nodos-segregacion/arbol');
   }
-  createNodoSegregacion(body: Partial<NodoSegregacion>): Observable<NodoSegregacion> {
+  createNodoSegregacion(body: Partial<NodoSegregacion> & { atributos?: { atributoId: string; valor: string }[] }): Observable<NodoSegregacion> {
     return this.request<NodoSegregacion>('POST', '/nodos-segregacion', body);
   }
-  updateNodoSegregacion(id: string, body: Partial<NodoSegregacion>): Observable<NodoSegregacion> {
+  updateNodoSegregacion(id: string, body: Partial<NodoSegregacion> & { atributos?: { atributoId: string; valor: string }[] }): Observable<NodoSegregacion> {
     return this.request<NodoSegregacion>('PUT', `/nodos-segregacion/${id}`, body);
   }
   deleteNodoSegregacion(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/nodos-segregacion/${id}`);
+  }
+
+  // --- Configuración: Valores de Atributos de Nodos ---
+  listNodosAtributoValores(nodoId?: string): Observable<NodoAtributoValor[]> {
+    const query = nodoId ? `?nodoId=${nodoId}` : '';
+    return this.request<NodoAtributoValor[]>('GET', `/nodos-atributo-valor${query}`);
+  }
+
+  // --- Configuración: Atributos de Nivel ---
+  listNivelesAtributos(nivelId?: string): Observable<NivelAtributo[]> {
+    const query = nivelId ? `?nivelId=${nivelId}` : '';
+    return this.request<NivelAtributo[]>('GET', `/niveles-atributos${query}`);
+  }
+  createNivelAtributo(body: Partial<NivelAtributo>): Observable<NivelAtributo> {
+    return this.request<NivelAtributo>('POST', '/niveles-atributos', body);
+  }
+  updateNivelAtributo(id: string, body: Partial<NivelAtributo>): Observable<NivelAtributo> {
+    return this.request<NivelAtributo>('PUT', `/niveles-atributos/${id}`, body);
+  }
+  deleteNivelAtributo(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/niveles-atributos/${id}`);
   }
 
   // --- Parámetros: Países ---

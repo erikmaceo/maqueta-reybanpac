@@ -4,6 +4,65 @@
 
  ---
 
+ ## 2026-07-13 — Atributos dinámicos por Nivel de Segregación
+
+ ### Resumen
+
+ Se implementó la gestión de atributos dinámicos asociados a cada nivel de segregación. Esto permite definir campos descriptivos personalizados (por ejemplo RUC, dirección, teléfono para Empresas) y registrar sus valores por cada nodo, visualizándolos en la tabla y en la exportación Excel.
+
+ ### Cambios realizados
+
+ #### 1. Modelo de datos dinámico
+ - **Nuevas entidades backend**: `NivelAtributo` y `NodoAtributoValor` en `backend/src/types.ts`.
+ - **Store en memoria**: arrays `nivelesAtributos` y `nodosAtributosValores` en `backend/src/store.ts`.
+ - **Seed inicial**: atributos de ejemplo para Empresa (RUC, dirección, teléfono, nombre comercial), Sucursal (código interno, dirección) y Punto de Venta (código interno, tipo) en `backend/src/seed.ts`.
+ - **Tipos frontend**: `NivelAtributo`, `NodoAtributoValor` y `TipoAtributo` en `front-angular/src/app/shared/models/types.ts`.
+
+ #### 2. Backend: endpoints
+ - `GET /api/niveles-atributos` — lista todos los atributos, opcionalmente filtrados por `nivelId`.
+ - `POST /api/niveles-atributos` — crea un atributo de nivel.
+ - `PUT /api/niveles-atributos/:id` — edita metadatos del atributo.
+ - `DELETE /api/niveles-atributos/:id` — elimina el atributo y sus valores asociados.
+ - `GET /api/nodos-atributo-valor` — lista valores de atributos, opcionalmente filtrados por `nodoId`.
+ - `POST /api/nodos-segregacion` y `PUT /api/nodos-segregacion/:id` — aceptan el array `atributos: [{ atributoId, valor }]` para crear/actualizar valores.
+ - `DELETE /api/niveles-segregacion/:id` — elimina también los atributos definidos para ese nivel.
+ - `DELETE /api/nodos-segregacion/:id` — elimina también los valores de atributos del nodo y descendientes.
+
+ #### 3. Frontend: pestaña "Atributos"
+ - Nueva pestaña en `Niveles de Segregación` para CRUD de atributos.
+ - Selector de nivel para filtrar atributos.
+ - Diálogo de creación/edición con código, nombre, tipo (`texto`, `numero`, `telefono`, `email`), obligatorio, orden y estado.
+ - Búsqueda reactiva por código, nombre, tipo o nivel.
+
+ #### 4. Frontend: nodos con campos dinámicos
+ - El diálogo de crear/editar nodo muestra automáticamente los campos de atributos activos del nivel seleccionado.
+ - Los valores se envían al backend como array de `{ atributoId, valor }`.
+ - Al editar se precargan los valores existentes.
+
+ #### 5. Frontend: tabla y exportación Excel
+ - La tabla de nodos incluye columnas dinámicas con los atributos activos.
+ - Si el mismo nombre de atributo existe en varios niveles, el encabezado se diferencia con el prefijo del nivel (por ejemplo: "Empresa - Dirección", "Sucursal - Dirección").
+ - La búsqueda de nodos también busca dentro de los valores de atributos.
+ - Botón "Exportar" genera `nodos-segregacion.xlsx` con columnas base (código, nombre, nivel, padre, estado) más una columna por atributo activo, usando los nombres diferenciados.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/types.ts` | Nuevos tipos `NivelAtributo`, `NodoAtributoValor`, `TipoAtributo` |
+ | `backend/src/store.ts` | Arrays `nivelesAtributos`, `nodosAtributosValores` |
+ | `backend/src/seed.ts` | Seed de atributos y valores para nodos existentes |
+ | `backend/src/index.ts` | Endpoints CRUD de atributos y gestión de valores en nodos |
+ | `front-angular/src/app/shared/models/types.ts` | Tipos frontend de atributos |
+ | `front-angular/src/app/core/services/api.service.ts` | Métodos `listNivelesAtributos`, `createNivelAtributo`, `updateNivelAtributo`, `deleteNivelAtributo`, `listNodosAtributoValores` |
+ | `front-angular/src/app/pages/segregation-levels/segregation-levels.component.ts` | Pestaña Atributos, campos dinámicos en nodos, columnas y exportación Excel |
+
+ ### Validación
+ - Build de backend Docker exitoso.
+ - Build de frontend Angular exitoso.
+
+ ---
+
  ## 2026-06-24 — Migración y mejora de la SPA Angular
 
  ### Resumen

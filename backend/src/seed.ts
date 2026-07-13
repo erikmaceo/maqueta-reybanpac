@@ -22,6 +22,8 @@ import type {
   Control,
   NivelSegregacion,
   NodoSegregacion,
+  NivelAtributo,
+  NodoAtributoValor,
   Pais,
   Provincia,
   Ciudad,
@@ -447,6 +449,52 @@ export const nodosSegregacion: NodoSegregacion[] = [
   { id: 'nod_pv_3', codigo: 'PV-003', nombre: 'Caja Aeropuerto', nivelId: 'niv_pv', padreId: 'nod_suc_2', estado: 'ACTIVO', createdAt: iso(84) },
   { id: 'nod_pv_4', codigo: 'PV-004', nombre: 'Caja Matriz', nivelId: 'niv_pv', padreId: 'nod_suc_3', estado: 'ACTIVO', createdAt: iso(86) },
   { id: 'nod_pv_5', codigo: 'PV-005', nombre: 'Caja Cumbayá', nivelId: 'niv_pv', padreId: 'nod_suc_4', estado: 'ACTIVO', createdAt: iso(78) },
+];
+
+// --- Configuración: Atributos por Nivel --------------------------------------
+export const nivelesAtributos: NivelAtributo[] = [
+  // Empresa
+  { id: 'attr_emp_ruc', nivelId: 'niv_emp', codigo: 'ruc', nombre: 'R.U.C.', tipo: 'texto', obligatorio: false, orden: 0, estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'attr_emp_razon', nivelId: 'niv_emp', codigo: 'razonSocial', nombre: 'Razón Social', tipo: 'texto', obligatorio: false, orden: 1, estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'attr_emp_nomcom', nivelId: 'niv_emp', codigo: 'nombreComercial', nombre: 'Nombre Comercial', tipo: 'texto', obligatorio: false, orden: 2, estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'attr_emp_dir', nivelId: 'niv_emp', codigo: 'direccion', nombre: 'Dirección', tipo: 'texto', obligatorio: false, orden: 3, estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'attr_emp_tel', nivelId: 'niv_emp', codigo: 'telefono', nombre: 'Teléfono', tipo: 'telefono', obligatorio: false, orden: 4, estado: 'ACTIVO', createdAt: iso(100) },
+  // Sucursal
+  { id: 'attr_suc_dir', nivelId: 'niv_suc', codigo: 'direccion', nombre: 'Dirección', tipo: 'texto', obligatorio: false, orden: 0, estado: 'ACTIVO', createdAt: iso(90) },
+  { id: 'attr_suc_tel', nivelId: 'niv_suc', codigo: 'telefono', nombre: 'Teléfono', tipo: 'telefono', obligatorio: false, orden: 1, estado: 'ACTIVO', createdAt: iso(90) },
+  // Punto de Venta
+  { id: 'attr_pv_dir', nivelId: 'niv_pv', codigo: 'direccion', nombre: 'Dirección', tipo: 'texto', obligatorio: false, orden: 0, estado: 'ACTIVO', createdAt: iso(88) },
+];
+
+// --- Configuración: Valores de Atributos por Nodo ----------------------------
+export const nodosAtributosValores: NodoAtributoValor[] = [
+  // Reybanpac
+  { id: 'val_1', nodoId: 'nod_emp_1', atributoId: 'attr_emp_ruc', valor: '0992345678001', createdAt: iso(100) },
+  { id: 'val_2', nodoId: 'nod_emp_1', atributoId: 'attr_emp_razon', valor: 'Reybanpac S.A.', createdAt: iso(100) },
+  { id: 'val_3', nodoId: 'nod_emp_1', atributoId: 'attr_emp_nomcom', valor: 'Reybanpac', createdAt: iso(100) },
+  { id: 'val_4', nodoId: 'nod_emp_1', atributoId: 'attr_emp_dir', valor: 'Av. Carlos Luis Sáenz, Guayaquil', createdAt: iso(100) },
+  { id: 'val_5', nodoId: 'nod_emp_1', atributoId: 'attr_emp_tel', valor: '04-600-1234', createdAt: iso(100) },
+  // Favorita Fruit
+  { id: 'val_6', nodoId: 'nod_emp_2', atributoId: 'attr_emp_ruc', valor: '0998765432001', createdAt: iso(95) },
+  { id: 'val_7', nodoId: 'nod_emp_2', atributoId: 'attr_emp_razon', valor: 'Favorita Fruit Company C.A.', createdAt: iso(95) },
+  { id: 'val_8', nodoId: 'nod_emp_2', atributoId: 'attr_emp_nomcom', valor: 'Favorita Fruit', createdAt: iso(95) },
+  { id: 'val_9', nodoId: 'nod_emp_2', atributoId: 'attr_emp_dir', valor: 'Av. Quito 1234, Quito', createdAt: iso(95) },
+  { id: 'val_10', nodoId: 'nod_emp_2', atributoId: 'attr_emp_tel', valor: '02-600-5678', createdAt: iso(95) },
+  // Sucursales
+  { id: 'val_11', nodoId: 'nod_suc_1', atributoId: 'attr_suc_dir', valor: 'Av. Carlos Luis Sáenz y 9 de Octubre, Guayaquil', createdAt: iso(90) },
+  { id: 'val_12', nodoId: 'nod_suc_1', atributoId: 'attr_suc_tel', valor: '04-600-1234', createdAt: iso(90) },
+  { id: 'val_13', nodoId: 'nod_suc_2', atributoId: 'attr_suc_dir', valor: 'Av. Francisco de Orellana, Guayaquil', createdAt: iso(85) },
+  { id: 'val_14', nodoId: 'nod_suc_2', atributoId: 'attr_suc_tel', valor: '04-600-5678', createdAt: iso(85) },
+  { id: 'val_15', nodoId: 'nod_suc_3', atributoId: 'attr_suc_dir', valor: 'Av. Quito 1234, Quito', createdAt: iso(88) },
+  { id: 'val_16', nodoId: 'nod_suc_3', atributoId: 'attr_suc_tel', valor: '02-600-5678', createdAt: iso(88) },
+  { id: 'val_17', nodoId: 'nod_suc_4', atributoId: 'attr_suc_dir', valor: 'Av. Interoceánica y Cumbayá, Quito', createdAt: iso(80) },
+  { id: 'val_18', nodoId: 'nod_suc_4', atributoId: 'attr_suc_tel', valor: '02-600-9012', createdAt: iso(80) },
+  // Puntos de Venta
+  { id: 'val_19', nodoId: 'nod_pv_1', atributoId: 'attr_pv_dir', valor: 'Av. Carlos Luis Sáenz y 9 de Octubre', createdAt: iso(88) },
+  { id: 'val_20', nodoId: 'nod_pv_2', atributoId: 'attr_pv_dir', valor: 'Av. Carlos Luis Sáenz y 9 de Octubre', createdAt: iso(87) },
+  { id: 'val_21', nodoId: 'nod_pv_3', atributoId: 'attr_pv_dir', valor: 'Av. Francisco de Orellana', createdAt: iso(84) },
+  { id: 'val_22', nodoId: 'nod_pv_4', atributoId: 'attr_pv_dir', valor: 'Av. Quito 1234', createdAt: iso(86) },
+  { id: 'val_23', nodoId: 'nod_pv_5', atributoId: 'attr_pv_dir', valor: 'Av. Interoceánica y Cumbayá', createdAt: iso(78) },
 ];
 
 // --- Parámetros y Configuración: Países ----------------------------------------

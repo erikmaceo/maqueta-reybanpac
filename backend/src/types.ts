@@ -106,6 +106,28 @@ export interface NodoSegregacion {
   createdAt: string;
 }
 
+export type TipoAtributo = 'texto' | 'numero' | 'telefono' | 'email';
+
+export interface NivelAtributo {
+  id: string;
+  nivelId: string;
+  codigo: string;
+  nombre: string;
+  tipo: TipoAtributo;
+  obligatorio: boolean;
+  orden: number;
+  estado: SegEstado;
+  createdAt: string;
+}
+
+export interface NodoAtributoValor {
+  id: string;
+  nodoId: string;
+  atributoId: string;
+  valor: string;
+  createdAt: string;
+}
+
 export type UserType = 'ADMIN' | 'CLIENTE_FINAL';
 export type UserSource = 'LOCAL' | 'LDAP';
 export type UserStatus = 'ACTIVE' | 'INACTIVE';

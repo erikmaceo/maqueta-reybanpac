@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
-import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, NivelSegregacion, NodoSegregacion, Pais, Provincia, Ciudad } from './types.js';
+import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -1196,10 +1196,34 @@ app.delete('/api/niveles-segregacion/:id', requireAuth, requireGlobalAdmin, (req
   if (db.nodosSegregacion.some(n => n.nivelId === nivel.id)) {
     return res.status(400).json({ error: 'No se puede eliminar un nivel que tiene nodos asociados.' });
   }
+  const atributosEliminados = db.nivelesAtributos.filter(a => a.nivelId === nivel.id).map(a => a.id);
+  db.nivelesAtributos = db.nivelesAtributos.filter(a => a.nivelId !== nivel.id);
+  db.nodosAtributosValores = db.nodosAtributosValores.filter(v => !atributosEliminados.includes(v.atributoId));
   db.nivelesSegregacion.splice(idx, 1);
   logAudit(actorName(req), 'DELETE_NIVEL_SEGREGACION', 'nivel-segregacion', nivel.id, `Nivel "${nivel.nombre}" eliminado.`);
   res.json({ ok: true });
 });
+
+// --- Atributos de Nivel ---------------------------------------------------
+function ordenarAtributos(items: NivelAtributo[]): NivelAtributo[] {
+  return [...items].sort((a, b) => a.orden - b.orden || a.createdAt.localeCompare(b.createdAt));
+}
+
+function reemplazarAtributosNodo(nodoId: string, atributos: any[] | undefined) {
+  db.nodosAtributosValores = db.nodosAtributosValores.filter(v => v.nodoId !== nodoId);
+  if (!Array.isArray(atributos)) return;
+  for (const a of atributos) {
+    if (!a?.atributoId) continue;
+    const valor: NodoAtributoValor = {
+      id: newId('nod_attr_val'),
+      nodoId,
+      atributoId: a.atributoId,
+      valor: String(a.valor ?? ''),
+      createdAt: nowIso(),
+    };
+    db.nodosAtributosValores.push(valor);
+  }
+}
 
 // --- Nodos de Segregación ---
 app.get('/api/nodos-segregacion', requireAuth, (_req, res) => {
@@ -1210,8 +1234,15 @@ app.get('/api/nodos-segregacion/arbol', requireAuth, (_req, res) => {
   res.json(buildTree(db.nodosSegregacion));
 });
 
+app.get('/api/nodos-atributo-valor', requireAuth, (req, res) => {
+  const { nodoId } = req.query;
+  let list = db.nodosAtributosValores;
+  if (nodoId) list = list.filter(v => v.nodoId === nodoId);
+  res.json(list);
+});
+
 app.post('/api/nodos-segregacion', requireAuth, requireGlobalAdmin, (req, res) => {
-  const { codigo, nombre, nivelId, padreId, estado } = req.body || {};
+  const { codigo, nombre, nivelId, padreId, estado, atributos } = req.body || {};
   if (!codigo || !nombre || !nivelId) {
     return res.status(400).json({ error: 'codigo, nombre y nivelId son obligatorios.' });
   }
@@ -1233,6 +1264,7 @@ app.post('/api/nodos-segregacion', requireAuth, requireGlobalAdmin, (req, res) =
     createdAt: nowIso(),
   };
   db.nodosSegregacion.push(nodo);
+  reemplazarAtributosNodo(nodo.id, atributos);
   logAudit(actorName(req), 'CREATE_NODO_SEGREGACION', 'nodo-segregacion', nodo.id, `Nodo "${nombre}" creado.`);
   res.status(201).json(nodo);
 });
@@ -1240,7 +1272,7 @@ app.post('/api/nodos-segregacion', requireAuth, requireGlobalAdmin, (req, res) =
 app.put('/api/nodos-segregacion/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const nodo = db.nodosSegregacion.find(n => n.id === req.params.id);
   if (!nodo) return res.status(404).json({ error: 'Nodo no encontrado.' });
-  const { codigo, nombre, nivelId, padreId, estado } = req.body || {};
+  const { codigo, nombre, nivelId, padreId, estado, atributos } = req.body || {};
   const patch = definedOnly({ codigo, nombre, nivelId, padreId, estado });
 
   if (patch.nivelId && !db.nivelesSegregacion.some(n => n.id === patch.nivelId)) {
@@ -1264,6 +1296,7 @@ app.put('/api/nodos-segregacion/:id', requireAuth, requireGlobalAdmin, (req, res
     db.users.forEach(u => { u.nodoIds = u.nodoIds.filter(id => id !== nodo.id && !desc.includes(id)); });
   }
   Object.assign(nodo, patch);
+  reemplazarAtributosNodo(nodo.id, atributos);
   logAudit(actorName(req), 'UPDATE_NODO_SEGREGACION', 'nodo-segregacion', nodo.id, `Nodo "${nodo.nombre}" actualizado.`);
   res.json(nodo);
 });
@@ -1275,8 +1308,74 @@ app.delete('/api/nodos-segregacion/:id', requireAuth, requireGlobalAdmin, (req, 
   const desc = descendientesNodo(removed.id);
   const eliminados = [removed.id, ...desc];
   db.nodosSegregacion = db.nodosSegregacion.filter(n => !eliminados.includes(n.id));
+  db.nodosAtributosValores = db.nodosAtributosValores.filter(v => !eliminados.includes(v.nodoId));
   db.users.forEach(u => { u.nodoIds = u.nodoIds.filter(id => !eliminados.includes(id)); });
   logAudit(actorName(req), 'DELETE_NODO_SEGREGACION', 'nodo-segregacion', removed.id, `Nodo "${removed.nombre}" eliminado con ${desc.length} descendiente(s).`);
+  res.json({ ok: true });
+});
+
+// ==========================================================================
+// Atributos de Nivel (metadatos dinámicos por nivel)
+// ==========================================================================
+
+app.get('/api/niveles-atributos', requireAuth, (req, res) => {
+  const { nivelId } = req.query;
+  let list = db.nivelesAtributos;
+  if (nivelId) list = list.filter(a => a.nivelId === nivelId);
+  res.json(ordenarAtributos(list));
+});
+
+app.post('/api/niveles-atributos', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { nivelId, codigo, nombre, tipo, obligatorio, orden, estado } = req.body || {};
+  if (!nivelId || !codigo || !nombre) {
+    return res.status(400).json({ error: 'nivelId, codigo y nombre son obligatorios.' });
+  }
+  if (!db.nivelesSegregacion.some(n => n.id === nivelId)) {
+    return res.status(404).json({ error: 'Nivel no encontrado.' });
+  }
+  if (db.nivelesAtributos.some(a => a.nivelId === nivelId && a.codigo === codigo)) {
+    return res.status(409).json({ error: 'El código de atributo ya existe para este nivel.' });
+  }
+  const atributo: NivelAtributo = {
+    id: newId('niv_attr'),
+    nivelId,
+    codigo,
+    nombre,
+    tipo: tipo || 'texto',
+    obligatorio: !!obligatorio,
+    orden: orden !== undefined ? Number(orden) : db.nivelesAtributos.filter(a => a.nivelId === nivelId).length,
+    estado: estado || 'ACTIVO',
+    createdAt: nowIso(),
+  };
+  db.nivelesAtributos.push(atributo);
+  logAudit(actorName(req), 'CREATE_NIVEL_ATRIBUTO', 'nivel-atributo', atributo.id, `Atributo "${nombre}" creado para nivel ${nivelId}.`);
+  res.status(201).json(atributo);
+});
+
+app.put('/api/niveles-atributos/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const attr = db.nivelesAtributos.find(a => a.id === req.params.id);
+  if (!attr) return res.status(404).json({ error: 'Atributo no encontrado.' });
+  const { nivelId, codigo, nombre, tipo, obligatorio, orden, estado } = req.body || {};
+  const patch = definedOnly({ nivelId, codigo, nombre, tipo, obligatorio, orden, estado });
+  if (patch.nivelId && !db.nivelesSegregacion.some(n => n.id === patch.nivelId)) {
+    return res.status(404).json({ error: 'Nivel no encontrado.' });
+  }
+  if (patch.codigo && db.nivelesAtributos.some(a => a.id !== attr.id && a.nivelId === (patch.nivelId || attr.nivelId) && a.codigo === patch.codigo)) {
+    return res.status(409).json({ error: 'El código de atributo ya existe para este nivel.' });
+  }
+  if (patch.orden !== undefined) patch.orden = Number(patch.orden);
+  Object.assign(attr, patch);
+  logAudit(actorName(req), 'UPDATE_NIVEL_ATRIBUTO', 'nivel-atributo', attr.id, `Atributo "${attr.nombre}" actualizado.`);
+  res.json(attr);
+});
+
+app.delete('/api/niveles-atributos/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.nivelesAtributos.findIndex(a => a.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Atributo no encontrado.' });
+  const removed = db.nivelesAtributos[idx];
+  db.nivelesAtributos.splice(idx, 1);
+  db.nodosAtributosValores = db.nodosAtributosValores.filter(v => v.atributoId !== removed.id);
+  logAudit(actorName(req), 'DELETE_NIVEL_ATRIBUTO', 'nivel-atributo', removed.id, `Atributo "${removed.nombre}" eliminado.`);
   res.json({ ok: true });
 });
 

@@ -99,6 +99,28 @@ export interface NodoSegregacion {
   createdAt: string;
 }
 
+export type TipoAtributo = 'texto' | 'numero' | 'telefono' | 'email';
+
+export interface NivelAtributo {
+  id: string;
+  nivelId: string;
+  codigo: string;
+  nombre: string;
+  tipo: TipoAtributo;
+  obligatorio: boolean;
+  orden: number;
+  estado: 'ACTIVO' | 'INACTIVO';
+  createdAt: string;
+}
+
+export interface NodoAtributoValor {
+  id: string;
+  nodoId: string;
+  atributoId: string;
+  valor: string;
+  createdAt: string;
+}
+
 export interface SystemApp {
   id: string;
   code: string;

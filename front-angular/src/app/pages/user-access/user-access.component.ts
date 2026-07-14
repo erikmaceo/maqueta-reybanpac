@@ -151,8 +151,9 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
                 } @else {
                   <span class="tree-toggle-spacer"></span>
                 }
-                <label class="tree-label">
+                <label class="tree-label" [class.tree-label-disabled]="!puedeSeleccionar(nodo.id)">
                   <input type="checkbox" [checked]="isNodoSelected(nodo.id)"
+                    [disabled]="!puedeSeleccionar(nodo.id)"
                     (change)="toggleNodo(nodo.id)" />
                   <span><b>{{ nodo.codigo }}</b> · {{ nodo.nombre }} <span class="tree-meta">({{ getNivelNombre(nodo.nivelId) }})</span></span>
                 </label>
@@ -203,6 +204,8 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     .tree-toggle-spacer { width: 20px; flex-shrink: 0; }
     .tree-label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; font-size: 0.9rem; }
     .tree-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .tree-label-disabled { cursor: not-allowed; opacity: 0.45; }
+    .tree-label-disabled input[type="checkbox"] { cursor: not-allowed; }
     .tree-children { padding-left: 12px; display: flex; flex-direction: column; gap: 2px; border-left: 1px dashed var(--border, #e5e7eb); margin-left: 10px; margin-top: 2px; }
     .tree-meta { font-size: 0.75rem; color: var(--muted, #6b7280); }
   `],
@@ -340,10 +343,56 @@ export class UserAccessComponent implements OnInit {
     return this.editForm.nodoIds.includes(nodoId);
   }
 
+  puedeSeleccionar(nodoId: string): boolean {
+    const nodo = this.nodos().find(n => n.id === nodoId);
+    if (!nodo) return false;
+    if (!nodo.padreId) return true;
+    return this.isNodoSelected(nodo.padreId);
+  }
+
   toggleNodo(nodoId: string): void {
-    const idx = this.editForm.nodoIds.indexOf(nodoId);
-    if (idx >= 0) this.editForm.nodoIds.splice(idx, 1);
-    else this.editForm.nodoIds.push(nodoId);
+    if (!this.puedeSeleccionar(nodoId)) return;
+    const isSelected = this.editForm.nodoIds.includes(nodoId);
+    const descendientes = this.descendientesDe(nodoId);
+    const grupo = [nodoId, ...descendientes];
+
+    if (isSelected) {
+      this.editForm.nodoIds = this.editForm.nodoIds.filter(id => !grupo.includes(id));
+    } else {
+      for (const id of grupo) {
+        if (!this.editForm.nodoIds.includes(id)) {
+          this.editForm.nodoIds.push(id);
+        }
+      }
+      this.expandirAncestros(nodoId);
+    }
+  }
+
+  descendientesDe(nodoId: string): string[] {
+    const result: string[] = [];
+    const stack = [nodoId];
+    while (stack.length) {
+      const actual = stack.pop()!;
+      const hijos = this.nodos().filter(n => n.padreId === actual);
+      for (const h of hijos) {
+        result.push(h.id);
+        stack.push(h.id);
+      }
+    }
+    return result;
+  }
+
+  expandirAncestros(nodoId: string): void {
+    const set = new Set(this.expanded());
+    const nodo = this.nodos().find(n => n.id === nodoId);
+    if (!nodo) return;
+    let padreId = nodo.padreId;
+    while (padreId) {
+      set.add(padreId);
+      const padre = this.nodos().find(n => n.id === padreId);
+      padreId = padre?.padreId || null;
+    }
+    this.expanded.set(set);
   }
 
   isExpanded(nodoId: string): boolean {

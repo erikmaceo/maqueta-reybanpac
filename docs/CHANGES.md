@@ -148,29 +148,26 @@
 
  ---
 
- ## 2026-07-14 — Botón "Actualizar orden" en Ordenar Soluciones
+ ## 2026-07-14 — Selección en cascada en árbol de Nodos de Segregación
 
  ### Resumen
 
- Se agregó un botón **Actualizar orden** en la parte inferior derecha de la vista *Ordenar Soluciones*. Ahora los reordenamientos por drag-and-drop se aplican localmente y solo se persisten al hacer clic en el botón, mostrando un toast de confirmación.
+ Se mejoró el selector de nodos del diálogo *Nuevo acceso* / *Editar acceso*: al **seleccionar un nodo padre** quedan marcados automáticamente él y **todos sus descendientes**, y al **deseleccionar un padre** se desmarcan también sus descendientes. Las hojas se pueden marcar/desmarcar individualmente sin afectar al padre.
 
  ### Cambios realizados
 
- #### Frontend (`soluciones.component.ts`)
- - Se eliminaron las llamadas automáticas a los endpoints de reordenar en los eventos `drop` de módulos, programas y controles.
- - Se agregó el método `saveOrder()` que envía los payloads actuales a:
-   - `PUT /api/seg-modulos/reordenar`
-   - `PUT /api/seg-programas/reordenar`
-   - `PUT /api/seg-controles/reordenar`
- - Al completarse las tres llamadas se muestra un toast de éxito; si alguna falla se muestra un toast de error y se recarga la lista correspondiente.
- - Se agregó el botón **Actualizar orden** al pie de la vista de una aplicación, alineado a la derecha.
- - Se agregó la clase CSS `.actions-footer` para alinear el botón.
+ #### Frontend (`user-access.component.ts`)
+ - Se reescribió `toggleNodo(nodoId)`:
+   - Si el nodo se está marcando: agrega el nodo y todos sus descendientes a `editForm.nodoIds` y expande los ancestros automáticamente para que el usuario vea los nodos recién seleccionados.
+   - Si el nodo se está desmarcando: elimina el nodo y todos sus descendientes de `editForm.nodoIds`.
+ - Se agregó `descendientesDe(nodoId)` que recorre recursivamente la jerarquía vía `padreId` y devuelve todos los ids descendientes.
+ - Se agregó `expandirAncestros(nodoId)` que expande automáticamente todos los nodos ancestros para mostrar el subárbol afectado.
 
  ### Archivos principales modificados
 
  | Archivo | Descripción |
  |---------|-------------|
- | `front-angular/src/app/pages/soluciones/soluciones.component.ts` | Botón de guardar orden, método `saveOrder()` y ajuste de handlers de drag-and-drop |
+ | `front-angular/src/app/pages/user-access/user-access.component.ts` | Lógica de selección/deselección en cascada y expansión de ancestros |
 
  ### Validación
  - Build de frontend Angular exitoso.

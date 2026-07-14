@@ -148,7 +148,37 @@
 
  ---
 
- ## 2026-07-14 — Selección en cascada en árbol de Nodos de Segregación
+ ## 2026-07-14 — Tabla jerárquica en pestaña Nodos con columnas por atributos de nivel
+
+ ### Resumen
+
+ Se reemplazó la tabla plana de la pestaña **Nodos** por una composición de tablas hijas jerárquicas. Cada tabla hija muestra los nodos de un nivel y sus columnas dinámicas según los atributos definidos para ese nivel. Al expandir un nodo se renderiza la tabla del siguiente nivel con sus propias columnas y valores.
+
+ ### Cambios realizados
+
+ #### Frontend (`segregation-levels.component.ts`)
+ - **Tablas hijas recursivas**: Se implementó un `ng-template` recursivo (`nodoTable`) que renderiza una tabla por cada nivel de la jerarquía.
+ - **Columnas dinámicas por nivel**: Cada tabla incluye columnas base (toggle, Código, Nombre, Estado, Acciones) + una columna por cada atributo activo del `NivelSegregacion` correspondiente a los hijos mostrados. Por ejemplo, la tabla de Empresas muestra RUC, Razón Social, Nombre Comercial, Dirección y Teléfono; la de Sucursales muestra Dirección y Teléfono; la de Puntos de Venta muestra Dirección.
+ - **Valores de atributos**: Se muestran los valores formateados de cada atributo (incluyendo descripciones para selects de países, provincias o ciudades).
+ - **Expansión por niveles**: Cada nodo con hijos tiene un botón expandir/contraer que muestra la tabla hija del siguiente nivel.
+ - **Búsqueda jerárquica**: Al escribir en el buscador se filtran nodos por coincidencia y se expanden automáticamente los ancestros necesarios.
+ - **Eliminación de exportación Excel**: Se quitó el botón **Exportar** y el método `exportNodos()` de esta pestaña.
+ - Se eliminaron las importaciones de `XLSX` e `IconDownloadComponent`.
+ - Se agregaron los métodos: `nodosRaices`, `hijosDe`, `tieneHijosNodo`, `isNodoExpanded`, `toggleNodoExpand`, `atributosDeNivel`, `primerNivelId`, `siguienteNivelId`, `tieneDescendienteEnSet`.
+ - Se agregaron estilos `.tree-table`, `.tree-table-caption`, `.tree-th-toggle`, `.tree-toggle-btn`, `.tree-child-cell`.
+
+ ### Nota técnica
+ - Se corrigió la declaración de variables del `ng-template` para que `nivelHijosId` se vincule a la propiedad `nivelHijosId` del contexto y no al valor implícito (`$implicit`), que correspondía al ID del nodo padre.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `front-angular/src/app/pages/segregation-levels/segregation-levels.component.ts` | Tabla jerárquica recursiva, columnas dinámicas por nivel, búsqueda adaptada, eliminación de export XLSX |
+
+ ### Validación
+ - Build de frontend Angular exitoso.
+ - Contenedor `cam-front-angular` reconstruido y corriendo en `http://localhost:5174`.
 
  ### Resumen
 

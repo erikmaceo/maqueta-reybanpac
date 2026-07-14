@@ -6,14 +6,12 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import * as XLSX from 'xlsx';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
-  IconDownloadComponent,
 } from '../../shared/components/icons';
 import type { NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad } from '../../shared/models/types';
 
@@ -35,7 +33,6 @@ interface NodoView extends NodoSegregacion {
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
-    IconDownloadComponent,
   ],
   template: `
     <div class="page-head">
@@ -122,76 +119,95 @@ interface NodoView extends NodoSegregacion {
             <div class="row between mb-4">
               <div class="search">
                 <app-icon-search [width]="15" [height]="15" />
-                <input type="text" placeholder="Buscar nodo..."
+                <input type="text" placeholder="Buscar nodo en la jerarquía..."
                   [ngModel]="searchNodo()" (ngModelChange)="searchNodo.set($event)" />
               </div>
-              <div class="row" style="gap: 8px;">
-                <button class="btn btn-secondary" (click)="exportNodos()">
-                  <app-icon-download [width]="14" [height]="14" /> Exportar
-                </button>
-                <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
-                  <app-icon-plus [width]="14" [height]="14" /> Nuevo nodo
-                </button>
-              </div>
+              <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo nodo
+              </button>
             </div>
             @if (niveles().length === 0) {
               <div class="card muted center" style="padding: 24px;">
                 Primero debe crear al menos un nivel de segregación para gestionar nodos.
               </div>
-            }
-            <div class="card table-wrap" style="overflow-x: auto;">
-              <table class="data">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Nivel</th>
-                    <th>Padre</th>
-                    @for (attr of atributosColumnas(); track attr.id) {
-                      <th>{{ attr.displayName }}</th>
-                    }
-                    <th>Estado</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (n of filteredNodos(); track n.id) {
-                    <tr>
-                      <td class="mono">{{ n.codigo }}</td>
-                      <td><div class="cell-strong">{{ n.nombre }}</div></td>
-                      <td><span class="badge badge-blue">{{ n.nivelNombre }}</span></td>
-                      <td>
-                        @if (n.padreId) {
-                          <span class="muted small">{{ n.padreNombre }}</span>
-                        } @else {
-                          <span class="muted small">—</span>
+            } @else {
+              <!-- Template recursivo para tablas hijas por nivel -->
+              <ng-template #nodoTable let-padreId let-nivelHijosId="nivelHijosId">
+                @let nivel = nivelMap().get(nivelHijosId);
+                @let attrs = atributosDeNivel(nivelHijosId);
+                @let hijos = hijosDe(padreId);
+                @if (hijos.length > 0) {
+                  <div class="tree-table">
+                    <div class="tree-table-caption">{{ nivel?.nombre }}</div>
+                    <table class="data">
+                      <thead>
+                        <tr>
+                          <th class="tree-th-toggle"></th>
+                          <th>Código</th>
+                          <th>Nombre</th>
+                          @for (attr of attrs; track attr.id) {
+                            <th>{{ attr.nombre }}</th>
+                          }
+                          <th>Estado</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (h of hijos; track h.id) {
+                          <tr>
+                            <td>
+                              @if (tieneHijosNodo(h.id)) {
+                                <button class="tree-toggle-btn" (click)="toggleNodoExpand(h.id)">
+                                  <i class="pi" [class.pi-chevron-down]="isNodoExpanded(h.id)"
+                                     [class.pi-chevron-right]="!isNodoExpanded(h.id)"></i>
+                                </button>
+                              }
+                            </td>
+                            <td class="mono">{{ h.codigo }}</td>
+                            <td>
+                              <div class="cell-strong">{{ h.nombre }}</div>
+                              <div class="tiny dim">{{ nivel?.nombre }}</div>
+                            </td>
+                            @for (attr of attrs; track attr.id) {
+                              <td class="small">{{ h.atributos[attr.id] || '—' }}</td>
+                            }
+                            <td>
+                              <span class="badge" [class.badge-green]="h.estado === 'ACTIVO'" [class.badge-gray]="h.estado !== 'ACTIVO'">
+                                {{ h.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+                              </span>
+                            </td>
+                            <td>
+                              <div class="cell-actions">
+                                <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openNodoDialog(h)">
+                                  <app-icon-edit [width]="15" [height]="15" />
+                                </button>
+                                <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteNodo(h)">
+                                  <app-icon-trash [width]="15" [height]="15" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          @if (isNodoExpanded(h.id)) {
+                            <tr>
+                              <td [attr.colspan]="3 + attrs.length + 2" class="tree-child-cell">
+                                <ng-container *ngTemplateOutlet="nodoTable; context: { $implicit: h.id, nivelHijosId: siguienteNivelId(h.nivelId) }"></ng-container>
+                              </td>
+                            </tr>
+                          }
                         }
-                      </td>
-                      @for (attr of atributosColumnas(); track attr.id) {
-                        <td class="small">{{ n.atributos[attr.id] || '—' }}</td>
-                      }
-                      <td>
-                        <span class="badge" [class.badge-green]="n.estado === 'ACTIVO'" [class.badge-gray]="n.estado !== 'ACTIVO'">
-                          {{ n.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                        </span>
-                      </td>
-                      <td>
-                        <div class="cell-actions">
-                          <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openNodoDialog(n)">
-                            <app-icon-edit [width]="15" [height]="15" />
-                          </button>
-                          <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteNodo(n)">
-                            <app-icon-trash [width]="15" [height]="15" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr><td [attr.colspan]="5 + atributosColumnas().length" class="muted center" style="padding: 24px;">Sin nodos configurados.</td></tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </ng-template>
+
+              @let raices = nodosRaices();
+              @if (raices.length === 0) {
+                <div class="card muted center" style="padding: 24px;">Sin nodos configurados.</div>
+              } @else {
+                <ng-container *ngTemplateOutlet="nodoTable; context: { $implicit: null, nivelHijosId: primerNivelId() }"></ng-container>
+              }
+            }
           }
         </p-tabpanel>
 
@@ -474,6 +490,35 @@ interface NodoView extends NodoSegregacion {
 
     <p-confirmDialog></p-confirmDialog>
   `,
+  styles: [`
+    .tree-table { width: 100%; margin-bottom: 8px; }
+    .tree-table > .data { width: 100%; }
+    .tree-table-caption { font-size: 0.75rem; font-weight: 700; color: var(--muted, #6b7280); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+    .tree-th-toggle { width: 32px; text-align: center; }
+    .tree-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--muted, #6b7280);
+      border-radius: 4px;
+      padding: 0;
+    }
+    .tree-toggle-btn:hover { background: var(--surface-2, #f3f4f6); color: var(--primary, #2563eb); }
+    .tree-child-cell {
+      padding: 0 !important;
+      border-top: none !important;
+      background: var(--surface-2, #f9fafb);
+    }
+    .tree-child-cell .tree-table { padding-left: 20px; }
+    .tree-child-cell .tree-table .data { margin: 4px 0; }
+    .tiny { font-size: 0.72rem; }
+    .dim { color: var(--text-3, #9ca3af); }
+  `],
 })
 export class SegregationLevelsComponent implements OnInit {
   private api = inject(ApiService);
@@ -626,6 +671,92 @@ export class SegregationLevelsComponent implements OnInit {
       Object.values(n.atributos).some(v => v.toLowerCase().includes(q))
     );
   });
+
+  expandedNodosTree = signal<Set<string>>(new Set());
+
+  nodosRaices = computed<NodoView[]>(() => {
+    const q = this.searchNodo().toLowerCase().trim();
+    let raices = this.nodosView().filter(n => !n.padreId);
+    if (q) {
+      const matchIds = new Set(this.filteredNodos().map(n => n.id));
+      const visibleIds = new Set<string>();
+      for (const id of matchIds) {
+        let currentId: string | null = id;
+        let node = this.nodoMap().get(currentId);
+        while (currentId && node) {
+          visibleIds.add(currentId);
+          currentId = node.padreId;
+          if (currentId) node = this.nodoMap().get(currentId);
+        }
+      }
+      raices = raices.filter(r => visibleIds.has(r.id) || this.tieneDescendienteEnSet(r.id, visibleIds));
+    }
+    return raices.sort((a, b) => a.codigo.localeCompare(b.codigo));
+  });
+
+  tieneDescendienteEnSet(nodoId: string, ids: Set<string>): boolean {
+    const hijos = this.nodos().filter(n => n.padreId === nodoId);
+    for (const h of hijos) {
+      if (ids.has(h.id)) return true;
+      if (this.tieneDescendienteEnSet(h.id, ids)) return true;
+    }
+    return false;
+  }
+
+  hijosDe(padreId: string | null): NodoView[] {
+    const q = this.searchNodo().toLowerCase().trim();
+    let hijos = this.nodosView().filter(n => n.padreId === padreId);
+    if (q) {
+      const matchIds = new Set(this.filteredNodos().map(n => n.id));
+      const visibleIds = new Set<string>();
+      for (const id of matchIds) {
+        let currentId: string | null = id;
+        let node = this.nodoMap().get(currentId);
+        while (currentId && node) {
+          visibleIds.add(currentId);
+          currentId = node.padreId;
+          if (currentId) node = this.nodoMap().get(currentId);
+        }
+      }
+      hijos = hijos.filter(h => visibleIds.has(h.id) || this.tieneDescendienteEnSet(h.id, visibleIds));
+    }
+    return hijos.sort((a, b) => a.codigo.localeCompare(b.codigo));
+  }
+
+  tieneHijosNodo(nodoId: string): boolean {
+    return this.nodos().some(n => n.padreId === nodoId);
+  }
+
+  isNodoExpanded(nodoId: string): boolean {
+    if (this.searchNodo().trim()) return true;
+    return this.expandedNodosTree().has(nodoId);
+  }
+
+  toggleNodoExpand(nodoId: string): void {
+    const set = new Set(this.expandedNodosTree());
+    if (set.has(nodoId)) set.delete(nodoId);
+    else set.add(nodoId);
+    this.expandedNodosTree.set(set);
+  }
+
+  atributosDeNivel(nivelId: string | null | undefined): NivelAtributo[] {
+    if (!nivelId) return [];
+    return this.atributos()
+      .filter(a => a.nivelId === nivelId && a.estado === 'ACTIVO')
+      .sort((a, b) => a.orden - b.orden || a.createdAt.localeCompare(b.createdAt));
+  }
+
+  primerNivelId(): string | null {
+    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
+    return sorted.length > 0 ? sorted[0].id : null;
+  }
+
+  siguienteNivelId(nivelId: string): string | null {
+    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
+    const idx = sorted.findIndex(n => n.id === nivelId);
+    if (idx >= 0 && idx < sorted.length - 1) return sorted[idx + 1].id;
+    return null;
+  }
 
   filteredAtributos = computed(() => {
     let list = this.atributos().slice().sort((a, b) => {
@@ -914,26 +1045,5 @@ export class SegregationLevelsComponent implements OnInit {
         error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
       });
     }
-  }
-
-  exportNodos(): void {
-    const attrCols = this.atributosColumnas();
-    const rows = this.filteredNodos().map(n => {
-      const base: Record<string, any> = {
-        codigo: n.codigo,
-        nombre: n.nombre,
-        nivel: n.nivelNombre,
-        padre: n.padreNombre || '—',
-        estado: n.estado === 'ACTIVO' ? 'Activo' : 'Inactivo',
-      };
-      for (const attr of attrCols) {
-        base[attr.displayName] = n.atributos[attr.id] || '';
-      }
-      return base;
-    });
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'nodos');
-    XLSX.writeFile(wb, 'nodos-segregacion.xlsx');
   }
 }

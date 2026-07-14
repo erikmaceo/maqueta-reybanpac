@@ -140,13 +140,35 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       }
       <div class="field">
         <label>Nodos de Segregación</label>
-        <div style="display:flex;flex-direction:column;gap:8px;max-height:240px;overflow:auto;">
-          @for (n of nodosOrdenados(); track n.id) {
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" [checked]="isNodoSelected(n.id)"
-                (change)="toggleNodo(n.id)" style="width:16px;height:16px;cursor:pointer;" />
-              <span><b>{{ getNodoLabel(n.id) }}</b></span>
-            </label>
+        <div class="tree-wrap">
+          <ng-template #nodoTree let-nodo>
+            <div class="tree-node">
+              <div class="tree-row">
+                @if (tieneHijos(nodo.id)) {
+                  <button type="button" class="tree-toggle" (click)="toggleExpand(nodo.id)">
+                    <i class="pi" [class.pi-chevron-down]="isExpanded(nodo.id)" [class.pi-chevron-right]="!isExpanded(nodo.id)"></i>
+                  </button>
+                } @else {
+                  <span class="tree-toggle-spacer"></span>
+                }
+                <label class="tree-label">
+                  <input type="checkbox" [checked]="isNodoSelected(nodo.id)"
+                    (change)="toggleNodo(nodo.id)" />
+                  <span><b>{{ nodo.codigo }}</b> · {{ nodo.nombre }} <span class="tree-meta">({{ getNivelNombre(nodo.nivelId) }})</span></span>
+                </label>
+              </div>
+              @if (isExpanded(nodo.id)) {
+                <div class="tree-children">
+                  @for (hijo of hijosDe(nodo.id); track hijo.id) {
+                    <ng-container *ngTemplateOutlet="nodoTree; context: { $implicit: hijo }"></ng-container>
+                  }
+                </div>
+              }
+            </div>
+          </ng-template>
+
+          @for (nodo of nodosRaices(); track nodo.id) {
+            <ng-container *ngTemplateOutlet="nodoTree; context: { $implicit: nodo }"></ng-container>
           } @empty {
             <span class="muted small">No hay nodos configurados.</span>
           }
@@ -172,6 +194,18 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
 
     <p-confirmDialog></p-confirmDialog>
   `,
+  styles: [`
+    .tree-wrap { max-height: 260px; overflow: auto; display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--border, #e5e7eb); border-radius: 8px; padding: 8px; }
+    .tree-node { display: flex; flex-direction: column; }
+    .tree-row { display: flex; align-items: center; gap: 4px; min-height: 28px; }
+    .tree-toggle { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; color: var(--muted, #6b7280); padding: 0; }
+    .tree-toggle:hover { color: var(--primary, #2563eb); }
+    .tree-toggle-spacer { width: 20px; flex-shrink: 0; }
+    .tree-label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; font-size: 0.9rem; }
+    .tree-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .tree-children { padding-left: 12px; display: flex; flex-direction: column; gap: 2px; border-left: 1px dashed var(--border, #e5e7eb); margin-left: 10px; margin-top: 2px; }
+    .tree-meta { font-size: 0.75rem; color: var(--muted, #6b7280); }
+  `],
 })
 export class UserAccessComponent implements OnInit {
   private api = inject(ApiService);
@@ -191,6 +225,7 @@ export class UserAccessComponent implements OnInit {
   editUser: User | null = null;
   selectedUserId = '';
   editForm = { nodoIds: [] as string[], perfilCodigos: [] as string[] };
+  expanded = signal<Set<string>>(new Set());
 
   search = signal('');
   pageSize = signal(10);
@@ -222,6 +257,17 @@ export class UserAccessComponent implements OnInit {
       if (oa !== ob) return oa - ob;
       return a.codigo.localeCompare(b.codigo);
     });
+  });
+
+  nodosRaices = computed(() => {
+    return this.nodos()
+      .filter(n => !n.padreId)
+      .sort((a, b) => {
+        const oa = this.getNivelOrden(a.nivelId);
+        const ob = this.getNivelOrden(b.nivelId);
+        if (oa !== ob) return oa - ob;
+        return a.codigo.localeCompare(b.codigo);
+      });
   });
 
   setPage(p: number): void {
@@ -279,6 +325,10 @@ export class UserAccessComponent implements OnInit {
     return this.niveles().find(n => n.id === nivelId)?.orden ?? 0;
   }
 
+  getNivelNombre(nivelId: string): string {
+    return this.niveles().find(n => n.id === nivelId)?.nombre ?? '';
+  }
+
   getNodoLabel(nodoId: string): string {
     const nodo = this.nodos().find(n => n.id === nodoId);
     if (!nodo) return nodoId;
@@ -294,6 +344,32 @@ export class UserAccessComponent implements OnInit {
     const idx = this.editForm.nodoIds.indexOf(nodoId);
     if (idx >= 0) this.editForm.nodoIds.splice(idx, 1);
     else this.editForm.nodoIds.push(nodoId);
+  }
+
+  isExpanded(nodoId: string): boolean {
+    return this.expanded().has(nodoId);
+  }
+
+  toggleExpand(nodoId: string): void {
+    const set = new Set(this.expanded());
+    if (set.has(nodoId)) set.delete(nodoId);
+    else set.add(nodoId);
+    this.expanded.set(set);
+  }
+
+  tieneHijos(nodoId: string): boolean {
+    return this.nodos().some(n => n.padreId === nodoId);
+  }
+
+  hijosDe(nodoId: string): NodoSegregacion[] {
+    return this.nodos()
+      .filter(n => n.padreId === nodoId)
+      .sort((a, b) => {
+        const oa = this.getNivelOrden(a.nivelId);
+        const ob = this.getNivelOrden(b.nivelId);
+        if (oa !== ob) return oa - ob;
+        return a.codigo.localeCompare(b.codigo);
+      });
   }
 
   async save(): Promise<void> {

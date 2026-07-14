@@ -119,6 +119,65 @@
 
  ---
 
+ ## 2026-07-14 — Selector jerárquico de nodos en Accesos por usuario
+
+ ### Resumen
+
+ Se reemplazó la lista plana de nodos en el diálogo *Nuevo acceso* / *Editar acceso* por un selector de árbol jerárquico. Ahora se puede expandir un nodo padre para ver y seleccionar únicamente a sus descendientes directos, facilitando identificar qué `Sucursal` pertenece a una `Empresa` o qué `Punto de Venta` pertenece a una `Sucursal`.
+
+ ### Cambios realizados
+
+ #### Frontend (`user-access.component.ts`)
+ - Se agregó un árbol recursivo en la sección **Nodos de Segregación** del diálogo.
+ - Cada nodo padre muestra una flecha para expandir/contraer y un checkbox independiente para seleccionarlo.
+ - Los nodos raíz se listan primero; al expandir un nodo se cargan solo sus hijos directos.
+ - Se permite marcar nodos de cualquier nivel (incluyendo intermedios).
+ - Se agregaron las clases CSS `.tree-wrap`, `.tree-node`, `.tree-row`, `.tree-toggle`, `.tree-children` y `.tree-meta`.
+ - Se agregaron los métodos `isExpanded`, `toggleExpand`, `tieneHijos`, `hijosDe`, `nodosRaices` y `getNivelNombre`.
+ - La sección de **Perfiles** se mantuvo sin cambios.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `front-angular/src/app/pages/user-access/user-access.component.ts` | Selector de nodos en árbol jerárquico y estilos asociados |
+
+ ### Validación
+ - Build de frontend Angular exitoso.
+ - Contenedor `cam-front-angular` reconstruido y corriendo en `http://localhost:5174`.
+
+ ---
+
+ ## 2026-07-14 — Botón "Actualizar orden" en Ordenar Soluciones
+
+ ### Resumen
+
+ Se agregó un botón **Actualizar orden** en la parte inferior derecha de la vista *Ordenar Soluciones*. Ahora los reordenamientos por drag-and-drop se aplican localmente y solo se persisten al hacer clic en el botón, mostrando un toast de confirmación.
+
+ ### Cambios realizados
+
+ #### Frontend (`soluciones.component.ts`)
+ - Se eliminaron las llamadas automáticas a los endpoints de reordenar en los eventos `drop` de módulos, programas y controles.
+ - Se agregó el método `saveOrder()` que envía los payloads actuales a:
+   - `PUT /api/seg-modulos/reordenar`
+   - `PUT /api/seg-programas/reordenar`
+   - `PUT /api/seg-controles/reordenar`
+ - Al completarse las tres llamadas se muestra un toast de éxito; si alguna falla se muestra un toast de error y se recarga la lista correspondiente.
+ - Se agregó el botón **Actualizar orden** al pie de la vista de una aplicación, alineado a la derecha.
+ - Se agregó la clase CSS `.actions-footer` para alinear el botón.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `front-angular/src/app/pages/soluciones/soluciones.component.ts` | Botón de guardar orden, método `saveOrder()` y ajuste de handlers de drag-and-drop |
+
+ ### Validación
+ - Build de frontend Angular exitoso.
+ - Contenedor `cam-front-angular` reconstruido y corriendo en `http://localhost:5174`.
+
+ ---
+
  ## 2026-06-24 — Migración y mejora de la SPA Angular
 
  ### Resumen

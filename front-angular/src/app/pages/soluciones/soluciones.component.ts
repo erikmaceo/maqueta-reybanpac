@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DragDropModule, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ApiService } from '../../core/services/api.service';
+import { ToastService } from '../../core/services/toast.service';
 import { IconChevronRightComponent, IconServerComponent, IconSettingsComponent } from '../../shared/components/icons';
 import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/types';
 
@@ -122,6 +123,10 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
           }
         </div>
       }
+
+      <div class="actions-footer">
+        <button class="btn btn-primary" (click)="saveOrder()">Actualizar orden</button>
+      </div>
     } @else {
       <div class="page-head">
         <div>
@@ -334,12 +339,18 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
     .cdk-drag-animating {
       transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
     }
+    .actions-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
   `],
 })
 export class SolucionesComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private api = inject(ApiService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   app = signal<Aplicacion | null>(null);
   modulos = signal<Modulo[]>([]);
@@ -433,11 +444,6 @@ export class SolucionesComponent implements OnInit {
     const reordered = [...this.modulos()];
     moveItemInArray(reordered, event.previousIndex, event.currentIndex);
     this.modulos.set(reordered);
-
-    const payload = reordered.map((m, idx) => ({ id: m.id, orden: idx }));
-    this.api.reordenarModulos(payload).subscribe({
-      error: () => this.loadModulos(),
-    });
   }
 
   dropPrograma(event: CdkDragDrop<Programa[]>, modCodigo: string): void {
@@ -447,11 +453,6 @@ export class SolucionesComponent implements OnInit {
     this.programas.update((all) => {
       const otros = all.filter(p => p.modCodigo !== modCodigo);
       return [...otros, ...reordered];
-    });
-
-    const payload = reordered.map((p, idx) => ({ id: p.id, orden: idx }));
-    this.api.reordenarProgramas(payload).subscribe({
-      error: () => this.loadProgramas(),
     });
   }
 
@@ -463,10 +464,33 @@ export class SolucionesComponent implements OnInit {
       const otros = all.filter(c => c.prgCodigo !== prgCodigo);
       return [...otros, ...reordered];
     });
+  }
 
-    const payload = reordered.map((c, idx) => ({ id: c.id, orden: idx }));
-    this.api.reordenarControles(payload).subscribe({
-      error: () => this.loadControles(),
+  saveOrder(): void {
+    const modPayload = this.modulos().map((m, idx) => ({ id: m.id, orden: idx }));
+    const prgPayload = this.programas().map((p, idx) => ({ id: p.id, orden: idx }));
+    const ctrlPayload = this.controles().map((c, idx) => ({ id: c.id, orden: idx }));
+
+    let completed = 0;
+    const total = 3;
+    const checkComplete = () => {
+      completed++;
+      if (completed === total) {
+        this.toast.success('Orden actualizado', 'El nuevo orden se ha persistido correctamente.');
+      }
+    };
+
+    this.api.reordenarModulos(modPayload).subscribe({
+      next: () => checkComplete(),
+      error: () => { this.toast.error('Error', 'No se pudo guardar el orden de los módulos.'); this.loadModulos(); },
+    });
+    this.api.reordenarProgramas(prgPayload).subscribe({
+      next: () => checkComplete(),
+      error: () => { this.toast.error('Error', 'No se pudo guardar el orden de los programas.'); this.loadProgramas(); },
+    });
+    this.api.reordenarControles(ctrlPayload).subscribe({
+      next: () => checkComplete(),
+      error: () => { this.toast.error('Error', 'No se pudo guardar el orden de los controles.'); this.loadControles(); },
     });
   }
 

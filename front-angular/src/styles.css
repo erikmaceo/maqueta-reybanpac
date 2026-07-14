@@ -723,7 +723,7 @@ table.data {
 
 table.data th {
   text-align: left;
-  font-size: 11px;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: .04em;
   color: var(--text-3);

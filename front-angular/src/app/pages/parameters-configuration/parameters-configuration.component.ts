@@ -14,7 +14,7 @@ import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/compon
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
 } from '../../shared/components/icons';
-import type { Pais, Provincia, Ciudad } from '../../shared/models/types';
+import type { Pais, Provincia, Ciudad, DispositivoMovil } from '../../shared/models/types';
 
 type Estado = 'ACTIVO' | 'INACTIVO';
 
@@ -41,6 +41,12 @@ const MOCK_CIUDADES: Ciudad[] = [
   { id: '5', codigo: 'LIM-C', descripcion: 'Lima Centro', provinciaId: '4', provinciaDescripcion: 'Lima', paisId: '2', paisDescripcion: 'Perú', estado: 'ACTIVO', createdAt: new Date().toISOString() },
 ];
 
+const MOCK_DISPOSITIVOS: DispositivoMovil[] = [
+  { id: '1', codigo: 'DM-001', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '2', codigo: 'DM-002', estado: 'ACTIVO', createdAt: new Date().toISOString() },
+  { id: '3', codigo: 'DM-003', estado: 'INACTIVO', createdAt: new Date().toISOString() },
+];
+
 @Component({
   selector: 'app-parameters-configuration',
   standalone: true,
@@ -63,6 +69,7 @@ const MOCK_CIUDADES: Ciudad[] = [
         <p-tab value="0"><i class="pi pi-globe mr-2"></i>Países</p-tab>
         <p-tab value="1"><i class="pi pi-map mr-2"></i>Provincias</p-tab>
         <p-tab value="2"><i class="pi pi-building mr-2"></i>Ciudades</p-tab>
+        <p-tab value="3"><i class="pi pi-mobile mr-2"></i>Dispositivos móviles</p-tab>
       </p-tablist>
       <p-tabpanels>
 
@@ -270,6 +277,69 @@ const MOCK_CIUDADES: Ciudad[] = [
         }
       </p-tabpanel>
 
+      <!-- ============ DISPOSITIVOS MÓVILES ============ -->
+      <p-tabpanel value="3">
+        @if (loadingDisp()) {
+          <app-table-skeleton [rows]="5" [cols]="4" />
+        } @else {
+          <div class="row between mb-4">
+            <div class="search">
+              <app-icon-search [width]="15" [height]="15" />
+              <input type="text" placeholder="Buscar por código..."
+                [ngModel]="searchDisp()" (ngModelChange)="searchDisp.set($event)" />
+            </div>
+            <button class="btn btn-primary" (click)="openDispDialog()">
+              <app-icon-plus [width]="14" [height]="14" /> Nuevo dispositivo
+            </button>
+          </div>
+          <div class="card table-wrap">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (d of paginatedDispositivos(); track d.id) {
+                  <tr>
+                    <td class="mono">{{ d.codigo }}</td>
+                    <td>
+                      <span class="badge" [class.badge-green]="d.estado === 'ACTIVO'" [class.badge-gray]="d.estado !== 'ACTIVO'">
+                        {{ d.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="cell-actions">
+                        <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openDispDialog(d)">
+                          <app-icon-edit [width]="15" [height]="15" />
+                        </button>
+                        <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteDisp(d)">
+                          <app-icon-trash [width]="15" [height]="15" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="3" class="muted center" style="padding: 24px;">Sin dispositivos registrados.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (totalPagesDisp() > 1) {
+            <div class="pagination">
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pageDisp() === 0" (click)="setPage('disp', pageDisp() - 1)">‹</button>
+                @for (p of getPageNumbers(totalPagesDisp(), pageDisp()); track p) {
+                  <button class="btn btn-sm" [class.btn-primary]="p === pageDisp()" [class.btn-ghost]="p !== pageDisp()" (click)="setPage('disp', p)">{{ p + 1 }}</button>
+                }
+                <button class="btn btn-ghost btn-sm" [disabled]="pageDisp() === totalPagesDisp() - 1" (click)="setPage('disp', pageDisp() + 1)">›</button>
+              </div>
+            </div>
+          }
+        }
+      </p-tabpanel>
       </p-tabpanels>
     </p-tabs>
 
@@ -390,6 +460,30 @@ const MOCK_CIUDADES: Ciudad[] = [
       </ng-template>
     </p-dialog>
 
+    <!-- ============ DIÁLOGO DISPOSITIVO MÓVIL ============ -->
+    <p-dialog
+      [(visible)]="showDispDlg"
+      [header]="editDispId ? 'Editar Dispositivo Móvil' : 'Nuevo Dispositivo Móvil'"
+      [modal]="true" [style]="{ width: '480px' }" [closable]="true"
+      (onHide)="closeDispDialog()"
+    >
+      <div class="field">
+        <label>Código</label>
+        <input class="input" [(ngModel)]="dispForm.codigo" placeholder="DM-001" />
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <select class="select" [(ngModel)]="dispForm.estado">
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closeDispDialog()">Cancelar</button>
+        <button class="btn btn-primary" (click)="saveDisp()">{{ editDispId ? 'Guardar' : 'Crear' }}</button>
+      </ng-template>
+    </p-dialog>
+
     <p-confirmDialog></p-confirmDialog>
   `,
 })
@@ -403,27 +497,33 @@ export class ParametersConfigurationComponent implements OnInit {
   paises = signal<Pais[]>([]);
   provincias = signal<Provincia[]>([]);
   ciudades = signal<Ciudad[]>([]);
+  dispositivos = signal<DispositivoMovil[]>([]);
 
   loadingPais = signal(true);
   loadingProv = signal(true);
   loadingCiu = signal(true);
+  loadingDisp = signal(true);
 
   showPaisDlg = false; editPaisId: string | null = null;
   showProvDlg = false; editProvId: string | null = null;
   showCiuDlg = false; editCiuId: string | null = null;
+  showDispDlg = false; editDispId: string | null = null;
 
   searchPais = signal('');
   searchProv = signal('');
   searchCiu = signal('');
+  searchDisp = signal('');
 
   pageSize = signal(10);
   pagePais = signal(0);
   pageProv = signal(0);
   pageCiu = signal(0);
+  pageDisp = signal(0);
 
   paisForm: any = {};
   provForm: any = {};
   ciuForm = signal<any>({});
+  dispForm: any = {};
 
   filteredPaises = computed(() => {
     const q = this.searchPais().toLowerCase().trim();
@@ -472,12 +572,24 @@ export class ParametersConfigurationComponent implements OnInit {
   });
   totalPagesCiu = computed(() => Math.max(1, Math.ceil(this.filteredCiudades().length / this.pageSize())));
 
-  setPage(entity: 'pais' | 'prov' | 'ciu', page: number): void {
-    const total = entity === 'pais' ? this.totalPagesPais() : entity === 'prov' ? this.totalPagesProv() : this.totalPagesCiu();
+  filteredDispositivos = computed(() => {
+    const q = this.searchDisp().toLowerCase().trim();
+    if (!q) return this.dispositivos();
+    return this.dispositivos().filter(d => d.codigo.toLowerCase().includes(q));
+  });
+  paginatedDispositivos = computed(() => {
+    const start = this.pageDisp() * this.pageSize();
+    return this.filteredDispositivos().slice(start, start + this.pageSize());
+  });
+  totalPagesDisp = computed(() => Math.max(1, Math.ceil(this.filteredDispositivos().length / this.pageSize())));
+
+  setPage(entity: 'pais' | 'prov' | 'ciu' | 'disp', page: number): void {
+    const total = entity === 'pais' ? this.totalPagesPais() : entity === 'prov' ? this.totalPagesProv() : entity === 'ciu' ? this.totalPagesCiu() : this.totalPagesDisp();
     if (page < 0 || page >= total) return;
     if (entity === 'pais') this.pagePais.set(page);
     else if (entity === 'prov') this.pageProv.set(page);
-    else this.pageCiu.set(page);
+    else if (entity === 'ciu') this.pageCiu.set(page);
+    else this.pageDisp.set(page);
   }
 
   getPageNumbers(total: number, current: number): number[] {
@@ -491,19 +603,23 @@ export class ParametersConfigurationComponent implements OnInit {
       this.paises.set([...MOCK_PAISES]);
       this.provincias.set([...MOCK_PROVINCIAS]);
       this.ciudades.set([...MOCK_CIUDADES]);
+      this.dispositivos.set([...MOCK_DISPOSITIVOS]);
       this.loadingPais.set(false);
       this.loadingProv.set(false);
       this.loadingCiu.set(false);
+      this.loadingDisp.set(false);
     } else {
       this.loadPaises();
       this.loadProvincias();
       this.loadCiudades();
+      this.loadDispositivos();
     }
     this.events.onDataChanged(() => {
       if (!this.useMockData) {
         this.loadPaises();
         this.loadProvincias();
         this.loadCiudades();
+        this.loadDispositivos();
       }
     });
   }
@@ -635,6 +751,43 @@ export class ParametersConfigurationComponent implements OnInit {
     if (confirm(`¿Eliminar la ciudad "${c.descripcion}"?`)) {
       this.ciudades.set(this.ciudades().filter(x => x.id !== c.id));
       this.toast.success('Ciudad eliminada');
+    }
+  }
+
+  // ============ DISPOSITIVOS MÓVILES ============
+  loadDispositivos(): void {
+    this.loadingDisp.set(true);
+    this.dispositivos.set([...MOCK_DISPOSITIVOS]);
+    this.loadingDisp.set(false);
+  }
+  blankDisp() { return { codigo: '', estado: 'ACTIVO' as Estado }; }
+  openDispDialog(d?: DispositivoMovil): void {
+    if (d) { this.dispForm = { ...d }; this.editDispId = d.id; }
+    else { this.dispForm = this.blankDisp(); this.editDispId = null; }
+    this.showDispDlg = true;
+  }
+  closeDispDialog(): void { this.showDispDlg = false; this.editDispId = null; }
+  saveDisp(): void {
+    if (!this.dispForm.codigo) { this.toast.error('Faltan datos', 'El código es obligatorio.'); return; }
+    if (this.editDispId) {
+      const idx = this.dispositivos().findIndex(d => d.id === this.editDispId);
+      if (idx >= 0) {
+        const updated = [...this.dispositivos()];
+        updated[idx] = { ...this.dispForm, id: this.editDispId, createdAt: updated[idx].createdAt };
+        this.dispositivos.set(updated);
+        this.toast.success('Dispositivo móvil actualizado');
+      }
+    } else {
+      const newDisp: DispositivoMovil = { ...this.dispForm, id: Date.now().toString(), createdAt: new Date().toISOString() };
+      this.dispositivos.set([...this.dispositivos(), newDisp]);
+      this.toast.success('Dispositivo móvil creado');
+    }
+    this.closeDispDialog();
+  }
+  confirmDeleteDisp(d: DispositivoMovil): void {
+    if (confirm(`¿Eliminar el dispositivo móvil "${d.codigo}"?`)) {
+      this.dispositivos.set(this.dispositivos().filter(x => x.id !== d.id));
+      this.toast.success('Dispositivo móvil eliminado');
     }
   }
 }

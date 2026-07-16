@@ -50,6 +50,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'acceso-dispositivos',
+        loadComponent: () => import('./pages/device-access/device-access.component').then(m => m.DeviceAccessComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'matriz-acceso',
         loadComponent: () => import('./pages/matrix-access/matrix-access.component').then(m => m.MatrixAccessComponent),
         canActivate: [adminGuard],

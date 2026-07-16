@@ -277,3 +277,17 @@ export interface Ciudad {
   estado: 'ACTIVO' | 'INACTIVO';
   createdAt: string;
 }
+
+export interface DispositivoMovil {
+  id: string;
+  codigo: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+  createdAt: string;
+}
+
+export interface AccesoDispositivoMovil {
+  id: string;
+  userId: string;
+  dispositivoId: string;
+  createdAt: string;
+}

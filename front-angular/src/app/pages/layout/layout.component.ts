@@ -13,7 +13,7 @@ import {
   IconUsersComponent, IconAuthorizerComponent, IconAccessComponent,
   IconAuditComponent, IconLogoutComponent, IconLdapComponent,
   IconSecurityComponent, IconMatrixComponent, IconServerComponent, IconChevronRightComponent,
-  IconBuildingComponent, IconSettingsComponent,
+  IconBuildingComponent, IconSettingsComponent, IconMobileComponent,
 } from '../../shared/components/icons';
 
 interface NavItem {
@@ -35,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/parametros', label: 'Parámetros y Configuración', icon: IconSettingsComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/acceso-usuarios', label: 'Accesos por usuario', icon: IconRolesComponent, group: 'Sistemas y Configuración', adminOnly: true },
+  { path: '/acceso-dispositivos', label: 'Accesos por dispositivo móvil', icon: IconMobileComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/soluciones', label: 'Ordenar Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true, isSection: true },
@@ -51,6 +52,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/parametros': { title: 'Parámetros y Configuración', sub: 'Gestión de países, provincias y ciudades' },
   '/usuarios': { title: 'Usuarios', sub: 'Administradores locales y clientes finales desde LDAP' },
   '/acceso-usuarios': { title: 'Accesos por usuario', sub: 'Gestión de Nodos de Segregación y Perfiles asignados a cada usuario' },
+  '/acceso-dispositivos': { title: 'Accesos por dispositivo móvil', sub: 'Gestión de dispositivos móviles asignados a cada usuario' },
   '/matriz-acceso': { title: 'Matriz de Acceso', sub: 'Carga masiva de seguridades mediante archivo Excel' },
   '/directorio': { title: 'Directorio LDAP', sub: 'Usuarios cliente final integrados desde el directorio corporativo' },
   '/autorizador': { title: 'Módulo autorizador', sub: 'Aprobación y rechazo de solicitudes de acceso' },
@@ -78,6 +80,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
     IconLogoutComponent,
     IconLdapComponent,
     IconSecurityComponent, IconMatrixComponent, IconServerComponent, IconChevronRightComponent,
+    IconBuildingComponent, IconSettingsComponent, IconMobileComponent,
   ],
   template: `
     <div class="app-shell">

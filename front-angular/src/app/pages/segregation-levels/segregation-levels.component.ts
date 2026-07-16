@@ -45,8 +45,8 @@ interface NodoView extends NodoSegregacion {
     <p-tabs value="0">
       <p-tablist>
         <p-tab value="0"><i class="pi pi-layer-group mr-2"></i>Niveles</p-tab>
-        <p-tab value="1"><i class="pi pi-sitemap mr-2"></i>Nodos</p-tab>
-        <p-tab value="2"><i class="pi pi-tags mr-2"></i>Atributos</p-tab>
+        <p-tab value="1"><i class="pi pi-tags mr-2"></i>Atributos</p-tab>
+        <p-tab value="2"><i class="pi pi-sitemap mr-2"></i>Nodos</p-tab>
       </p-tablist>
       <p-tabpanels>
 
@@ -110,7 +110,7 @@ interface NodoView extends NodoSegregacion {
         </p-tabpanel>
 
         <!-- ============ NODOS ============ -->
-        <p-tabpanel value="1">
+        <p-tabpanel value="2">
           @if (loadingNodos()) {
             <app-table-skeleton [rows]="5" [cols]="6" />
           } @else if (errorNodos()) {
@@ -212,7 +212,7 @@ interface NodoView extends NodoSegregacion {
         </p-tabpanel>
 
         <!-- ============ ATRIBUTOS ============ -->
-        <p-tabpanel value="2">
+        <p-tabpanel value="1">
           @if (loadingAtributos()) {
             <app-table-skeleton [rows]="5" [cols]="6" />
           } @else if (errorAtributos()) {

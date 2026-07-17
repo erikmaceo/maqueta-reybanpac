@@ -7,7 +7,7 @@ import type {
   LdapResponse, Stats,
   Aplicacion, Modulo, Programa, Perfil, Control,
   NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor,
-  Pais, Provincia, Ciudad,
+  Pais, Provincia, Ciudad, DispositivoMovil,
 } from '../../shared/models/types';
 
 const TOKEN_KEY = 'cam.token';
@@ -356,6 +356,20 @@ export class ApiService {
   }
   deleteCiudad(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/param-ciudades/${id}`);
+  }
+
+  // --- Parámetros: Dispositivos Móviles ---
+  listDispositivosMoviles(): Observable<DispositivoMovil[]> {
+    return this.request<DispositivoMovil[]>('GET', '/param-dispositivos-moviles');
+  }
+  createDispositivoMovil(body: Partial<DispositivoMovil>): Observable<DispositivoMovil> {
+    return this.request<DispositivoMovil>('POST', '/param-dispositivos-moviles', body);
+  }
+  updateDispositivoMovil(id: string, body: Partial<DispositivoMovil>): Observable<DispositivoMovil> {
+    return this.request<DispositivoMovil>('PUT', `/param-dispositivos-moviles/${id}`, body);
+  }
+  deleteDispositivoMovil(id: string): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('DELETE', `/param-dispositivos-moviles/${id}`);
   }
 
   uploadMatriz(file: File): Observable<{ ok: boolean; summary: string }> {

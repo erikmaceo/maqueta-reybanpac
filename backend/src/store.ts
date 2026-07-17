@@ -23,6 +23,7 @@ import type {
   Pais,
   Provincia,
   Ciudad,
+  DispositivoMovil,
 } from './types.js';
 import {
   systems as seedSystems,
@@ -44,6 +45,7 @@ import {
   paises as seedPaises,
   provincias as seedProvincias,
   ciudades as seedCiudades,
+  dispositivosMoviles as seedDispositivosMoviles,
 } from './seed.js';
 
 interface DB {
@@ -66,6 +68,7 @@ interface DB {
   paises: Pais[];
   provincias: Provincia[];
   ciudades: Ciudad[];
+  dispositivosMoviles: DispositivoMovil[];
 }
 
 // Clonado profundo para no mutar los arrays de seed (permite "reset").
@@ -91,6 +94,7 @@ export const db: DB = {
   paises: clone(seedPaises),
   provincias: clone(seedProvincias),
   ciudades: clone(seedCiudades),
+  dispositivosMoviles: clone(seedDispositivosMoviles),
 };
 
 export function resetDb() {
@@ -113,6 +117,7 @@ export function resetDb() {
   db.paises = clone(seedPaises);
   db.provincias = clone(seedProvincias);
   db.ciudades = clone(seedCiudades);
+  db.dispositivosMoviles = clone(seedDispositivosMoviles);
 }
 
 let counter = 1000;

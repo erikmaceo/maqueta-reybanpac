@@ -5,7 +5,9 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
@@ -27,8 +29,8 @@ const MOCK_DISPOSITIVOS: DispositivoMovil[] = [
 ];
 
 const MOCK_ACCESOS: AccesoDispositivoMovil[] = [
-  { id: '1', userId: 'u_admin', dispositivoId: '1', createdAt: new Date().toISOString() },
-  { id: '2', userId: 'u_ldiaz', dispositivoId: '2', createdAt: new Date().toISOString() },
+  { id: '1', userId: 'u_admin', dispositivoId: 'param_disp_1', createdAt: new Date().toISOString() },
+  { id: '2', userId: 'u_ldiaz', dispositivoId: 'param_disp_2', createdAt: new Date().toISOString() },
 ];
 
 interface AccesoView extends AccesoDispositivoMovil {
@@ -153,7 +155,9 @@ interface AccesoView extends AccesoDispositivoMovil {
   `,
 })
 export class DeviceAccessComponent implements OnInit {
+  private api = inject(ApiService);
   private toast = inject(ToastService);
+  private events = inject(EventsService);
 
   usuarios = signal<User[]>([]);
   dispositivos = signal<DispositivoMovil[]>([]);
@@ -198,10 +202,31 @@ export class DeviceAccessComponent implements OnInit {
   dispositivoSeleccionado = computed(() => this.dispositivoMap().get(this.form.dispositivoId));
 
   ngOnInit(): void {
-    this.usuarios.set([...MOCK_USERS]);
-    this.dispositivos.set([...MOCK_DISPOSITIVOS]);
-    this.accesos.set([...MOCK_ACCESOS]);
-    this.loading.set(false);
+    this.loadData();
+    this.events.onDataChanged(() => this.loadData());
+  }
+
+  loadData(): void {
+    this.loading.set(true);
+    this.api.listUsers().subscribe({
+      next: (users) => {
+        this.usuarios.set(users);
+        this.api.listDispositivosMoviles().subscribe({
+          next: (disp) => {
+            this.dispositivos.set(disp);
+            this.accesos.set([...MOCK_ACCESOS]);
+            this.loading.set(false);
+          },
+          error: () => { this.dispositivos.set([...MOCK_DISPOSITIVOS]); this.accesos.set([...MOCK_ACCESOS]); this.loading.set(false); },
+        });
+      },
+      error: () => {
+        this.usuarios.set([...MOCK_USERS]);
+        this.dispositivos.set([...MOCK_DISPOSITIVOS]);
+        this.accesos.set([...MOCK_ACCESOS]);
+        this.loading.set(false);
+      },
+    });
   }
 
   openDialog(a?: AccesoView): void {

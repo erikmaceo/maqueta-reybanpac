@@ -27,6 +27,7 @@ import type {
   Pais,
   Provincia,
   Ciudad,
+  DispositivoMovil,
 } from './types.js';
 
 const now = new Date();
@@ -521,4 +522,11 @@ export const ciudades: Ciudad[] = [
   { id: 'param_ciu_3', codigo: 'UIO-C', descripcion: 'Quito Centro', provinciaId: 'param_prov_2', provinciaDescripcion: 'Pichincha', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(108) },
   { id: 'param_ciu_4', codigo: 'CUE-C', descripcion: 'Cuenca', provinciaId: 'param_prov_3', provinciaDescripcion: 'Azuay', paisId: 'param_pais_1', paisDescripcion: 'Ecuador', estado: 'ACTIVO', createdAt: iso(100) },
   { id: 'param_ciu_5', codigo: 'LIM-C', descripcion: 'Lima Centro', provinciaId: 'param_prov_4', provinciaDescripcion: 'Lima', paisId: 'param_pais_2', paisDescripcion: 'Perú', estado: 'ACTIVO', createdAt: iso(90) },
+];
+
+// --- Parámetros y Configuración: Dispositivos Móviles ---------------------------
+export const dispositivosMoviles: DispositivoMovil[] = [
+  { id: 'param_disp_1', codigo: 'DM-001', estado: 'ACTIVO', createdAt: iso(100) },
+  { id: 'param_disp_2', codigo: 'DM-002', estado: 'ACTIVO', createdAt: iso(95) },
+  { id: 'param_disp_3', codigo: 'DM-003', estado: 'INACTIVO', createdAt: iso(90) },
 ];

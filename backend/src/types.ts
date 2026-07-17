@@ -264,6 +264,13 @@ export interface Ciudad {
   createdAt: string;
 }
 
+export interface DispositivoMovil {
+  id: string;
+  codigo: string;
+  estado: SegEstado;
+  createdAt: string;
+}
+
 // --- Contratos LDAP / Stats (espejo de frontend/src/types.ts) --------------
 export interface LdapPerson {
   username: string;

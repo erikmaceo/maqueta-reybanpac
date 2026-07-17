@@ -41,12 +41,6 @@ const MOCK_CIUDADES: Ciudad[] = [
   { id: '5', codigo: 'LIM-C', descripcion: 'Lima Centro', provinciaId: '4', provinciaDescripcion: 'Lima', paisId: '2', paisDescripcion: 'Perú', estado: 'ACTIVO', createdAt: new Date().toISOString() },
 ];
 
-const MOCK_DISPOSITIVOS: DispositivoMovil[] = [
-  { id: '1', codigo: 'DM-001', estado: 'ACTIVO', createdAt: new Date().toISOString() },
-  { id: '2', codigo: 'DM-002', estado: 'ACTIVO', createdAt: new Date().toISOString() },
-  { id: '3', codigo: 'DM-003', estado: 'INACTIVO', createdAt: new Date().toISOString() },
-];
-
 @Component({
   selector: 'app-parameters-configuration',
   standalone: true,
@@ -603,11 +597,10 @@ export class ParametersConfigurationComponent implements OnInit {
       this.paises.set([...MOCK_PAISES]);
       this.provincias.set([...MOCK_PROVINCIAS]);
       this.ciudades.set([...MOCK_CIUDADES]);
-      this.dispositivos.set([...MOCK_DISPOSITIVOS]);
       this.loadingPais.set(false);
       this.loadingProv.set(false);
       this.loadingCiu.set(false);
-      this.loadingDisp.set(false);
+      this.loadDispositivos();
     } else {
       this.loadPaises();
       this.loadProvincias();
@@ -619,8 +612,8 @@ export class ParametersConfigurationComponent implements OnInit {
         this.loadPaises();
         this.loadProvincias();
         this.loadCiudades();
-        this.loadDispositivos();
       }
+      this.loadDispositivos();
     });
   }
 
@@ -757,8 +750,10 @@ export class ParametersConfigurationComponent implements OnInit {
   // ============ DISPOSITIVOS MÓVILES ============
   loadDispositivos(): void {
     this.loadingDisp.set(true);
-    this.dispositivos.set([...MOCK_DISPOSITIVOS]);
-    this.loadingDisp.set(false);
+    this.api.listDispositivosMoviles().subscribe({
+      next: (data) => { this.dispositivos.set(data); this.loadingDisp.set(false); },
+      error: () => { this.loadingDisp.set(false); },
+    });
   }
   blankDisp() { return { codigo: '', estado: 'ACTIVO' as Estado }; }
   openDispDialog(d?: DispositivoMovil): void {
@@ -766,28 +761,28 @@ export class ParametersConfigurationComponent implements OnInit {
     else { this.dispForm = this.blankDisp(); this.editDispId = null; }
     this.showDispDlg = true;
   }
-  closeDispDialog(): void { this.showDispDlg = false; this.editDispId = null; }
+  closeDispDialog(): void { this.showDispDlg = false; this.editDispId = null; this.dispForm = this.blankDisp(); }
   saveDisp(): void {
     if (!this.dispForm.codigo) { this.toast.error('Faltan datos', 'El código es obligatorio.'); return; }
+    const body = { codigo: this.dispForm.codigo, estado: this.dispForm.estado };
     if (this.editDispId) {
-      const idx = this.dispositivos().findIndex(d => d.id === this.editDispId);
-      if (idx >= 0) {
-        const updated = [...this.dispositivos()];
-        updated[idx] = { ...this.dispForm, id: this.editDispId, createdAt: updated[idx].createdAt };
-        this.dispositivos.set(updated);
-        this.toast.success('Dispositivo móvil actualizado');
-      }
+      this.api.updateDispositivoMovil(this.editDispId, body).subscribe({
+        next: () => { this.toast.success('Dispositivo móvil actualizado'); this.events.emitDataChanged(); this.closeDispDialog(); this.loadDispositivos(); },
+        error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
+      });
     } else {
-      const newDisp: DispositivoMovil = { ...this.dispForm, id: Date.now().toString(), createdAt: new Date().toISOString() };
-      this.dispositivos.set([...this.dispositivos(), newDisp]);
-      this.toast.success('Dispositivo móvil creado');
+      this.api.createDispositivoMovil(body).subscribe({
+        next: () => { this.toast.success('Dispositivo móvil creado'); this.events.emitDataChanged(); this.closeDispDialog(); this.loadDispositivos(); },
+        error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
+      });
     }
-    this.closeDispDialog();
   }
   confirmDeleteDisp(d: DispositivoMovil): void {
     if (confirm(`¿Eliminar el dispositivo móvil "${d.codigo}"?`)) {
-      this.dispositivos.set(this.dispositivos().filter(x => x.id !== d.id));
-      this.toast.success('Dispositivo móvil eliminado');
+      this.api.deleteDispositivoMovil(d.id).subscribe({
+        next: () => { this.toast.success('Dispositivo móvil eliminado'); this.events.emitDataChanged(); this.loadDispositivos(); },
+        error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
+      });
     }
   }
 }

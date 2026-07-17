@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
-import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad } from './types.js';
+import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad, DispositivoMovil } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -1483,6 +1483,40 @@ app.delete('/api/param-ciudades/:id', requireAuth, requireGlobalAdmin, (req, res
   if (idx === -1) { res.status(404).json({ error: 'Ciudad no encontrada.' }); return; }
   const removed = db.ciudades.splice(idx, 1)[0];
   logAudit('api', 'DELETE', 'param-ciudad', removed.id, `Ciudad ${removed.codigo}`);
+  res.json({ ok: true });
+});
+
+// --- Parámetros: Dispositivos Móviles -----------------------------------------
+app.get('/api/param-dispositivos-moviles', requireAuth, (_req, res) => {
+  res.json(db.dispositivosMoviles);
+});
+
+app.post('/api/param-dispositivos-moviles', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { codigo, estado } = req.body || {};
+  if (!codigo) { res.status(400).json({ error: 'El código es obligatorio.' }); return; }
+  if (db.dispositivosMoviles.some(d => d.codigo === codigo)) { res.status(400).json({ error: 'Ya existe un dispositivo con ese código.' }); return; }
+  const dispositivo: DispositivoMovil = { id: newId('param_disp'), codigo, estado: estado || 'ACTIVO', createdAt: new Date().toISOString() };
+  db.dispositivosMoviles.push(dispositivo);
+  logAudit('api', 'CREATE', 'param-dispositivo-movil', dispositivo.id, `Dispositivo móvil ${dispositivo.codigo}`);
+  res.status(201).json(dispositivo);
+});
+
+app.put('/api/param-dispositivos-moviles/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const dispositivo = db.dispositivosMoviles.find(d => d.id === req.params.id);
+  if (!dispositivo) { res.status(404).json({ error: 'Dispositivo móvil no encontrado.' }); return; }
+  const { codigo, estado } = req.body || {};
+  if (codigo && db.dispositivosMoviles.some(d => d.id !== req.params.id && d.codigo === codigo)) { res.status(400).json({ error: 'Ya existe otro dispositivo con ese código.' }); return; }
+  if (codigo) dispositivo.codigo = codigo;
+  if (estado) dispositivo.estado = estado;
+  logAudit('api', 'UPDATE', 'param-dispositivo-movil', dispositivo.id, `Dispositivo móvil ${dispositivo.codigo}`);
+  res.json(dispositivo);
+});
+
+app.delete('/api/param-dispositivos-moviles/:id', requireAuth, requireGlobalAdmin, (req, res) => {
+  const idx = db.dispositivosMoviles.findIndex(d => d.id === req.params.id);
+  if (idx === -1) { res.status(404).json({ error: 'Dispositivo móvil no encontrado.' }); return; }
+  const removed = db.dispositivosMoviles.splice(idx, 1)[0];
+  logAudit('api', 'DELETE', 'param-dispositivo-movil', removed.id, `Dispositivo móvil ${removed.codigo}`);
   res.json({ ok: true });
 });
 

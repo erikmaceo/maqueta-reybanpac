@@ -121,34 +121,158 @@ interface AccesoView extends AccesoDispositivoMovil {
     >
       <div class="field">
         <label>Usuario</label>
-        <select class="select" [(ngModel)]="form.userId">
-          <option value="">— Seleccione usuario —</option>
-          @for (u of usuarios(); track u.id) {
-            <option [value]="u.id">{{ u.username }} · {{ u.firstName }} {{ u.lastName }}</option>
-          }
-        </select>
+        <div class="search-field">
+          <input class="select" type="text" [ngModel]="userSearchText()" readonly placeholder="Seleccione un usuario..." />
+          <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openUserSearchDialog()" title="Buscar usuario">
+            <app-icon-search [width]="16" [height]="16" />
+          </button>
+        </div>
       </div>
       <div class="field">
         <label>Dispositivo móvil</label>
-        <select class="select" [(ngModel)]="form.dispositivoId">
-          <option value="">— Seleccione dispositivo —</option>
-          @for (d of dispositivos(); track d.id) {
-            <option [value]="d.id">{{ d.codigo }}</option>
-          }
-        </select>
-      </div>
-      @if (form.dispositivoId) {
-        <div class="field">
-          <label>Estado del dispositivo</label>
-          <span class="badge" [class.badge-green]="dispositivoSeleccionado()?.estado === 'ACTIVO'" [class.badge-gray]="dispositivoSeleccionado()?.estado !== 'ACTIVO'">
-            {{ dispositivoSeleccionado()?.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-          </span>
+        <div class="search-field">
+          <input class="select" type="text" [ngModel]="dispositivoSearchText()" readonly placeholder="Seleccione un dispositivo..." />
+          <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openDispSearchDialog()" title="Buscar dispositivo">
+            <app-icon-search [width]="16" [height]="16" />
+          </button>
         </div>
-      }
+      </div>
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="save()">{{ editId ? 'Guardar' : 'Crear' }}</button>
       </ng-template>
+    </p-dialog>
+
+    <p-dialog
+      [(visible)]="showUserSearchDlg"
+      header="Buscar usuario"
+      [modal]="true" [style]="{ width: '900px' }" [closable]="true"
+      (onHide)="closeUserSearchDialog()"
+    >
+      <div class="filter-row">
+        <div class="field">
+          <label>Código</label>
+          <input type="text" class="select" [(ngModel)]="userFilterCodigo" placeholder="Código de usuario" />
+        </div>
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" class="select" [(ngModel)]="userFilterNombre" placeholder="Nombre" />
+        </div>
+        <div class="field">
+          <label>Apellido</label>
+          <input type="text" class="select" [(ngModel)]="userFilterApellido" placeholder="Apellido" />
+        </div>
+        <div class="field">
+          <label>Correo</label>
+          <input type="text" class="select" [(ngModel)]="userFilterCorreo" placeholder="Correo" />
+        </div>
+        <div class="field">
+          <label>Departamento</label>
+          <input type="text" class="select" [(ngModel)]="userFilterDepartamento" placeholder="Departamento" />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="applyUserFilters()">Buscar</button>
+        <button class="btn btn-ghost" (click)="clearUserFilters()">Limpiar</button>
+      </div>
+
+      <div class="card table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Apellido</th>
+              <th>Correo</th>
+              <th>Departamento</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of paginatedUsersForSearch(); track u.id) {
+              <tr>
+                <td class="mono">{{ u.username }}</td>
+                <td><div class="cell-strong">{{ u.firstName }}</div></td>
+                <td><div class="cell-strong">{{ u.lastName }}</div></td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.department }}</td>
+                <td>
+                  <button class="btn btn-primary btn-sm" (click)="selectUserFromDialog(u)">Seleccionar</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === 1" (click)="changeUserPage(-1)">Anterior</button>
+        <span>Página {{ userSearchPage() }} de {{ userSearchTotalPages() }} ({{ filteredUsersForSearch().length }} registros)</span>
+        <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === userSearchTotalPages()" (click)="changeUserPage(1)">Siguiente</button>
+      </div>
+    </p-dialog>
+
+    <p-dialog
+      [(visible)]="showDispSearchDlg"
+      header="Buscar dispositivo móvil"
+      [modal]="true" [style]="{ width: '700px' }" [closable]="true"
+      (onHide)="closeDispSearchDialog()"
+    >
+      <div class="filter-row">
+        <div class="field">
+          <label>Código</label>
+          <input type="text" class="select" [(ngModel)]="dispFilterCodigo" placeholder="Código de dispositivo" />
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select class="select" [(ngModel)]="dispFilterEstado">
+            <option value="">Todos</option>
+            <option value="ACTIVO">Activo</option>
+            <option value="INACTIVO">Inactivo</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="applyDispFilters()">Buscar</button>
+        <button class="btn btn-ghost" (click)="clearDispFilters()">Limpiar</button>
+      </div>
+
+      <div class="card table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of paginatedDispsForSearch(); track d.id) {
+              <tr>
+                <td class="mono">{{ d.codigo }}</td>
+                <td>
+                  <span class="badge" [class.badge-green]="d.estado === 'ACTIVO'" [class.badge-gray]="d.estado !== 'ACTIVO'">
+                    {{ d.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-primary btn-sm" (click)="selectDispFromDialog(d)">Seleccionar</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button class="btn btn-ghost btn-sm" [disabled]="dispSearchPage() === 1" (click)="changeDispPage(-1)">Anterior</button>
+        <span>Página {{ dispSearchPage() }} de {{ dispSearchTotalPages() }} ({{ filteredDispsForSearch().length }} registros)</span>
+        <button class="btn btn-ghost btn-sm" [disabled]="dispSearchPage() === dispSearchTotalPages()" (click)="changeDispPage(1)">Siguiente</button>
+      </div>
     </p-dialog>
 
     <p-confirmDialog></p-confirmDialog>
@@ -169,6 +293,31 @@ export class DeviceAccessComponent implements OnInit {
   showDlg = false;
   editId: string | null = null;
   form = { userId: '', dispositivoId: '' };
+  userSearchText = signal('');
+  dispositivoSearchText = signal('');
+
+  showUserSearchDlg = false;
+  showDispSearchDlg = false;
+
+  userFilterCodigo = '';
+  userFilterNombre = '';
+  userFilterApellido = '';
+  userFilterCorreo = '';
+  userFilterDepartamento = '';
+  appliedUserFilterCodigo = signal('');
+  appliedUserFilterNombre = signal('');
+  appliedUserFilterApellido = signal('');
+  appliedUserFilterCorreo = signal('');
+  appliedUserFilterDepartamento = signal('');
+  userSearchPage = signal(1);
+  userSearchPageSize = signal(10);
+
+  dispFilterCodigo = '';
+  dispFilterEstado = '';
+  appliedDispFilterCodigo = signal('');
+  appliedDispFilterEstado = signal('');
+  dispSearchPage = signal(1);
+  dispSearchPageSize = signal(10);
 
   userMap = computed(() => new Map(this.usuarios().map(u => [u.id, u])));
   dispositivoMap = computed(() => new Map(this.dispositivos().map(d => [d.id, d])));
@@ -199,7 +348,139 @@ export class DeviceAccessComponent implements OnInit {
     );
   });
 
-  dispositivoSeleccionado = computed(() => this.dispositivoMap().get(this.form.dispositivoId));
+  filteredUsersForSearch = computed(() => {
+    const qCodigo = this.appliedUserFilterCodigo().toLowerCase().trim();
+    const qNombre = this.appliedUserFilterNombre().toLowerCase().trim();
+    const qApellido = this.appliedUserFilterApellido().toLowerCase().trim();
+    const qCorreo = this.appliedUserFilterCorreo().toLowerCase().trim();
+    const qDepartamento = this.appliedUserFilterDepartamento().toLowerCase().trim();
+    return this.usuarios().filter(u =>
+      (!qCodigo || u.username.toLowerCase().includes(qCodigo)) &&
+      (!qNombre || u.firstName.toLowerCase().includes(qNombre)) &&
+      (!qApellido || u.lastName.toLowerCase().includes(qApellido)) &&
+      (!qCorreo || u.email.toLowerCase().includes(qCorreo)) &&
+      (!qDepartamento || u.department.toLowerCase().includes(qDepartamento))
+    );
+  });
+
+  paginatedUsersForSearch = computed(() => {
+    const start = (this.userSearchPage() - 1) * this.userSearchPageSize();
+    return this.filteredUsersForSearch().slice(start, start + this.userSearchPageSize());
+  });
+
+  userSearchTotalPages = computed(() => {
+    const total = this.filteredUsersForSearch().length;
+    return Math.max(1, Math.ceil(total / this.userSearchPageSize()));
+  });
+
+  filteredDispsForSearch = computed(() => {
+    const qCodigo = this.appliedDispFilterCodigo().toLowerCase().trim();
+    const qEstado = this.appliedDispFilterEstado().trim();
+    return this.dispositivos().filter(d =>
+      (!qCodigo || d.codigo.toLowerCase().includes(qCodigo)) &&
+      (!qEstado || d.estado === qEstado)
+    );
+  });
+
+  paginatedDispsForSearch = computed(() => {
+    const start = (this.dispSearchPage() - 1) * this.dispSearchPageSize();
+    return this.filteredDispsForSearch().slice(start, start + this.dispSearchPageSize());
+  });
+
+  dispSearchTotalPages = computed(() => {
+    const total = this.filteredDispsForSearch().length;
+    return Math.max(1, Math.ceil(total / this.dispSearchPageSize()));
+  });
+
+  selectUser(u: User): void {
+    this.form.userId = u.id;
+    this.userSearchText.set(`${u.username} · ${u.firstName} ${u.lastName}`);
+  }
+
+  selectDispositivo(d: DispositivoMovil): void {
+    this.form.dispositivoId = d.id;
+    this.dispositivoSearchText.set(d.codigo);
+  }
+
+  openUserSearchDialog(): void {
+    this.userFilterCodigo = '';
+    this.userFilterNombre = '';
+    this.userFilterApellido = '';
+    this.userFilterCorreo = '';
+    this.userFilterDepartamento = '';
+    this.appliedUserFilterCodigo.set('');
+    this.appliedUserFilterNombre.set('');
+    this.appliedUserFilterApellido.set('');
+    this.appliedUserFilterCorreo.set('');
+    this.appliedUserFilterDepartamento.set('');
+    this.userSearchPage.set(1);
+    this.showUserSearchDlg = true;
+  }
+
+  closeUserSearchDialog(): void {
+    this.showUserSearchDlg = false;
+  }
+
+  applyUserFilters(): void {
+    this.appliedUserFilterCodigo.set(this.userFilterCodigo);
+    this.appliedUserFilterNombre.set(this.userFilterNombre);
+    this.appliedUserFilterApellido.set(this.userFilterApellido);
+    this.appliedUserFilterCorreo.set(this.userFilterCorreo);
+    this.appliedUserFilterDepartamento.set(this.userFilterDepartamento);
+    this.userSearchPage.set(1);
+  }
+
+  clearUserFilters(): void {
+    this.userFilterCodigo = '';
+    this.userFilterNombre = '';
+    this.userFilterApellido = '';
+    this.userFilterCorreo = '';
+    this.userFilterDepartamento = '';
+    this.applyUserFilters();
+  }
+
+  changeUserPage(delta: number): void {
+    this.userSearchPage.set(Math.min(Math.max(this.userSearchPage() + delta, 1), this.userSearchTotalPages()));
+  }
+
+  selectUserFromDialog(u: User): void {
+    this.selectUser(u);
+    this.closeUserSearchDialog();
+  }
+
+  openDispSearchDialog(): void {
+    this.dispFilterCodigo = '';
+    this.dispFilterEstado = '';
+    this.appliedDispFilterCodigo.set('');
+    this.appliedDispFilterEstado.set('');
+    this.dispSearchPage.set(1);
+    this.showDispSearchDlg = true;
+  }
+
+  closeDispSearchDialog(): void {
+    this.showDispSearchDlg = false;
+  }
+
+  applyDispFilters(): void {
+    this.appliedDispFilterCodigo.set(this.dispFilterCodigo);
+    this.appliedDispFilterEstado.set(this.dispFilterEstado);
+    this.dispSearchPage.set(1);
+  }
+
+  clearDispFilters(): void {
+    this.dispFilterCodigo = '';
+    this.dispFilterEstado = '';
+    this.applyDispFilters();
+  }
+
+  changeDispPage(delta: number): void {
+    this.dispSearchPage.set(Math.min(Math.max(this.dispSearchPage() + delta, 1), this.dispSearchTotalPages()));
+  }
+
+  selectDispFromDialog(d: DispositivoMovil): void {
+    this.selectDispositivo(d);
+    this.closeDispSearchDialog();
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -233,9 +514,15 @@ export class DeviceAccessComponent implements OnInit {
     if (a) {
       this.editId = a.id;
       this.form = { userId: a.userId, dispositivoId: a.dispositivoId };
+      const u = this.userMap().get(a.userId);
+      this.userSearchText.set(u ? `${u.username} · ${u.firstName} ${u.lastName}` : '');
+      const d = this.dispositivoMap().get(a.dispositivoId);
+      this.dispositivoSearchText.set(d ? d.codigo : '');
     } else {
       this.editId = null;
       this.form = { userId: '', dispositivoId: '' };
+      this.userSearchText.set('');
+      this.dispositivoSearchText.set('');
     }
     this.showDlg = true;
   }
@@ -244,6 +531,8 @@ export class DeviceAccessComponent implements OnInit {
     this.showDlg = false;
     this.editId = null;
     this.form = { userId: '', dispositivoId: '' };
+    this.userSearchText.set('');
+    this.dispositivoSearchText.set('');
   }
 
   save(): void {

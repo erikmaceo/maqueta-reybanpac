@@ -1680,3 +1680,234 @@ textarea.input {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Autocomplete custom */
+.ac-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.ac-wrapper .select {
+  flex: 1;
+  padding-right: 32px;
+  border-radius: 6px;
+}
+
+.ac-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.ac-toggle:hover {
+  color: var(--navy-600);
+  background: var(--surface-2);
+}
+
+.ac-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  z-index: 1000;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ac-item {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  gap: 1px;
+}
+
+.ac-item:last-child {
+  border-bottom: none;
+}
+
+.ac-item:hover,
+.ac-item.ac-highlight {
+  background: var(--surface-2);
+}
+
+.ac-item .ac-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.ac-item .ac-sub {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+.ac-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 0.875rem;
+}
+
+/* Search field with button */
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.search-field .select {
+  flex: 1;
+}
+
+.search-field .btn-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Filter row inside dialog */
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.filter-row .field {
+  margin: 0;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+.pagination .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Autocomplete custom */
+.ac-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.ac-wrapper .select {
+  flex: 1;
+  padding-right: 32px;
+  border-radius: 6px;
+}
+
+.ac-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.ac-toggle:hover {
+  color: var(--navy-600);
+  background: var(--surface-2);
+}
+
+.ac-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  z-index: 1000;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ac-item {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  gap: 1px;
+}
+
+.ac-item:last-child {
+  border-bottom: none;
+}
+
+.ac-item:hover,
+.ac-item.ac-highlight {
+  background: var(--surface-2);
+}
+
+.ac-item .ac-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.ac-item .ac-sub {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+.ac-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 0.875rem;
+}

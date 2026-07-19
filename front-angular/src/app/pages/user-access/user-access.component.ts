@@ -140,38 +140,28 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       }
       <div class="field">
         <label>Nodos de Segregación</label>
-        <div class="tree-wrap">
-          <ng-template #nodoTree let-nodo>
-            <div class="tree-node">
-              <div class="tree-row">
-                @if (tieneHijos(nodo.id)) {
-                  <button type="button" class="tree-toggle" (click)="toggleExpand(nodo.id)">
-                    <i class="pi" [class.pi-chevron-down]="isExpanded(nodo.id)" [class.pi-chevron-right]="!isExpanded(nodo.id)"></i>
-                  </button>
-                } @else {
-                  <span class="tree-toggle-spacer"></span>
-                }
-                <label class="tree-label" [class.tree-label-disabled]="!puedeSeleccionar(nodo.id)">
-                  <input type="checkbox" [checked]="isNodoSelected(nodo.id)"
-                    [disabled]="!puedeSeleccionar(nodo.id)"
-                    (change)="toggleNodo(nodo.id)" />
-                  <span><b>{{ nodo.codigo }}</b> · {{ nodo.nombre }} <span class="tree-meta">({{ getNivelNombre(nodo.nivelId) }})</span></span>
-                </label>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          @for (nivel of niveles(); track nivel.id) {
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <span class="small muted"><b>{{ nivel.nombre }}</b></span>
+                <button class="btn btn-ghost btn-sm" type="button" (click)="openNodoSearchDialog(nivel.id, nivel.nombre)" [disabled]="!puedeBuscarNivel(nivel.id)" [title]="puedeBuscarNivel(nivel.id) ? 'Buscar ' + nivel.nombre : 'Seleccione primero un ' + getNivelNombre(getNivelPadreId(nivel.id)!)" >
+                  <app-icon-search [width]="14" [height]="14" /> Buscar {{ nivel.nombre }}
+                </button>
               </div>
-              @if (isExpanded(nodo.id)) {
-                <div class="tree-children">
-                  @for (hijo of hijosDe(nodo.id); track hijo.id) {
-                    <ng-container *ngTemplateOutlet="nodoTree; context: { $implicit: hijo }"></ng-container>
-                  }
-                </div>
-              }
+              <div style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface-2);">
+                @for (nodo of selectedNodosByNivelId(nivel.id); track nodo.id) {
+                  <label style="display:flex;align-items:center;gap:8px;cursor:default;opacity:0.85;">
+                    <input type="checkbox" checked disabled style="width:16px;height:16px;cursor:default;" />
+                    <span><b>{{ nodo.codigo }}</b> · {{ nodo.nombre }}</span>
+                  </label>
+                } @empty {
+                  <span class="muted small">Ningún nodo seleccionado.</span>
+                }
+              </div>
             </div>
-          </ng-template>
-
-          @for (nodo of nodosRaices(); track nodo.id) {
-            <ng-container *ngTemplateOutlet="nodoTree; context: { $implicit: nodo }"></ng-container>
           } @empty {
-            <span class="muted small">No hay nodos configurados.</span>
+            <span class="muted small">No hay niveles configurados.</span>
           }
         </div>
       </div>
@@ -339,21 +329,90 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       </ng-template>
     </p-dialog>
 
+    <!-- ============ DIÁLOGO BÚSQUEDA NODOS (MULTI-SELECCIÓN POR NIVEL) ============ -->
+    <p-dialog
+      [(visible)]="showNodoSearchDlg"
+      [header]="'Buscar ' + nodoSearchNivelNombre()"
+      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
+      (onHide)="cancelNodoSearch()"
+    >
+      <div class="filter-row">
+        <div class="field">
+          <label>Código</label>
+          <input type="text" class="select" [(ngModel)]="nodoSearchCodigo" placeholder="Código de nodo" />
+        </div>
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" class="select" [(ngModel)]="nodoSearchNombre" placeholder="Nombre de nodo" />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="applyNodoFilters()">Buscar</button>
+        <button class="btn btn-ghost" (click)="clearNodoFilters()">Limpiar</button>
+      </div>
+
+      @if (getSelectedParentIds(nodoSearchNivelId()).length > 0) {
+        <div class="muted small" style="margin-bottom: 8px;">
+          Mostrando {{ nodoSearchNivelNombre() }} del {{ getNivelNombre(getNivelPadreId(nodoSearchNivelId())!) }} seleccionado.
+        </div>
+      }
+
+      <div class="card table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th style="width:40px;"></th>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Padre</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (n of paginatedNodosForSearch(); track n.id) {
+              <tr>
+                <td class="center">
+                  <input type="checkbox" [checked]="tempSelectedNodoIds().includes(n.id)"
+                    (change)="toggleNodoSelection(n.id)" style="width:16px;height:16px;cursor:pointer;" />
+                </td>
+                <td class="mono">{{ n.codigo }}</td>
+                <td><div class="cell-strong">{{ n.nombre }}</div></td>
+                <td>
+                  @if (n.padreId) {
+                    {{ getNodoPadreLabel(n.padreId) }}
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td>
+                  <span class="badge" [class.badge-green]="n.estado === 'ACTIVO'" [class.badge-gray]="n.estado !== 'ACTIVO'">
+                    {{ n.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === 1" (click)="changeNodoSearchPage(-1)">Anterior</button>
+        <span>Página {{ nodoSearchPage() }} de {{ nodoSearchTotalPages() }} ({{ filteredNodosForSearch().length }} registros)</span>
+        <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === nodoSearchTotalPages()" (click)="changeNodoSearchPage(1)">Siguiente</button>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="cancelNodoSearch()">Cancelar</button>
+        <button class="btn btn-primary" (click)="acceptNodoSearch()">Aceptar ({{ tempSelectedNodoIds().length }})</button>
+      </ng-template>
+    </p-dialog>
+
     <p-confirmDialog></p-confirmDialog>
   `,
   styles: [`
-    .tree-wrap { max-height: 260px; overflow: auto; display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--border, #e5e7eb); border-radius: 8px; padding: 8px; }
-    .tree-node { display: flex; flex-direction: column; }
-    .tree-row { display: flex; align-items: center; gap: 4px; min-height: 28px; }
-    .tree-toggle { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; color: var(--muted, #6b7280); padding: 0; }
-    .tree-toggle:hover { color: var(--primary, #2563eb); }
-    .tree-toggle-spacer { width: 20px; flex-shrink: 0; }
-    .tree-label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; font-size: 0.9rem; }
-    .tree-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
-    .tree-label-disabled { cursor: not-allowed; opacity: 0.45; }
-    .tree-label-disabled input[type="checkbox"] { cursor: not-allowed; }
-    .tree-children { padding-left: 12px; display: flex; flex-direction: column; gap: 2px; border-left: 1px dashed var(--border, #e5e7eb); margin-left: 10px; margin-top: 2px; }
-    .tree-meta { font-size: 0.75rem; color: var(--muted, #6b7280); }
+    .center { text-align: center; }
   `],
 })
 export class UserAccessComponent implements OnInit {
@@ -374,7 +433,6 @@ export class UserAccessComponent implements OnInit {
   editUser: User | null = null;
   selectedUserId = '';
   editForm = signal({ nodoIds: [] as string[], perfilCodigos: [] as string[] });
-  expanded = signal<Set<string>>(new Set());
 
   // --- Diálogo búsqueda de usuario ---
   showUserSearchDlg = false;
@@ -403,6 +461,18 @@ export class UserAccessComponent implements OnInit {
   perfilSearchPage = signal(1);
   perfilSearchPageSize = signal(10);
   tempSelectedPerfilCodigos = signal<string[]>([]);
+
+  // --- Diálogo búsqueda de nodos de segregación (multi-selección por nivel) ---
+  showNodoSearchDlg = false;
+  nodoSearchNivelId = signal('');
+  nodoSearchNivelNombre = signal('');
+  nodoSearchCodigo = '';
+  nodoSearchNombre = '';
+  appliedNodoSearchCodigo = signal('');
+  appliedNodoSearchNombre = signal('');
+  nodoSearchPage = signal(1);
+  nodoSearchPageSize = signal(10);
+  tempSelectedNodoIds = signal<string[]>([]);
 
   search = signal('');
   pageSize = signal(10);
@@ -475,25 +545,55 @@ export class UserAccessComponent implements OnInit {
       .filter((p): p is Perfil => !!p);
   });
 
-  nodosOrdenados = computed(() => {
-    return [...this.nodos()].sort((a, b) => {
-      const oa = this.getNivelOrden(a.nivelId);
-      const ob = this.getNivelOrden(b.nivelId);
-      if (oa !== ob) return oa - ob;
-      return a.codigo.localeCompare(b.codigo);
+  // --- Computed para búsqueda de nodos por nivel ---
+  getNivelPadreId(nivelId: string): string | null {
+    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
+    const idx = sorted.findIndex(n => n.id === nivelId);
+    return idx > 0 ? sorted[idx - 1].id : null;
+  }
+
+  getSelectedParentIds(nivelId: string): string[] {
+    const parentNivelId = this.getNivelPadreId(nivelId);
+    if (!parentNivelId) return [];
+    return this.editForm().nodoIds
+      .map(id => this.nodos().find(n => n.id === id))
+      .filter((n): n is NodoSegregacion => !!n && n.nivelId === parentNivelId)
+      .map(n => n.id);
+  }
+
+  puedeBuscarNivel(nivelId: string): boolean {
+    const parentNivelId = this.getNivelPadreId(nivelId);
+    if (!parentNivelId) return true;
+    return this.getSelectedParentIds(nivelId).length > 0;
+  }
+
+  filteredNodosForSearch = computed(() => {
+    const nivelId = this.nodoSearchNivelId();
+    const parentNivelId = this.getNivelPadreId(nivelId);
+    const selectedParentIds = parentNivelId ? this.getSelectedParentIds(nivelId) : [];
+    const hasParentFilter = parentNivelId && selectedParentIds.length > 0;
+    const qCodigo = this.appliedNodoSearchCodigo().toLowerCase().trim();
+    const qNombre = this.appliedNodoSearchNombre().toLowerCase().trim();
+    return this.nodos().filter(n => {
+      if (n.nivelId !== nivelId || n.estado !== 'ACTIVO') return false;
+      if (hasParentFilter && n.padreId && !selectedParentIds.includes(n.padreId)) return false;
+      return (!qCodigo || n.codigo.toLowerCase().includes(qCodigo)) &&
+             (!qNombre || n.nombre.toLowerCase().includes(qNombre));
     });
   });
 
-  nodosRaices = computed(() => {
-    return this.nodos()
-      .filter(n => !n.padreId)
-      .sort((a, b) => {
-        const oa = this.getNivelOrden(a.nivelId);
-        const ob = this.getNivelOrden(b.nivelId);
-        if (oa !== ob) return oa - ob;
-        return a.codigo.localeCompare(b.codigo);
-      });
+  paginatedNodosForSearch = computed(() => {
+    const start = (this.nodoSearchPage() - 1) * this.nodoSearchPageSize();
+    return this.filteredNodosForSearch().slice(start, start + this.nodoSearchPageSize());
   });
+
+  nodoSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredNodosForSearch().length / this.nodoSearchPageSize())));
+
+  selectedNodosByNivelId = (nivelId: string) => {
+    return this.editForm().nodoIds
+      .map(id => this.nodos().find(n => n.id === id))
+      .filter((n): n is NodoSegregacion => !!n && n.nivelId === nivelId);
+  };
 
   setPage(p: number): void {
     if (p < 0 || p >= this.totalPages()) return;
@@ -646,8 +746,86 @@ export class UserAccessComponent implements OnInit {
     this.showPerfilSearchDlg = false;
   }
 
-  getNivelOrden(nivelId: string): number {
-    return this.niveles().find(n => n.id === nivelId)?.orden ?? 0;
+  openNodoSearchDialog(nivelId: string, nivelNombre: string): void {
+    this.nodoSearchNivelId.set(nivelId);
+    this.nodoSearchNivelNombre.set(nivelNombre);
+    this.nodoSearchCodigo = '';
+    this.nodoSearchNombre = '';
+    this.appliedNodoSearchCodigo.set('');
+    this.appliedNodoSearchNombre.set('');
+    this.nodoSearchPage.set(1);
+    this.tempSelectedNodoIds.set(this.editForm().nodoIds.filter(id => {
+      const n = this.nodos().find(x => x.id === id);
+      return n?.nivelId === nivelId;
+    }));
+    this.showNodoSearchDlg = true;
+  }
+
+  closeNodoSearchDialog(): void {
+    this.showNodoSearchDlg = false;
+    this.nodoSearchNivelId.set('');
+    this.nodoSearchNivelNombre.set('');
+  }
+
+  cancelNodoSearch(): void {
+    this.showNodoSearchDlg = false;
+    this.nodoSearchNivelId.set('');
+    this.nodoSearchNivelNombre.set('');
+    this.tempSelectedNodoIds.set([]);
+  }
+
+  applyNodoFilters(): void {
+    this.appliedNodoSearchCodigo.set(this.nodoSearchCodigo);
+    this.appliedNodoSearchNombre.set(this.nodoSearchNombre);
+    this.nodoSearchPage.set(1);
+  }
+
+  clearNodoFilters(): void {
+    this.nodoSearchCodigo = '';
+    this.nodoSearchNombre = '';
+    this.applyNodoFilters();
+  }
+
+  changeNodoSearchPage(delta: number): void {
+    this.nodoSearchPage.set(Math.min(Math.max(this.nodoSearchPage() + delta, 1), this.nodoSearchTotalPages()));
+  }
+
+  toggleNodoSelection(nodoId: string): void {
+    const selected = this.tempSelectedNodoIds();
+    if (selected.includes(nodoId)) {
+      this.tempSelectedNodoIds.set(selected.filter(id => id !== nodoId));
+    } else {
+      this.tempSelectedNodoIds.set([...selected, nodoId]);
+    }
+  }
+
+  acceptNodoSearch(): void {
+    const form = this.editForm();
+    const nivelId = this.nodoSearchNivelId();
+    const newSelected = this.tempSelectedNodoIds();
+
+    const prevSelected = form.nodoIds.filter(id => this.nodos().find(n => n.id === id)?.nivelId === nivelId);
+    const deselected = prevSelected.filter(id => !newSelected.includes(id));
+
+    const idsToRemove = new Set<string>();
+    for (const id of deselected) {
+      idsToRemove.add(id);
+      for (const desc of this.descendientesDe(id)) {
+        idsToRemove.add(desc);
+      }
+    }
+
+    const otherNodes = form.nodoIds.filter(id => {
+      if (idsToRemove.has(id)) return false;
+      const n = this.nodos().find(x => x.id === id);
+      return n?.nivelId !== nivelId;
+    });
+
+    this.editForm.set({ ...form, nodoIds: [...otherNodes, ...newSelected] });
+    this.tempSelectedNodoIds.set([]);
+    this.showNodoSearchDlg = false;
+    this.nodoSearchNivelId.set('');
+    this.nodoSearchNivelNombre.set('');
   }
 
   getNivelNombre(nivelId: string): string {
@@ -659,38 +837,6 @@ export class UserAccessComponent implements OnInit {
     if (!nodo) return nodoId;
     const nivel = this.niveles().find(n => n.id === nodo.nivelId);
     return `${nodo.codigo} · ${nodo.nombre}${nivel ? ` (${nivel.nombre})` : ''}`;
-  }
-
-  isNodoSelected(nodoId: string): boolean {
-    return this.editForm().nodoIds.includes(nodoId);
-  }
-
-  puedeSeleccionar(nodoId: string): boolean {
-    const nodo = this.nodos().find(n => n.id === nodoId);
-    if (!nodo) return false;
-    if (!nodo.padreId) return true;
-    return this.isNodoSelected(nodo.padreId);
-  }
-
-  toggleNodo(nodoId: string): void {
-    if (!this.puedeSeleccionar(nodoId)) return;
-    const form = this.editForm();
-    const isSelected = form.nodoIds.includes(nodoId);
-    const descendientes = this.descendientesDe(nodoId);
-    const grupo = [nodoId, ...descendientes];
-
-    if (isSelected) {
-      this.editForm.set({ ...form, nodoIds: form.nodoIds.filter(id => !grupo.includes(id)) });
-    } else {
-      const nuevos = [...form.nodoIds];
-      for (const id of grupo) {
-        if (!nuevos.includes(id)) {
-          nuevos.push(id);
-        }
-      }
-      this.editForm.set({ ...form, nodoIds: nuevos });
-      this.expandirAncestros(nodoId);
-    }
   }
 
   descendientesDe(nodoId: string): string[] {
@@ -707,43 +853,9 @@ export class UserAccessComponent implements OnInit {
     return result;
   }
 
-  expandirAncestros(nodoId: string): void {
-    const set = new Set(this.expanded());
-    const nodo = this.nodos().find(n => n.id === nodoId);
-    if (!nodo) return;
-    let padreId = nodo.padreId;
-    while (padreId) {
-      set.add(padreId);
-      const padre = this.nodos().find(n => n.id === padreId);
-      padreId = padre?.padreId || null;
-    }
-    this.expanded.set(set);
-  }
-
-  isExpanded(nodoId: string): boolean {
-    return this.expanded().has(nodoId);
-  }
-
-  toggleExpand(nodoId: string): void {
-    const set = new Set(this.expanded());
-    if (set.has(nodoId)) set.delete(nodoId);
-    else set.add(nodoId);
-    this.expanded.set(set);
-  }
-
-  tieneHijos(nodoId: string): boolean {
-    return this.nodos().some(n => n.padreId === nodoId);
-  }
-
-  hijosDe(nodoId: string): NodoSegregacion[] {
-    return this.nodos()
-      .filter(n => n.padreId === nodoId)
-      .sort((a, b) => {
-        const oa = this.getNivelOrden(a.nivelId);
-        const ob = this.getNivelOrden(b.nivelId);
-        if (oa !== ob) return oa - ob;
-        return a.codigo.localeCompare(b.codigo);
-      });
+  getNodoPadreLabel(padreId: string): string {
+    const padre = this.nodos().find(n => n.id === padreId);
+    return padre ? `${padre.codigo} · ${padre.nombre}` : padreId;
   }
 
   async save(): Promise<void> {

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DragDropModule, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop';
 import * as XLSX from 'xlsx';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
@@ -14,7 +15,7 @@ import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
-  IconCheckComponent, IconCloseComponent,
+  IconCheckComponent, IconCloseComponent, IconUploadComponent,
 } from '../../shared/components/icons';
 import type { Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, TipoPrograma, TipoControl, Control } from '../../shared/models/types';
 
@@ -53,7 +54,7 @@ interface PerfilProgramaRow {
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
-    IconCheckComponent, IconCloseComponent,
+    IconCheckComponent, IconCloseComponent, IconUploadComponent,
   ],
   template: `
     <div class="page-head">
@@ -90,6 +91,9 @@ interface PerfilProgramaRow {
               </button>
               <button class="btn btn-primary" (click)="openAppDialog()">
                 <app-icon-plus [width]="14" [height]="14" /> Nueva aplicación
+              </button>
+              <button class="btn btn-primary" (click)="openBulkDialog()">
+                <app-icon-upload [width]="14" [height]="14" /> Carga masiva
               </button>
             </div>
           </div>
@@ -1281,6 +1285,58 @@ interface PerfilProgramaRow {
       </ng-template>
     </p-dialog>
 
+    <!-- ============ DIÁLOGO CARGA MASIVA APLICACIONES/MÓDULOS/PROGRAMAS ============ -->
+    <p-dialog
+      [(visible)]="showBulkDlg"
+      header="Carga masiva de aplicaciones"
+      [modal]="true" [style]="{ width: '620px' }" [closable]="true"
+      (onHide)="closeBulkDialog()"
+    >
+      <p class="mb-3 muted small">
+        El archivo debe tener las columnas: <b>TIPO</b>, <b>CODIGO</b>, <b>NOMBRE</b>, <b>DESCRIPCION</b>, <b>APP_CODIGO</b>, <b>MOD_CODIGO</b>, <b>PRG_TIPO</b> y <b>ESTADO</b>.
+        TIPOS válidos: <b>APLICACION</b>, <b>MODULO</b>, <b>PROGRAMA</b>.
+      </p>
+
+      <div class="row gap-2 mb-3">
+        <button class="btn btn-ghost" (click)="downloadBulkTemplate()">
+          <app-icon-download [width]="14" [height]="14" /> Descargar plantilla
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Archivo Excel</label>
+        <input type="file" accept=".xlsx,.xls" (change)="onBulkFileSelected($event)" />
+        @if (bulkFileName()) {
+          <div class="small mt-1">{{ bulkFileName() }}</div>
+        }
+      </div>
+
+      @if (bulkSuccess()) {
+        <div class="alert alert-success mb-3">{{ bulkSuccess() }}</div>
+      }
+
+      @if (bulkErrors().length > 0) {
+        <div class="alert alert-error mb-3">
+          <ul class="mb-0">
+            @for (e of bulkErrors(); track e.row + e.message) {
+              <li>Fila {{ e.row }}: {{ e.message }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closeBulkDialog()">Cerrar</button>
+        <button class="btn btn-primary" (click)="processBulkFile()" [disabled]="!bulkFile || bulkLoading()">
+          @if (bulkLoading()) {
+            <span>Procesando...</span>
+          } @else {
+            <span>Procesar</span>
+          }
+        </button>
+      </ng-template>
+    </p-dialog>
+
     <p-confirmDialog></p-confirmDialog>
   `,
   styles: [`
@@ -1532,6 +1588,13 @@ export class SecurityComponent implements OnInit {
   showModDlg = false; editModId: string | null = null; modTouched = false;
   showPrgDlg = false; editPrgId: string | null = null; prgTouched = false;
   showPerfDlg = false; editPerfId: string | null = null; perfTouched = false;
+
+  showBulkDlg = false;
+  bulkFile: File | null = null;
+  bulkFileName = signal('');
+  bulkErrors = signal<{ row: number; message: string }[]>([]);
+  bulkSuccess = signal('');
+  bulkLoading = signal(false);
 
   // --- Diálogo búsqueda de aplicación (para módulo) ---
   showAppSearchDlg = false;
@@ -2565,6 +2628,172 @@ export class SecurityComponent implements OnInit {
         next: () => { this.toast.success('Perfil eliminado'); this.events.emitDataChanged(); this._loadPerf(); },
         error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
+    }
+  }
+
+  openBulkDialog(): void {
+    this.showBulkDlg = true;
+    this.bulkFile = null;
+    this.bulkFileName.set('');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+    this.bulkLoading.set(false);
+  }
+
+  closeBulkDialog(): void {
+    this.showBulkDlg = false;
+    this.bulkFile = null;
+    this.bulkFileName.set('');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+    this.bulkLoading.set(false);
+  }
+
+  downloadBulkTemplate(): void {
+    const headers = ['TIPO', 'CODIGO', 'NOMBRE', 'DESCRIPCION', 'APP_CODIGO', 'MOD_CODIGO', 'PRG_TIPO', 'ESTADO'];
+    const rows: any[] = [headers];
+
+    const apps = this.aplicaciones().filter(a => a.estado === 'ACTIVO');
+    const mods = this.modulos().filter(m => m.estado === 'ACTIVO');
+    const prgs = this.programas().filter(p => p.estado === 'ACTIVO');
+
+    if (apps.length || mods.length || prgs.length) {
+      for (const a of apps.sort((x, y) => x.codigo.localeCompare(y.codigo))) {
+        rows.push(['APLICACION', a.codigo, a.nombre, a.descripcion, '', '', '', a.estado]);
+      }
+      for (const m of mods.sort((x, y) => x.codigo.localeCompare(y.codigo))) {
+        const app = apps.find(a => a.codigo === m.appCodigo);
+        rows.push(['MODULO', m.codigo, m.nombre, m.descripcion, app?.codigo ?? m.appCodigo, '', '', m.estado]);
+      }
+      for (const p of prgs.sort((x, y) => x.codigo.localeCompare(y.codigo))) {
+        const mod = mods.find(m => m.codigo === p.modCodigo);
+        const app = mod ? apps.find(a => a.codigo === mod.appCodigo) : null;
+        rows.push(['PROGRAMA', p.codigo, p.nombre, p.descripcion, app?.codigo ?? '', mod?.codigo ?? p.modCodigo, p.tipo, p.estado]);
+      }
+    } else {
+      // Ejemplo con una pequeña jerarquía
+      rows.push(['APLICACION', 'APP-ERP', 'ERP Corporativo', 'Sistema ERP corporativo', '', '', '', 'ACTIVO']);
+      rows.push(['MODULO', 'MOD-FI', 'Finanzas', 'Módulo financiero', 'APP-ERP', '', '', 'ACTIVO']);
+      rows.push(['MODULO', 'MOD-MM', 'Materiales', 'Módulo de gestión de materiales', 'APP-ERP', '', '', 'ACTIVO']);
+      rows.push(['PROGRAMA', 'PRG-FI-001', 'Documentos contables', 'Consulta de documentos', 'APP-ERP', 'MOD-FI', 'Transacción', 'ACTIVO']);
+      rows.push(['PROGRAMA', 'PRG-FI-002', 'Reporte de balances', 'Reportes financieros', 'APP-ERP', 'MOD-FI', 'Reporte', 'ACTIVO']);
+      rows.push(['PROGRAMA', 'PRG-MM-001', 'Stock de materiales', 'Consulta de stock', 'APP-ERP', 'MOD-MM', 'Consulta', 'ACTIVO']);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'plantilla-aplicaciones');
+    XLSX.writeFile(wb, 'plantilla-aplicaciones-modulos-programas.xlsx');
+  }
+
+  onBulkFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.bulkFile = file;
+    this.bulkFileName.set(file ? file.name : '');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+  }
+
+  private parseBulkCell(cell: string | number | undefined): string {
+    if (cell === undefined || cell === null) return '';
+    return String(cell).trim();
+  }
+
+  async processBulkFile(): Promise<void> {
+    if (!this.bulkFile) return;
+    this.bulkLoading.set(true);
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+
+    try {
+      const data = await this.bulkFile.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+      if (rawRows.length < 2) {
+        this.bulkErrors.set([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      const headerRow = rawRows[0].map((h: any) => String(h).trim().toUpperCase());
+      const expected = ['TIPO', 'CODIGO', 'NOMBRE', 'DESCRIPCION', 'APP_CODIGO', 'MOD_CODIGO', 'PRG_TIPO', 'ESTADO'];
+      const missing = expected.filter(h => !headerRow.includes(h));
+      if (missing.length > 0) {
+        this.bulkErrors.set([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      const idx = (h: string) => headerRow.indexOf(h);
+      const rows: { row: number; tipo: string; codigo: string; nombre: string; descripcion: string; appCodigo: string; modCodigo: string; prgTipo: string; estado: string }[] = [];
+      for (let i = 1; i < rawRows.length; i++) {
+        const raw = rawRows[i];
+        if (raw.every((v: any) => !v || String(v).trim() === '')) continue;
+        rows.push({
+          row: i + 1,
+          tipo: this.parseBulkCell(raw[idx('TIPO')]),
+          codigo: this.parseBulkCell(raw[idx('CODIGO')]),
+          nombre: this.parseBulkCell(raw[idx('NOMBRE')]),
+          descripcion: this.parseBulkCell(raw[idx('DESCRIPCION')]),
+          appCodigo: this.parseBulkCell(raw[idx('APP_CODIGO')]),
+          modCodigo: this.parseBulkCell(raw[idx('MOD_CODIGO')]),
+          prgTipo: this.parseBulkCell(raw[idx('PRG_TIPO')]),
+          estado: this.parseBulkCell(raw[idx('ESTADO')]),
+        });
+      }
+
+      if (!rows.length) {
+        this.bulkErrors.set([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      this.api.bulkCreateAplicaciones(rows).subscribe({
+        next: (res) => {
+          if (res.ok) {
+            this.bulkSuccess.set(`Se procesaron ${res.processed} registros: ${res.created.apps} apps, ${res.created.mods} módulos, ${res.created.prgs} programas creados; ${res.updated.apps} apps, ${res.updated.mods} módulos, ${res.updated.prgs} programas actualizados.`);
+            this.bulkFile = null;
+            this.bulkFileName.set('');
+            this.events.emitDataChanged();
+          } else {
+            this.bulkErrors.set(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
+          }
+          this.bulkLoading.set(false);
+        },
+        error: (e) => {
+          console.error('bulkCreateAplicaciones error', e);
+          let message = 'Error al procesar el archivo.';
+          if (e instanceof HttpErrorResponse) {
+            if (e.status === 0) {
+              message = 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.';
+            } else if (e.status >= 500) {
+              message = `Error interno del servidor (${e.status}). Revise la consola del backend.`;
+            } else if (e.error?.error) {
+              message = e.error.error;
+            } else if (Array.isArray(e.error?.errors)) {
+              this.bulkErrors.set(e.error.errors);
+              this.bulkLoading.set(false);
+              return;
+            } else if (e.message) {
+              message = e.message;
+            }
+          } else if (e?.error?.errors) {
+            this.bulkErrors.set(e.error.errors);
+            this.bulkLoading.set(false);
+            return;
+          } else if (e?.error?.error) {
+            message = e.error.error;
+          }
+          this.bulkErrors.set([{ row: 0, message }]);
+          this.bulkLoading.set(false);
+        },
+      });
+    } catch (e: any) {
+      this.bulkErrors.set([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      this.bulkLoading.set(false);
     }
   }
 }

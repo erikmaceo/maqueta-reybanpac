@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
-import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, Control, NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad, DispositivoMovil } from './types.js';
+import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, TipoPrograma, Control, NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad, DispositivoMovil } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -903,6 +903,139 @@ app.delete('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res)
   res.json({ ok: true });
 });
 
+const TIPOS_PROGRAMA_VALIDOS: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transacción', 'Proceso', 'Consulta', 'Reporte', 'Objeto'];
+
+interface BulkSeguridadRow {
+  row: number;
+  tipo: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  appCodigo: string;
+  modCodigo: string;
+  prgTipo: string;
+  estado: string;
+}
+
+app.post('/api/seg-aplicaciones/bulk', requireAuth, requireGlobalAdmin, (req, res) => {
+  const rows: BulkSeguridadRow[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (!rows.length) return res.status(400).json({ ok: false, error: 'No se recibieron filas para procesar.' });
+
+  const errors: { row: number; message: string }[] = [];
+  let processed = 0;
+  let createdApps = 0;
+  let createdMods = 0;
+  let createdPrgs = 0;
+  let updatedApps = 0;
+  let updatedMods = 0;
+  let updatedPrgs = 0;
+
+  const tipoOrden = new Map<string, number>([['APLICACION', 1], ['MODULO', 2], ['PROGRAMA', 3]]);
+  const sortedRows = [...rows].sort((a, b) => {
+    const oa = tipoOrden.get(a.tipo?.trim().toUpperCase()) ?? 99;
+    const ob = tipoOrden.get(b.tipo?.trim().toUpperCase()) ?? 99;
+    return oa - ob;
+  });
+
+  for (const r of sortedRows) {
+    const tipo = r.tipo?.trim().toUpperCase();
+    const codigo = r.codigo?.trim();
+    const nombre = r.nombre?.trim();
+    const descripcion = r.descripcion?.trim() || '';
+    const appCodigo = r.appCodigo?.trim();
+    const modCodigo = r.modCodigo?.trim();
+    const prgTipoRaw = r.prgTipo?.trim();
+    const estadoRaw = r.estado?.trim();
+
+    if (!tipo) { errors.push({ row: r.row, message: 'El campo TIPO es obligatorio.' }); continue; }
+    if (!codigo) { errors.push({ row: r.row, message: 'El campo CODIGO es obligatorio.' }); continue; }
+    if (!nombre) { errors.push({ row: r.row, message: 'El campo NOMBRE es obligatorio.' }); continue; }
+
+    const estado = estadoRaw ? estadoRaw.toUpperCase() : 'ACTIVO';
+    if (estado !== 'ACTIVO' && estado !== 'INACTIVO') {
+      errors.push({ row: r.row, message: `El estado "${estadoRaw}" no es válido. Use ACTIVO o INACTIVO.` });
+      continue;
+    }
+
+    if (tipo === 'APLICACION') {
+      const existing = db.aplicaciones.find(a => a.codigo.toLowerCase() === codigo.toLowerCase());
+      if (existing) {
+        existing.nombre = nombre;
+        existing.descripcion = descripcion;
+        existing.estado = estado as Aplicacion['estado'];
+        updatedApps++;
+        logAudit(actorName(req), 'UPDATE_APLICACION', 'aplicacion', existing.id, `Aplicación "${nombre}" actualizada por carga masiva.`);
+      } else {
+        const app: Aplicacion = { id: newId('seg_app'), codigo, nombre, descripcion, estado: estado as Aplicacion['estado'], createdAt: nowIso() };
+        db.aplicaciones.push(app);
+        createdApps++;
+        logAudit(actorName(req), 'CREATE_APLICACION', 'aplicacion', app.id, `Aplicación "${nombre}" creada por carga masiva.`);
+      }
+    } else if (tipo === 'MODULO') {
+      if (!appCodigo) { errors.push({ row: r.row, message: 'El campo APP_CODIGO es obligatorio para un módulo.' }); continue; }
+      const app = db.aplicaciones.find(a => a.codigo.toLowerCase() === appCodigo.toLowerCase());
+      if (!app) { errors.push({ row: r.row, message: `La aplicación "${appCodigo}" no existe.` }); continue; }
+      const existing = db.modulos.find(m => m.codigo.toLowerCase() === codigo.toLowerCase());
+      if (existing) {
+        if (existing.appCodigo.toLowerCase() !== appCodigo.toLowerCase()) {
+          errors.push({ row: r.row, message: `El módulo "${codigo}" ya existe en la aplicación "${existing.appCodigo}". No se puede cambiar de aplicación por carga masiva.` });
+          continue;
+        }
+        existing.nombre = nombre;
+        existing.descripcion = descripcion;
+        existing.estado = estado as Modulo['estado'];
+        updatedMods++;
+        logAudit(actorName(req), 'UPDATE_MODULO', 'modulo', existing.id, `Módulo "${nombre}" actualizado por carga masiva.`);
+      } else {
+        const mod: Modulo = { id: newId('seg_mod'), codigo, nombre, descripcion, appCodigo: app.codigo, estado: estado as Modulo['estado'], orden: siguienteOrdenModulo(app.codigo), createdAt: nowIso() };
+        db.modulos.push(mod);
+        createdMods++;
+        logAudit(actorName(req), 'CREATE_MODULO', 'modulo', mod.id, `Módulo "${nombre}" creado por carga masiva.`);
+      }
+    } else if (tipo === 'PROGRAMA') {
+      if (!modCodigo) { errors.push({ row: r.row, message: 'El campo MOD_CODIGO es obligatorio para un programa.' }); continue; }
+      const mod = db.modulos.find(m => m.codigo.toLowerCase() === modCodigo.toLowerCase());
+      if (!mod) { errors.push({ row: r.row, message: `El módulo "${modCodigo}" no existe.` }); continue; }
+      if (appCodigo && mod.appCodigo.toLowerCase() !== appCodigo.toLowerCase()) {
+        errors.push({ row: r.row, message: `El módulo "${modCodigo}" no pertenece a la aplicación "${appCodigo}".` });
+        continue;
+      }
+      const tipoPrograma = prgTipoRaw || 'Transacción';
+      if (!TIPOS_PROGRAMA_VALIDOS.includes(tipoPrograma as TipoPrograma)) {
+        errors.push({ row: r.row, message: `El tipo de programa "${prgTipoRaw}" no es válido. Valores: ${TIPOS_PROGRAMA_VALIDOS.join(', ')}.` });
+        continue;
+      }
+      const existing = db.programas.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
+      if (existing) {
+        if (existing.modCodigo.toLowerCase() !== modCodigo.toLowerCase()) {
+          errors.push({ row: r.row, message: `El programa "${codigo}" ya existe en el módulo "${existing.modCodigo}". No se puede cambiar de módulo por carga masiva.` });
+          continue;
+        }
+        existing.nombre = nombre;
+        existing.descripcion = descripcion;
+        existing.tipo = tipoPrograma as TipoPrograma;
+        existing.estado = estado as Programa['estado'];
+        updatedPrgs++;
+        logAudit(actorName(req), 'UPDATE_PROGRAMA', 'programa', existing.id, `Programa "${nombre}" actualizado por carga masiva.`);
+      } else {
+        const prg: Programa = { id: newId('seg_prg'), codigo, nombre, descripcion, modCodigo: mod.codigo, tipo: tipoPrograma as TipoPrograma, estado: estado as Programa['estado'], orden: siguienteOrdenPrograma(mod.codigo), createdAt: nowIso() };
+        db.programas.push(prg);
+        createdPrgs++;
+        logAudit(actorName(req), 'CREATE_PROGRAMA', 'programa', prg.id, `Programa "${nombre}" creado por carga masiva.`);
+      }
+    } else {
+      errors.push({ row: r.row, message: `El tipo "${r.tipo}" no es válido. Use APLICACION, MODULO o PROGRAMA.` });
+      continue;
+    }
+    processed++;
+  }
+
+  if (errors.length) {
+    return res.status(400).json({ ok: false, processed, created: { apps: createdApps, mods: createdMods, prgs: createdPrgs }, updated: { apps: updatedApps, mods: updatedMods, prgs: updatedPrgs }, errors });
+  }
+  res.json({ ok: true, processed, created: { apps: createdApps, mods: createdMods, prgs: createdPrgs }, updated: { apps: updatedApps, mods: updatedMods, prgs: updatedPrgs }, errors: [] });
+});
+
 // --- Perfiles ---
 app.get('/api/seg-perfiles', requireAuth, (_req, res) => res.json(db.perfiles));
 
@@ -1374,6 +1507,115 @@ app.post('/api/nodos-segregacion', requireAuth, requireGlobalAdmin, (req, res) =
   reemplazarAtributosNodo(nodo.id, atributos);
   logAudit(actorName(req), 'CREATE_NODO_SEGREGACION', 'nodo-segregacion', nodo.id, `Nodo "${nombre}" creado.`);
   res.status(201).json(nodo);
+});
+
+interface BulkNodoRow {
+  row: number;
+  nivel: string;
+  codigo: string;
+  nombre: string;
+  padre: string;
+  estado: string;
+}
+
+app.post('/api/nodos-segregacion/bulk', requireAuth, requireGlobalAdmin, (req, res) => {
+  const rows: BulkNodoRow[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (!rows.length) return res.status(400).json({ ok: false, error: 'No se recibieron filas para procesar.' });
+
+  const errors: { row: number; message: string }[] = [];
+  let processed = 0;
+  const createdIds: string[] = [];
+  const updatedIds: string[] = [];
+
+  // Mapa de códigos procesados en este lote a IDs de nodo (existentes o recién creados).
+  const codeToId = new Map<string, string>();
+  for (const n of db.nodosSegregacion) codeToId.set(n.codigo.toLowerCase(), n.id);
+
+  // Ordenar por orden del nivel para que los padres se procesen antes que los hijos.
+  const nivelOrden = new Map<string, number>();
+  for (const n of db.nivelesSegregacion) nivelOrden.set(n.id, n.orden);
+  const sortedRows = [...rows].sort((a, b) => {
+    const nivelA = db.nivelesSegregacion.find(n => n.nombre.toLowerCase() === a.nivel.toLowerCase().trim());
+    const nivelB = db.nivelesSegregacion.find(n => n.nombre.toLowerCase() === b.nivel.toLowerCase().trim());
+    const ordenA = nivelA ? nivelOrden.get(nivelA.id) ?? 0 : 0;
+    const ordenB = nivelB ? nivelOrden.get(nivelB.id) ?? 0 : 0;
+    return ordenA - ordenB;
+  });
+
+  for (const r of sortedRows) {
+    const nivelNombre = r.nivel?.trim();
+    const codigo = r.codigo?.trim();
+    const nombre = r.nombre?.trim();
+    const padreCodigo = r.padre?.trim();
+    const estadoRaw = r.estado?.trim();
+
+    if (!nivelNombre) { errors.push({ row: r.row, message: 'El campo NIVEL es obligatorio.' }); continue; }
+    if (!codigo) { errors.push({ row: r.row, message: 'El campo CODIGO es obligatorio.' }); continue; }
+    if (!nombre) { errors.push({ row: r.row, message: 'El campo NOMBRE es obligatorio.' }); continue; }
+
+    const nivel = db.nivelesSegregacion.find(n => n.nombre.toLowerCase() === nivelNombre.toLowerCase());
+    if (!nivel) { errors.push({ row: r.row, message: `El nivel "${nivelNombre}" no existe.` }); continue; }
+    if (nivel.estado !== 'ACTIVO') { errors.push({ row: r.row, message: `El nivel "${nivelNombre}" no está activo.` }); continue; }
+
+    const estado = estadoRaw ? estadoRaw.toUpperCase() : 'ACTIVO';
+    if (estado !== 'ACTIVO' && estado !== 'INACTIVO') {
+      errors.push({ row: r.row, message: `El estado "${estadoRaw}" no es válido. Use ACTIVO o INACTIVO.` });
+      continue;
+    }
+
+    // Resolver padre
+    let padreId: string | null = null;
+    if (padreCodigo) {
+      const padreIdByCode = codeToId.get(padreCodigo.toLowerCase());
+      const padre = padreIdByCode ? db.nodosSegregacion.find(n => n.id === padreIdByCode) : null;
+      if (!padre) { errors.push({ row: r.row, message: `El nodo padre "${padreCodigo}" no existe.` }); continue; }
+      const nivelPadreReq = nivelPadre(nivel.id);
+      if (!nivelPadreReq) { errors.push({ row: r.row, message: `El nivel "${nivel.nombre}" no admite padre.` }); continue; }
+      if (padre.nivelId !== nivelPadreReq.id) {
+        errors.push({ row: r.row, message: `El padre "${padreCodigo}" debe pertenecer al nivel "${nivelPadreReq.nombre}".` });
+        continue;
+      }
+      padreId = padre.id;
+    } else if (nivel.orden > 1) {
+      const nivelPadreReq = nivelPadre(nivel.id);
+      errors.push({ row: r.row, message: `El nivel "${nivel.nombre}" requiere un padre del nivel "${nivelPadreReq?.nombre || 'anterior'}".` });
+      continue;
+    }
+
+    const existing = db.nodosSegregacion.find(n => n.codigo.toLowerCase() === codigo.toLowerCase());
+    if (existing) {
+      if (existing.nivelId !== nivel.id) {
+        const nivelActual = db.nivelesSegregacion.find(n => n.id === existing.nivelId);
+        errors.push({ row: r.row, message: `El nodo "${codigo}" ya existe en el nivel "${nivelActual?.nombre || existing.nivelId}". No se puede cambiar de nivel por carga masiva.` });
+        continue;
+      }
+      // Actualizar solo nombre y estado para evitar conflictos de jerarquía.
+      existing.nombre = nombre;
+      existing.estado = estado as NodoSegregacion['estado'];
+      updatedIds.push(existing.id);
+      logAudit(actorName(req), 'UPDATE_NODO_SEGREGACION', 'nodo-segregacion', existing.id, `Nodo "${nombre}" actualizado por carga masiva.`);
+    } else {
+      const nuevo: NodoSegregacion = {
+        id: newId('nod_seg'),
+        codigo,
+        nombre,
+        nivelId: nivel.id,
+        padreId,
+        estado: estado as NodoSegregacion['estado'],
+        createdAt: nowIso(),
+      };
+      db.nodosSegregacion.push(nuevo);
+      createdIds.push(nuevo.id);
+      codeToId.set(codigo.toLowerCase(), nuevo.id);
+      logAudit(actorName(req), 'CREATE_NODO_SEGREGACION', 'nodo-segregacion', nuevo.id, `Nodo "${nombre}" creado por carga masiva.`);
+    }
+    processed++;
+  }
+
+  if (errors.length) {
+    return res.status(400).json({ ok: false, processed, created: createdIds.length, updated: updatedIds.length, errors });
+  }
+  res.json({ ok: true, processed, created: createdIds.length, updated: updatedIds.length, errors: [] });
 });
 
 app.put('/api/nodos-segregacion/:id', requireAuth, requireGlobalAdmin, (req, res) => {

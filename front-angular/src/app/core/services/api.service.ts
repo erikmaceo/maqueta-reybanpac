@@ -201,6 +201,9 @@ export class ApiService {
   deleteAplicacion(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-aplicaciones/${id}`);
   }
+  bulkCreateAplicaciones(rows: { row: number; tipo: string; codigo: string; nombre: string; descripcion: string; appCodigo: string; modCodigo: string; prgTipo: string; estado: string }[]): Observable<{ ok: boolean; processed: number; created: { apps: number; mods: number; prgs: number }; updated: { apps: number; mods: number; prgs: number }; errors: { row: number; message: string }[] }> {
+    return this.request<{ ok: boolean; processed: number; created: { apps: number; mods: number; prgs: number }; updated: { apps: number; mods: number; prgs: number }; errors: { row: number; message: string }[] }>('POST', '/seg-aplicaciones/bulk', { rows });
+  }
 
   // --- Seguridades: Modulos ---
   listModulos(): Observable<Modulo[]> {
@@ -290,6 +293,9 @@ export class ApiService {
   }
   deleteNodoSegregacion(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/nodos-segregacion/${id}`);
+  }
+  bulkCreateNodos(rows: { row: number; nivel: string; codigo: string; nombre: string; padre: string; estado: string }[]): Observable<{ ok: boolean; processed: number; created: number; updated: number; errors: { row: number; message: string }[] }> {
+    return this.request<{ ok: boolean; processed: number; created: number; updated: number; errors: { row: number; message: string }[] }>('POST', '/nodos-segregacion/bulk', { rows });
   }
 
   // --- Configuración: Valores de Atributos de Nodos ---

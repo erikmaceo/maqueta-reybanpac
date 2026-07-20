@@ -1,6 +1,8 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import * as XLSX from 'xlsx';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -11,7 +13,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
-  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
+  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconUploadComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
 import type { NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad } from '../../shared/models/types';
 
@@ -32,7 +34,7 @@ interface NodoView extends NodoSegregacion {
     CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
-    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
+    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconUploadComponent, IconDownloadComponent,
   ],
   template: `
     <div class="page-head">
@@ -122,9 +124,14 @@ interface NodoView extends NodoSegregacion {
                 <input type="text" placeholder="Buscar nodo en la jerarquía..."
                   [ngModel]="searchNodo()" (ngModelChange)="searchNodo.set($event)" />
               </div>
-              <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
-                <app-icon-plus [width]="14" [height]="14" /> Nuevo nodo
-              </button>
+              <div class="row gap-2">
+                <button class="btn btn-primary" (click)="openBulkDialog()" [disabled]="niveles().length === 0">
+                  <app-icon-upload [width]="14" [height]="14" /> Carga masiva
+                </button>
+                <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
+                  <app-icon-plus [width]="14" [height]="14" /> Nuevo nodo
+                </button>
+              </div>
             </div>
             @if (niveles().length === 0) {
               <div class="card muted center" style="padding: 24px;">
@@ -415,6 +422,58 @@ interface NodoView extends NodoSegregacion {
       </ng-template>
     </p-dialog>
 
+    <!-- ============ DIÁLOGO CARGA MASIVA NODOS ============ -->
+    <p-dialog
+      [(visible)]="showBulkDlg"
+      header="Carga masiva de nodos"
+      [modal]="true" [style]="{ width: '560px' }" [closable]="true"
+      (onHide)="closeBulkDialog()"
+    >
+      <p class="mb-3 muted small">
+        El archivo debe tener las columnas: <b>NIVEL</b>, <b>CODIGO</b>, <b>NOMBRE</b>, <b>PADRE</b> y <b>ESTADO</b>.
+        Los niveles deben coincidir con los configurados y el padre debe ser el código del nivel inmediatamente anterior.
+      </p>
+
+      <div class="row gap-2 mb-3">
+        <button class="btn btn-ghost" (click)="downloadBulkTemplate()">
+          <app-icon-download [width]="14" [height]="14" /> Descargar plantilla
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Archivo Excel</label>
+        <input type="file" accept=".xlsx,.xls" (change)="onBulkFileSelected($event)" />
+        @if (bulkFileName()) {
+          <div class="small mt-1">{{ bulkFileName() }}</div>
+        }
+      </div>
+
+      @if (bulkSuccess()) {
+        <div class="alert alert-success mb-3">{{ bulkSuccess() }}</div>
+      }
+
+      @if (bulkErrors().length > 0) {
+        <div class="alert alert-error mb-3">
+          <ul class="mb-0">
+            @for (e of bulkErrors(); track e.row + e.message) {
+              <li>Fila {{ e.row }}: {{ e.message }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closeBulkDialog()">Cerrar</button>
+        <button class="btn btn-primary" (click)="processBulkFile()" [disabled]="!bulkFile || bulkLoading()">
+          @if (bulkLoading()) {
+            <span>Procesando...</span>
+          } @else {
+            <span>Procesar</span>
+          }
+        </button>
+      </ng-template>
+    </p-dialog>
+
     <!-- ============ DIÁLOGO ATRIBUTO ============ -->
     <p-dialog
       [(visible)]="showAtributoDlg"
@@ -557,6 +616,13 @@ export class SegregationLevelsComponent implements OnInit {
   showAtributoDlg = false;
   editAtributoId: string | null = null;
   atributoForm: any = {};
+
+  showBulkDlg = false;
+  bulkFile: File | null = null;
+  bulkFileName = signal('');
+  bulkErrors = signal<{ row: number; message: string }[]>([]);
+  bulkSuccess = signal('');
+  bulkLoading = signal(false);
 
   nivelesOrdenados = computed(() => [...this.niveles()].sort((a, b) => a.orden - b.orden));
 
@@ -1044,6 +1110,175 @@ export class SegregationLevelsComponent implements OnInit {
         next: () => { this.toast.success('Atributo eliminado'); this.events.emitDataChanged(); },
         error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
       });
+    }
+  }
+
+  openBulkDialog(): void {
+    this.showBulkDlg = true;
+    this.bulkFile = null;
+    this.bulkFileName.set('');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+    this.bulkLoading.set(false);
+  }
+
+  closeBulkDialog(): void {
+    this.showBulkDlg = false;
+    this.bulkFile = null;
+    this.bulkFileName.set('');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+    this.bulkLoading.set(false);
+  }
+
+  downloadBulkTemplate(): void {
+    const niveles = this.nivelesOrdenados();
+    const headers = ['NIVEL', 'CODIGO', 'NOMBRE', 'PADRE', 'ESTADO'];
+    const rows: any[] = [headers];
+
+    const nodosActivos = this.nodos().filter(n => n.estado === 'ACTIVO');
+
+    if (nodosActivos.length > 0) {
+      // Mostrar todos los nodos activos ordenados por nivel (padres antes que hijos) y luego por código.
+      const nodosOrdenados = [...nodosActivos].sort((a, b) => {
+        const nivelA = this.nivelMap().get(a.nivelId)?.orden ?? 0;
+        const nivelB = this.nivelMap().get(b.nivelId)?.orden ?? 0;
+        if (nivelA !== nivelB) return nivelA - nivelB;
+        return a.codigo.localeCompare(b.codigo);
+      });
+      for (const n of nodosOrdenados) {
+        const nivel = this.nivelMap().get(n.nivelId);
+        const padre = n.padreId ? this.nodoMap().get(n.padreId) : null;
+        rows.push([nivel?.nombre ?? n.nivelId, n.codigo, n.nombre, padre?.codigo ?? '', n.estado]);
+      }
+    } else {
+      // Si no hay nodos, generar un pequeño árbol de ejemplo con múltiples ramas.
+      for (const nivel of niveles) {
+        const nivelPadre = this.nivelesOrdenados().filter(n => n.orden < nivel.orden).sort((a, b) => b.orden - a.orden)[0];
+        const padreEjemplo = nivelPadre ? this.nodos().find(n => n.nivelId === nivelPadre.id && n.estado === 'ACTIVO') : null;
+        const padreCodigo = padreEjemplo?.codigo ?? '';
+        if (nivel.orden === 1) {
+          rows.push([nivel.nombre, `${nivel.codigo}-001`, `Nueva ${nivel.nombre}`, '', 'ACTIVO']);
+        } else {
+          // Ejemplo con dos hijos por nivel para mostrar la estructura de árbol.
+          rows.push([nivel.nombre, `${nivel.codigo}-001`, `${nivel.nombre} 1`, padreCodigo || `${niveles[0].codigo}-001`, 'ACTIVO']);
+          rows.push([nivel.nombre, `${nivel.codigo}-002`, `${nivel.nombre} 2`, padreCodigo || `${niveles[0].codigo}-001`, 'ACTIVO']);
+        }
+      }
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'plantilla-nodos');
+    XLSX.writeFile(wb, 'plantilla-nodos-segregacion.xlsx');
+  }
+
+  onBulkFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.bulkFile = file;
+    this.bulkFileName.set(file ? file.name : '');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+  }
+
+  private parseBulkCell(cell: string | number | undefined): string {
+    if (cell === undefined || cell === null) return '';
+    return String(cell).trim();
+  }
+
+  async processBulkFile(): Promise<void> {
+    if (!this.bulkFile) return;
+    this.bulkLoading.set(true);
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+
+    try {
+      const data = await this.bulkFile.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+      if (rawRows.length < 2) {
+        this.bulkErrors.set([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      const headerRow = rawRows[0].map((h: any) => String(h).trim().toUpperCase());
+      const expected = ['NIVEL', 'CODIGO', 'NOMBRE', 'PADRE', 'ESTADO'];
+      const missing = expected.filter(h => !headerRow.includes(h));
+      if (missing.length > 0) {
+        this.bulkErrors.set([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      const idx = (h: string) => headerRow.indexOf(h);
+      const rows: { row: number; nivel: string; codigo: string; nombre: string; padre: string; estado: string }[] = [];
+      for (let i = 1; i < rawRows.length; i++) {
+        const raw = rawRows[i];
+        if (raw.every((v: any) => !v || String(v).trim() === '')) continue;
+        rows.push({
+          row: i + 1,
+          nivel: this.parseBulkCell(raw[idx('NIVEL')]),
+          codigo: this.parseBulkCell(raw[idx('CODIGO')]),
+          nombre: this.parseBulkCell(raw[idx('NOMBRE')]),
+          padre: this.parseBulkCell(raw[idx('PADRE')]),
+          estado: this.parseBulkCell(raw[idx('ESTADO')]),
+        });
+      }
+
+      if (!rows.length) {
+        this.bulkErrors.set([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      this.api.bulkCreateNodos(rows).subscribe({
+        next: (res) => {
+          if (res.ok) {
+            this.bulkSuccess.set(`Se procesaron ${res.processed} nodos: ${res.created} creados, ${res.updated} actualizados.`);
+            this.bulkFile = null;
+            this.bulkFileName.set('');
+            this.events.emitDataChanged();
+            this.loadNodos();
+          } else {
+            this.bulkErrors.set(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
+          }
+          this.bulkLoading.set(false);
+        },
+        error: (e) => {
+          console.error('bulkCreateNodos error', e);
+          let message = 'Error al procesar el archivo.';
+          if (e instanceof HttpErrorResponse) {
+            if (e.status === 0) {
+              message = 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.';
+            } else if (e.status >= 500) {
+              message = `Error interno del servidor (${e.status}). Revise la consola del backend.`;
+            } else if (e.error?.error) {
+              message = e.error.error;
+            } else if (Array.isArray(e.error?.errors)) {
+              this.bulkErrors.set(e.error.errors);
+              this.bulkLoading.set(false);
+              return;
+            } else if (e.message) {
+              message = e.message;
+            }
+          } else if (e?.error?.errors) {
+            this.bulkErrors.set(e.error.errors);
+            this.bulkLoading.set(false);
+            return;
+          } else if (e?.error?.error) {
+            message = e.error.error;
+          }
+          this.bulkErrors.set([{ row: 0, message }]);
+          this.bulkLoading.set(false);
+        },
+      });
+    } catch (e: any) {
+      this.bulkErrors.set([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      this.bulkLoading.set(false);
     }
   }
 }

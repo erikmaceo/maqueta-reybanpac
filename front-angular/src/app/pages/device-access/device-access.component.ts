@@ -151,8 +151,8 @@ interface AccesoView extends AccesoDispositivoMovil {
     >
       <div class="filter-row">
         <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="userFilterCodigo" placeholder="Código de usuario" />
+          <label>Usuario</label>
+          <input type="text" class="select" [(ngModel)]="userFilterCodigo" placeholder="Usuario" />
         </div>
         <div class="field">
           <label>Nombre</label>
@@ -180,7 +180,7 @@ interface AccesoView extends AccesoDispositivoMovil {
         <table class="data">
           <thead>
             <tr>
-              <th>Código</th>
+              <th>Usuario</th>
               <th>Nombre</th>
               <th>Apellido</th>
               <th>Correo</th>

@@ -176,6 +176,9 @@ export class ApiService {
   updateUserAccess(id: string, body: { nodoIds: string[]; perfilCodigos: string[] }): Observable<User> {
     return this.request<User>('PUT', `/user-access/${id}`, body);
   }
+  bulkUpdateUserAccess(rows: { row: number; username: string; perfilCodigos: string[]; nodoCodigosPorNivelId: Record<string, string[]> }[]): Observable<{ ok: boolean; processed: number; errors: { row: number; message: string }[] }> {
+    return this.request<{ ok: boolean; processed: number; errors: { row: number; message: string }[] }>('POST', '/user-access/bulk', { rows });
+  }
 
   listAudit(): Observable<AuditEntry[]> {
     return this.request<AuditEntry[]>('GET', '/audit');

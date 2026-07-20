@@ -408,6 +408,113 @@ app.put('/api/user-access/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   res.json(publicUser(user));
 });
 
+interface BulkAccessRow {
+  row: number;
+  username: string;
+  perfilCodigos: string[];
+  nodoCodigosPorNivelId: Record<string, string[]>;
+}
+
+app.post('/api/user-access/bulk', requireAuth, requireGlobalAdmin, (req, res) => {
+  const rows: BulkAccessRow[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (!rows.length) return res.status(400).json({ ok: false, error: 'No se recibieron filas para procesar.' });
+
+  const errors: { row: number; message: string }[] = [];
+  const updates: { user: typeof db.users[number]; nodoIds: string[]; perfilCodigos: string[] }[] = [];
+
+    for (const r of rows) {
+      const user = db.users.find(u => u.username.toLowerCase() === r.username.toLowerCase().trim());
+      if (!r.username?.trim()) {
+        errors.push({ row: r.row, message: 'El campo USUARIO es obligatorio.' });
+        continue;
+      }
+      if (!user) {
+        errors.push({ row: r.row, message: `El usuario "${r.username}" no existe.` });
+        continue;
+      }
+
+      const perfilCodigos: string[] = [];
+      for (const pc of r.perfilCodigos || []) {
+        const cod = pc.trim();
+        if (!cod) continue;
+        const perfil = db.perfiles.find(p => p.codigo.toLowerCase() === cod.toLowerCase());
+        if (!perfil) {
+          errors.push({ row: r.row, message: `El perfil "${cod}" no existe.` });
+          break;
+        }
+        if (perfil.estado !== 'ACTIVO') {
+          errors.push({ row: r.row, message: `El perfil "${cod}" no está activo.` });
+          break;
+        }
+        perfilCodigos.push(perfil.codigo);
+      }
+      if (errors.some(e => e.row === r.row)) continue;
+
+      const nodoIds: string[] = [];
+      const selectedNodoIds = new Set<string>();
+      const nivelIds = Object.keys(r.nodoCodigosPorNivelId || {});
+
+      for (const nivelId of nivelIds) {
+        const nivel = db.nivelesSegregacion.find(n => n.id === nivelId);
+        if (!nivel) {
+          errors.push({ row: r.row, message: `El nivel de segregación no existe.` });
+          break;
+        }
+        const codigos = r.nodoCodigosPorNivelId[nivelId] || [];
+        for (const nc of codigos) {
+          const cod = nc.trim();
+          if (!cod) continue;
+          const nodo = db.nodosSegregacion.find(n => n.codigo.toLowerCase() === cod.toLowerCase() && n.nivelId === nivelId);
+          if (!nodo) {
+            errors.push({ row: r.row, message: `El nodo "${cod}" no existe en el nivel ${nivel.nombre}.` });
+            break;
+          }
+          if (nodo.estado !== 'ACTIVO') {
+            errors.push({ row: r.row, message: `El nodo "${cod}" no está activo.` });
+            break;
+          }
+          nodoIds.push(nodo.id);
+          selectedNodoIds.add(nodo.id);
+        }
+        if (errors.some(e => e.row === r.row)) break;
+      }
+      if (errors.some(e => e.row === r.row)) continue;
+
+      // Validar jerarquía padre-hijo: todo nodo seleccionado debe tener su cadena de ancestros completa
+      for (const nodoId of nodoIds) {
+        const nodo = db.nodosSegregacion.find(n => n.id === nodoId);
+        if (!nodo) continue;
+        let padreId = nodo.padreId;
+        while (padreId) {
+          if (!selectedNodoIds.has(padreId)) {
+            const padre = db.nodosSegregacion.find(n => n.id === padreId);
+            errors.push({ row: r.row, message: `Falta seleccionar el nodo padre "${padre?.codigo || padreId}" para "${nodo.codigo}".` });
+            break;
+          }
+          const padre = db.nodosSegregacion.find(n => n.id === padreId);
+          padreId = padre?.padreId || null;
+        }
+        if (errors.some(e => e.row === r.row)) break;
+      }
+      if (errors.some(e => e.row === r.row)) continue;
+
+      updates.push({ user, nodoIds: [...new Set(nodoIds)], perfilCodigos: [...new Set(perfilCodigos)] });
+    }
+
+  if (errors.length) {
+    return res.status(400).json({ ok: false, processed: 0, errors });
+  }
+
+  for (const u of updates) {
+    u.user.nodoIds = u.nodoIds;
+    u.user.perfilCodigos = u.perfilCodigos;
+    logAudit(actorName(req), 'UPDATE_USER_ACCESS', 'user', u.user.id,
+      `Acceso actualizado por carga masiva para "${u.user.username}": nodos=${u.nodoIds.length}, perfiles=${u.perfilCodigos.length}.`);
+  }
+
+  res.json({ ok: true, processed: updates.length, errors: [] });
+});
+
 // ===========================================================================
 // LDAP  (directorio de clientes finales + importación)
 // ===========================================================================

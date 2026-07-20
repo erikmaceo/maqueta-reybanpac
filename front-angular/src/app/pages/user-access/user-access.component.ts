@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import * as XLSX from 'xlsx';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { DialogModule } from 'primeng/dialog';
@@ -12,7 +13,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
-  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
+  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent, IconUploadComponent,
 } from '../../shared/components/icons';
 import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shared/models/types';
 
@@ -23,7 +24,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
-    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
+    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent, IconUploadComponent,
   ],
   template: `
     <div class="page-head">
@@ -50,6 +51,9 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
           </button>
           <button class="btn btn-primary" (click)="openNewDialog()">
             <app-icon-plus [width]="14" [height]="14" /> Nuevo acceso
+          </button>
+          <button class="btn btn-primary" (click)="openBulkDialog()">
+            <app-icon-upload [width]="14" [height]="14" /> Carga masiva
           </button>
         </div>
       </div>
@@ -409,6 +413,51 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       </ng-template>
     </p-dialog>
 
+    <!-- ============ DIÁLOGO CARGA MASIVA ============ -->
+    <p-dialog
+      [(visible)]="showBulkDlg"
+      header="Carga masiva de accesos"
+      [modal]="true" [style]="{ width: '600px' }" [closable]="true"
+      (onHide)="closeBulkDialog()"
+    >
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <p class="small">Descargue la plantilla de ejemplo con la estructura actual de niveles de segregación. Complete una fila por usuario y suba el archivo Excel procesado.</p>
+          <button class="btn btn-ghost btn-sm" (click)="downloadBulkTemplate()">
+            <app-icon-download [width]="14" [height]="14" /> Descargar plantilla de ejemplo
+          </button>
+        </div>
+
+        <div class="field">
+          <label>Archivo Excel (.xlsx)</label>
+          <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="onBulkFileSelected($event)" />
+          @if (bulkFileName()) {
+            <small class="meta">Archivo seleccionado: {{ bulkFileName() }}</small>
+          }
+        </div>
+
+        @if (bulkErrors().length > 0) {
+          <div style="max-height:180px;overflow-y:auto;border:1px solid var(--red-600);border-radius:8px;padding:10px;background:#fef2f2;">
+            <div class="small" style="color:var(--red-600);font-weight:600;margin-bottom:6px;">Errores detectados:</div>
+            @for (e of bulkErrors(); track e.row + e.message) {
+              <div class="small" style="color:var(--red-600);">• Fila {{ e.row }}: {{ e.message }}</div>
+            }
+          </div>
+        }
+
+        @if (bulkSuccess()) {
+          <div class="small" style="color:var(--green-600);font-weight:600;">{{ bulkSuccess() }}</div>
+        }
+      </div>
+
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closeBulkDialog()" [disabled]="bulkLoading()">Cerrar</button>
+        <button class="btn btn-primary" (click)="processBulkFile()" [disabled]="!bulkFile || bulkLoading()">
+          @if (bulkLoading()) { Procesando... } @else { Procesar }
+        </button>
+      </ng-template>
+    </p-dialog>
+
     <p-confirmDialog></p-confirmDialog>
   `,
   styles: [`
@@ -465,6 +514,14 @@ export class UserAccessComponent implements OnInit {
   // --- Diálogo búsqueda de nodos de segregación (multi-selección por nivel) ---
   showNodoSearchDlg = false;
   nodoSearchNivelId = signal('');
+
+  // --- Diálogo carga masiva ---
+  showBulkDlg = false;
+  bulkFile: File | null = null;
+  bulkFileName = signal('');
+  bulkLoading = signal(false);
+  bulkErrors = signal<{ row: number; message: string }[]>([]);
+  bulkSuccess = signal('');
   nodoSearchNivelNombre = signal('');
   nodoSearchCodigo = '';
   nodoSearchNombre = '';
@@ -897,5 +954,176 @@ export class UserAccessComponent implements OnInit {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'accesos-usuario');
     XLSX.writeFile(wb, 'accesos-usuario.xlsx');
+  }
+
+  openBulkDialog(): void {
+    this.showBulkDlg = true;
+    this.bulkFile = null;
+    this.bulkFileName.set('');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+    this.bulkLoading.set(false);
+  }
+
+  closeBulkDialog(): void {
+    this.showBulkDlg = false;
+    this.bulkFile = null;
+    this.bulkFileName.set('');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+    this.bulkLoading.set(false);
+  }
+
+  downloadBulkTemplate(): void {
+    const nivelesActivos = [...this.niveles()]
+      .filter(n => n.estado === 'ACTIVO')
+      .sort((a, b) => a.orden - b.orden);
+    const nivelHeaders = nivelesActivos.map(n => n.nombre.toUpperCase());
+
+    const headers = ['USUARIO', 'PERFILES', ...nivelHeaders];
+
+    const ejemploUsername = this.users().find(u => u.status === 'ACTIVE')?.username ?? 'usuario1';
+    const ejemploPerfil = this.perfiles().find(p => p.estado === 'ACTIVO')?.codigo ?? 'PERF-FI-VIS';
+
+    const exampleRow: Record<string, string> = {
+      USUARIO: ejemploUsername,
+      PERFILES: ejemploPerfil,
+    };
+
+    for (const nivel of nivelesActivos) {
+      const header = nivel.nombre.toUpperCase();
+      const ejemploNodo = this.nodos().find(n => n.nivelId === nivel.id && n.estado === 'ACTIVO');
+      exampleRow[header] = ejemploNodo?.codigo ?? '';
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, Object.values(exampleRow)]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'plantilla-accesos');
+    XLSX.writeFile(wb, 'plantilla-accesos-usuario.xlsx');
+  }
+
+  onBulkFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.bulkFile = file;
+    this.bulkFileName.set(file ? file.name : '');
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+  }
+
+  private parseBulkCell(cell: string | number | undefined): string[] {
+    if (cell === undefined || cell === null) return [];
+    const str = String(cell).trim();
+    if (!str) return [];
+    return str.split(/[;,]/).map(s => s.trim()).filter(s => s);
+  }
+
+  async processBulkFile(): Promise<void> {
+    if (!this.bulkFile) return;
+    this.bulkLoading.set(true);
+    this.bulkErrors.set([]);
+    this.bulkSuccess.set('');
+
+    try {
+      const data = await this.bulkFile.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+      if (rawRows.length < 2) {
+        this.bulkErrors.set([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      const headerRow = rawRows[0].map((h: any) => String(h).trim().toUpperCase());
+      const expectedHeaders = ['USUARIO', 'PERFILES', ...this.niveles()
+        .filter(n => n.estado === 'ACTIVO')
+        .sort((a, b) => a.orden - b.orden)
+        .map(n => n.nombre.toUpperCase())];
+
+      const missing = expectedHeaders.filter(h => !headerRow.includes(h));
+      if (missing.length > 0) {
+        this.bulkErrors.set([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      const nivelByHeader = new Map<string, NivelSegregacion>();
+      for (const nivel of this.niveles()) {
+        if (nivel.estado === 'ACTIVO') {
+          nivelByHeader.set(nivel.nombre.toUpperCase(), nivel);
+        }
+      }
+
+      const rows: { row: number; username: string; perfilCodigos: string[]; nodoCodigosPorNivelId: Record<string, string[]> }[] = [];
+      for (let i = 1; i < rawRows.length; i++) {
+        const raw = rawRows[i];
+        if (raw.every((v: any) => !v || String(v).trim() === '')) continue;
+
+        const rowNum = i + 1;
+        const username = String(raw[headerRow.indexOf('USUARIO')] || '').trim();
+        const perfilCodigos = this.parseBulkCell(raw[headerRow.indexOf('PERFILES')]);
+        const nodoCodigosPorNivelId: Record<string, string[]> = {};
+
+        for (const [header, nivel] of nivelByHeader) {
+          const idx = headerRow.indexOf(header);
+          nodoCodigosPorNivelId[nivel.id] = idx >= 0 ? this.parseBulkCell(raw[idx]) : [];
+        }
+
+        rows.push({ row: rowNum, username, perfilCodigos, nodoCodigosPorNivelId });
+      }
+
+      if (!rows.length) {
+        this.bulkErrors.set([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        this.bulkLoading.set(false);
+        return;
+      }
+
+      this.api.bulkUpdateUserAccess(rows).subscribe({
+        next: (res) => {
+          if (res.ok) {
+            this.bulkSuccess.set(`Se procesaron ${res.processed} accesos correctamente.`);
+            this.bulkFile = null;
+            this.bulkFileName.set('');
+            this.events.emitDataChanged();
+            this.loadData();
+          } else {
+            this.bulkErrors.set(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
+          }
+          this.bulkLoading.set(false);
+        },
+        error: (e) => {
+          console.error('bulkUpdateUserAccess error', e);
+          let message = 'Error al procesar el archivo.';
+          if (e instanceof HttpErrorResponse) {
+            if (e.status === 0) {
+              message = 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.';
+            } else if (e.status >= 500) {
+              message = `Error interno del servidor (${e.status}). Revise la consola del backend.`;
+            } else if (e.error?.error) {
+              message = e.error.error;
+            } else if (Array.isArray(e.error?.errors)) {
+              this.bulkErrors.set(e.error.errors);
+              this.bulkLoading.set(false);
+              return;
+            } else if (e.message) {
+              message = e.message;
+            }
+          } else if (e?.error?.errors) {
+            this.bulkErrors.set(e.error.errors);
+            this.bulkLoading.set(false);
+            return;
+          } else if (e?.error?.error) {
+            message = e.error.error;
+          }
+          this.bulkErrors.set([{ row: 0, message }]);
+          this.bulkLoading.set(false);
+        },
+      });
+    } catch (e: any) {
+      this.bulkErrors.set([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      this.bulkLoading.set(false);
+    }
   }
 }

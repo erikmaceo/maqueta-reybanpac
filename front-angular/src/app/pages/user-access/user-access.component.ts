@@ -202,8 +202,8 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     >
       <div class="filter-row">
         <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="userSearchCodigo" placeholder="Código de usuario" />
+          <label>Usuario</label>
+          <input type="text" class="select" [(ngModel)]="userSearchCodigo" placeholder="Usuario" />
         </div>
         <div class="field">
           <label>Nombre</label>
@@ -235,7 +235,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
         <table class="data">
           <thead>
             <tr>
-              <th>Código</th>
+              <th>Usuario</th>
               <th>Nombre</th>
               <th>Apellido</th>
               <th>Correo</th>

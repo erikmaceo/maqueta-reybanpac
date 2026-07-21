@@ -84,24 +84,25 @@ interface UserForm {
         <h1>Usuarios</h1>
         <p>Los administradores se crean localmente en la consola; los clientes finales se integran exclusivamente desde LDAP. A todos se les asignan roles.</p>
       </div>
-      <button class="btn btn-primary" (click)="showCreateDialog = true">
-        <app-icon-user-plus /> Nuevo usuario
+    </div>
+
+    <div class="tabs mb-4">
+      <button [class.active]="tab() === 'ALL'" (click)="tab.set('ALL')">
+        Todos ({{ totalCount }})
+      </button>
+      <button [class.active]="tab() === 'ADMIN'" (click)="tab.set('ADMIN')">
+        Administradores ({{ adminCount }})
+      </button>
+      <button [class.active]="tab() === 'CLIENTE_FINAL'" (click)="tab.set('CLIENTE_FINAL')">
+        Clientes finales ({{ clienteFinalCount }})
       </button>
     </div>
 
-    <div class="row between mb-4 wrap gap-3">
-      <div class="tabs">
-        <button [class.active]="tab() === 'ALL'" (click)="tab.set('ALL')">
-          Todos ({{ totalCount }})
-        </button>
-        <button [class.active]="tab() === 'ADMIN'" (click)="tab.set('ADMIN')">
-          Administradores ({{ adminCount }})
-        </button>
-        <button [class.active]="tab() === 'CLIENTE_FINAL'" (click)="tab.set('CLIENTE_FINAL')">
-          Clientes finales ({{ clienteFinalCount }})
-        </button>
-      </div>
+    <div class="row between mb-4">
       <app-search-box [value]="q()" (valueChange)="q.set($event)" placeholder="Buscar usuario…" />
+      <button class="btn btn-primary" (click)="showCreateDialog = true">
+        <app-icon-user-plus /> Nuevo usuario
+      </button>
     </div>
 
     @if (loading()) {

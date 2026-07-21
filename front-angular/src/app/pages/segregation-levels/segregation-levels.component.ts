@@ -125,11 +125,11 @@ interface NodoView extends NodoSegregacion {
                   [ngModel]="searchNodo()" (ngModelChange)="searchNodo.set($event)" />
               </div>
               <div class="row gap-2">
-                <button class="btn btn-primary" (click)="openBulkDialog()" [disabled]="niveles().length === 0">
-                  <app-icon-upload [width]="14" [height]="14" /> Carga masiva
-                </button>
                 <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
                   <app-icon-plus [width]="14" [height]="14" /> Nuevo nodo
+                </button>
+                <button class="btn btn-primary" (click)="openBulkDialog()" [disabled]="niveles().length === 0">
+                  <app-icon-upload [width]="14" [height]="14" /> Carga masiva
                 </button>
               </div>
             </div>

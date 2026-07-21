@@ -694,7 +694,36 @@ app.delete('/api/grants/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/audit', requireAuth, (_req, res) => res.json(db.audit));
+app.get('/api/audit', requireAuth, (req, res) => {
+  const q = String(req.query.q || '').trim().toLowerCase();
+  const desde = String(req.query.desde || '').trim();
+  const hasta = String(req.query.hasta || '').trim();
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.max(1, Math.min(500, Number(req.query.limit) || 25));
+
+  let list = [...db.audit];
+
+  if (desde) {
+    const d = new Date(desde);
+    if (!isNaN(d.getTime())) list = list.filter(e => new Date(e.timestamp) >= d);
+  }
+  if (hasta) {
+    const h = new Date(hasta);
+    if (!isNaN(h.getTime())) {
+      h.setHours(23, 59, 59, 999);
+      list = list.filter(e => new Date(e.timestamp) <= h);
+    }
+  }
+  if (q) {
+    list = list.filter(e => `${e.actor} ${e.action} ${e.entityType} ${e.detail}`.toLowerCase().includes(q));
+  }
+
+  list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const total = list.length;
+  const start = (page - 1) * limit;
+  const items = list.slice(start, start + limit);
+  res.json({ items, total, page, limit });
+});
 
 // Utilidad de maqueta: reiniciar datos
 app.post('/api/admin/reset', requireAuth, requireGlobalAdmin, (req, res) => {

@@ -59,7 +59,7 @@ export default function RequestAccessModal({ users: usersProp, roles: rolesProp,
     <Modal title="Solicitar acceso" subtitle="Asigne un rol de un sistema a un usuario. La solicitud pasará por el módulo autorizador." onClose={onClose}
       footer={<>
         <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" disabled={busy} onClick={submit}><IconAuthorizer width={15} height={15} /> Enviar a autorización</button>
+        <button className="btn btn-primary" disabled={busy} onClick={submit}><IconAuthorizer width={15} height={15} /> Enviar a Autorización</button>
       </>}>
       <Field label="Usuario">
         <select className="select" value={userId} onChange={(e) => setUserId(e.target.value)}>

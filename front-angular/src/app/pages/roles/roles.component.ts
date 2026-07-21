@@ -80,7 +80,7 @@ interface RoleForm {
       <div class="row gap-3">
         <app-search-box [value]="q()" (valueChange)="q.set($event)" placeholder="Buscar rol…" />
         <button class="btn btn-primary" (click)="openCreate()">
-          <app-icon-plus /> Nuevo rol
+          <app-icon-plus /> Nuevo Rol
         </button>
       </div>
     </div>
@@ -97,7 +97,7 @@ interface RoleForm {
           <p class="muted small">Cree el primer rol y seleccione sus accesos.</p>
           <div class="mt-4">
             <button class="btn btn-primary" (click)="openCreate()">
-              <app-icon-plus /> Nuevo rol
+              <app-icon-plus /> Nuevo Rol
             </button>
           </div>
         </div>
@@ -138,7 +138,7 @@ interface RoleForm {
             <div class="divider" style="margin: 4px 0;"></div>
             <div class="row gap-2">
               <button class="btn btn-ghost btn-sm grow" (click)="openEdit(r)">
-                <app-icon-edit [width]="14" [height]="14" /> Editar accesos
+                <app-icon-edit [width]="14" [height]="14" /> Editar Accesos
               </button>
               <button
                 class="btn btn-danger btn-sm btn-icon"
@@ -278,7 +278,7 @@ interface RoleForm {
         </span>
         <button class="btn btn-ghost" (click)="closeDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="save()">
-          {{ editId ? 'Guardar cambios' : 'Crear rol' }}
+          {{ editId ? 'Guardar Cambios' : 'Crear rol' }}
         </button>
       </ng-template>
     </p-dialog>

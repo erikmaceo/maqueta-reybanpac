@@ -71,12 +71,12 @@ export default function Systems() {
           <h1>Sistemas y aplicativos</h1>
           <p>Cada sistema expone un catálogo de accesos que luego se agrupan en roles para autorizar usuarios.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setForm(blank); setEditId(null); }}><IconPlus /> Nuevo sistema</button>
+        <button className="btn btn-primary" onClick={() => { setForm(blank); setEditId(null); }}><IconPlus /> Nuevo Sistema</button>
       </div>
 
       {loading ? <TableSkeleton rows={6} cols={3} /> : error ? <ErrorState message={error} onRetry={load} /> : systems.length === 0 ? (
         <div className="card"><Empty icon={<IconSystems />} title="Aún no hay sistemas" hint="Cree el primer sistema gobernado por la consola."
-          action={<button className="btn btn-primary" onClick={() => setForm(blank)}><IconPlus /> Nuevo sistema</button>} /></div>
+          action={<button className="btn btn-primary" onClick={() => setForm(blank)}><IconPlus /> Nuevo Sistema</button>} /></div>
       ) : (
         <div className="grid cols-3">
           {systems.map((s) => (
@@ -112,7 +112,7 @@ export default function Systems() {
           onClose={() => { setForm(null); setEditId(null); }}
           footer={<>
             <button className="btn btn-ghost" onClick={() => { setForm(null); setEditId(null); }}>Cancelar</button>
-            <button className="btn btn-primary" onClick={save}>{editId ? 'Guardar cambios' : 'Crear sistema'}</button>
+            <button className="btn btn-primary" onClick={save}>{editId ? 'Guardar Cambios' : 'Crear sistema'}</button>
           </>}>
           <div className="form-grid">
             <Field label="Código"><input className="input" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="KS8" /></Field>
@@ -143,7 +143,7 @@ export default function Systems() {
           onClose={() => { setDetail(null); setPermForm(null); }}
           footer={<>
             <button className="btn btn-ghost" onClick={() => { setDetail(null); setPermForm(null); }}>Cerrar</button>
-            <button className="btn btn-primary" onClick={() => setPermForm({ name: '', level: 'VIEW', category: 'General', description: '' })}><IconPlus /> Nuevo acceso</button>
+            <button className="btn btn-primary" onClick={() => setPermForm({ name: '', level: 'VIEW', category: 'General', description: '' })}><IconPlus /> Nuevo Acceso</button>
           </>}>
           {permForm && (
             <div className="card pad mb-4" style={{ background: 'var(--surface-2)' }}>

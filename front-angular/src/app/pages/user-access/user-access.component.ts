@@ -50,10 +50,10 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
             <app-icon-download [width]="14" [height]="14" /> Exportar
           </button>
           <button class="btn btn-primary" (click)="openNewDialog()">
-            <app-icon-plus [width]="14" [height]="14" /> Nuevo acceso
+            <app-icon-plus [width]="14" [height]="14" /> Nuevo Acceso
           </button>
           <button class="btn btn-primary" (click)="openBulkDialog()">
-            <app-icon-upload [width]="14" [height]="14" /> Carga masiva
+            <app-icon-upload [width]="14" [height]="14" /> Carga Masiva
           </button>
         </div>
       </div>
@@ -173,7 +173,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
         <label>Perfiles</label>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;">
           <button class="btn btn-ghost btn-sm" type="button" (click)="openPerfilSearchDialog()" title="Buscar perfiles">
-            <app-icon-search [width]="14" [height]="14" /> Buscar perfiles
+            <app-icon-search [width]="14" [height]="14" /> Buscar Perfiles
           </button>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface-2);">
@@ -424,7 +424,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
         <div>
           <p class="small">Descargue la plantilla de ejemplo con la estructura actual de niveles de segregación. Complete una fila por usuario y suba el archivo Excel procesado.</p>
           <button class="btn btn-ghost btn-sm" (click)="downloadBulkTemplate()">
-            <app-icon-download [width]="14" [height]="14" /> Descargar plantilla de ejemplo
+            <app-icon-download [width]="14" [height]="14" /> Descargar Plantilla de ejemplo
           </button>
         </div>
 

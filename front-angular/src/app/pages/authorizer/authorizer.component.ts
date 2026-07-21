@@ -55,7 +55,7 @@ import type { AccessRequest, Role, SystemApp, User } from '../../shared/models/t
         <p>Aprobación y rechazo de solicitudes de acceso. Los flujos pending requieren su autorización.</p>
       </div>
       <button class="btn btn-primary" (click)="showRequestDialog = true">
-        <app-icon-plus /> Nueva solicitud
+        <app-icon-plus /> Nueva Solicitud
       </button>
     </div>
 
@@ -242,7 +242,7 @@ import type { AccessRequest, Role, SystemApp, User } from '../../shared/models/t
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeRequestDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="createRequest()">
-          <app-icon-key [width]="14" [height]="14" /> Enviar a autorización
+          <app-icon-key [width]="14" [height]="14" /> Enviar a Autorización
         </button>
       </ng-template>
     </p-dialog>

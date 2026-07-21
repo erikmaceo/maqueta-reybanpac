@@ -55,7 +55,7 @@ export default function Users() {
           <h1>Usuarios</h1>
           <p>Los administradores se crean localmente en la consola; los clientes finales se integran exclusivamente desde LDAP. A todos se les asignan roles.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setCreating(true)}><IconUserPlus /> Nuevo usuario</button>
+        <button className="btn btn-primary" onClick={() => setCreating(true)}><IconUserPlus /> Nuevo Usuario</button>
       </div>
 
       <div className="row between mb-4 wrap gap-3">
@@ -69,7 +69,7 @@ export default function Users() {
 
       {loading ? <TableSkeleton rows={6} cols={6} /> : error ? <ErrorState message={error} onRetry={load} /> : filtered.length === 0 ? (
         <div className="card"><Empty icon={<IconUsers />} title="Sin usuarios" hint="Cree un administrador local o integre un cliente final desde LDAP."
-          action={<button className="btn btn-primary" onClick={() => setCreating(true)}><IconUserPlus /> Nuevo usuario</button>} /></div>
+          action={<button className="btn btn-primary" onClick={() => setCreating(true)}><IconUserPlus /> Nuevo Usuario</button>} /></div>
       ) : (
         <div className="card table-wrap">
           <table className="data">
@@ -159,7 +159,7 @@ function CreateUserModal({ roles, existing, onClose, onDone }: { roles: Role[]; 
     <Modal wide title="Nuevo usuario" subtitle="Elija el tipo de usuario que desea crear." onClose={onClose}
       footer={mode === 'ADMIN' ? <>
         <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={createLocal}>Crear administrador</button>
+        <button className="btn btn-primary" onClick={createLocal}>Crear Administrador</button>
       </> : <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>}>
 
       <div className="grid cols-2 mb-4">

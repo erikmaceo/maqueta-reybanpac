@@ -79,7 +79,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                 [ngModel]="searchPais()" (ngModelChange)="searchPais.set($event)" />
             </div>
             <button class="btn btn-primary" (click)="openPaisDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nuevo país
+              <app-icon-plus [width]="14" [height]="14" /> Nuevo País
             </button>
           </div>
           <div class="card table-wrap">
@@ -145,7 +145,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                 [ngModel]="searchProv()" (ngModelChange)="searchProv.set($event)" />
             </div>
             <button class="btn btn-primary" (click)="openProvDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nueva provincia
+              <app-icon-plus [width]="14" [height]="14" /> Nueva Provincia
             </button>
           </div>
           <div class="card table-wrap">
@@ -213,7 +213,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                 [ngModel]="searchCiu()" (ngModelChange)="searchCiu.set($event)" />
             </div>
             <button class="btn btn-primary" (click)="openCiuDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nueva ciudad
+              <app-icon-plus [width]="14" [height]="14" /> Nueva Ciudad
             </button>
           </div>
           <div class="card table-wrap">
@@ -283,7 +283,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                 [ngModel]="searchDisp()" (ngModelChange)="searchDisp.set($event)" />
             </div>
             <button class="btn btn-primary" (click)="openDispDialog()">
-              <app-icon-plus [width]="14" [height]="14" /> Nuevo dispositivo
+              <app-icon-plus [width]="14" [height]="14" /> Nuevo Dispositivo
             </button>
           </div>
           <div class="card table-wrap">

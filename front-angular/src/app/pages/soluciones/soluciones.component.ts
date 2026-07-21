@@ -125,7 +125,7 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
       }
 
       <div class="actions-footer">
-        <button class="btn btn-primary" (click)="saveOrder()">Actualizar orden</button>
+        <button class="btn btn-primary" (click)="saveOrder()">Actualizar Orden</button>
       </div>
     } @else {
       <div class="page-head">

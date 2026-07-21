@@ -181,7 +181,7 @@ import type { LdapPerson, Role } from '../../shared/models/types';
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeImportDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="importUser()">
-          <app-icon-download /> Importar usuario
+          <app-icon-download /> Importar Usuario
         </button>
       </ng-template>
     </p-dialog>

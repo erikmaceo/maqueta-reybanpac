@@ -53,7 +53,7 @@ export default function Authorizer() {
           <h1>Módulo autorizador</h1>
           <p>Bandeja de solicitudes de acceso. Apruebe o rechace la asignación de roles a usuarios; al aprobar se genera el acceso efectivo.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setRequesting(true)}><IconPlus /> Nueva solicitud</button>
+        <button className="btn btn-primary" onClick={() => setRequesting(true)}><IconPlus /> Nueva Solicitud</button>
       </div>
 
       <div className="grid cols-4 mb-4">

@@ -67,7 +67,7 @@ interface AccesoView extends AccesoDispositivoMovil {
             [ngModel]="search()" (ngModelChange)="search.set($event)" />
         </div>
         <button class="btn btn-primary" (click)="openDialog()">
-          <app-icon-plus [width]="14" [height]="14" /> Nuevo acceso
+          <app-icon-plus [width]="14" [height]="14" /> Nuevo Acceso
         </button>
       </div>
       <div class="card table-wrap">

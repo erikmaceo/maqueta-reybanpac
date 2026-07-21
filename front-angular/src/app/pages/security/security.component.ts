@@ -90,10 +90,10 @@ interface PerfilProgramaRow {
                 <app-icon-download [width]="14" [height]="14" /> Exportar
               </button>
               <button class="btn btn-primary" (click)="openAppDialog()">
-                <app-icon-plus [width]="14" [height]="14" /> Nueva aplicación
+                <app-icon-plus [width]="14" [height]="14" /> Nueva Aplicación
               </button>
               <button class="btn btn-primary" (click)="openBulkDialog()">
-                <app-icon-upload [width]="14" [height]="14" /> Carga masiva
+                <app-icon-upload [width]="14" [height]="14" /> Carga Masiva
               </button>
             </div>
           </div>
@@ -178,7 +178,7 @@ interface PerfilProgramaRow {
                 <app-icon-download [width]="14" [height]="14" /> Exportar
               </button>
               <button class="btn btn-primary" (click)="openModDialog()">
-                <app-icon-plus [width]="14" [height]="14" /> Nuevo módulo
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo Módulo
               </button>
             </div>
           </div>
@@ -263,7 +263,7 @@ interface PerfilProgramaRow {
                 <app-icon-download [width]="14" [height]="14" /> Exportar
               </button>
               <button class="btn btn-primary" (click)="openPrgDialog()">
-                <app-icon-plus [width]="14" [height]="14" /> Nuevo programa
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo Programa
               </button>
             </div>
           </div>
@@ -463,10 +463,10 @@ interface PerfilProgramaRow {
                 <app-icon-download [width]="14" [height]="14" /> Exportar
               </button>
               <button class="btn btn-primary" (click)="openPerfDialog()">
-                <app-icon-plus [width]="14" [height]="14" /> Nuevo perfil
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo Perfil
               </button>
               <button class="btn btn-primary" (click)="openPerfilBulkDialog()">
-                <app-icon-upload [width]="14" [height]="14" /> Carga masiva
+                <app-icon-upload [width]="14" [height]="14" /> Carga Masiva
               </button>
             </div>
           </div>
@@ -778,7 +778,7 @@ interface PerfilProgramaRow {
             }
           </div>
           <button class="btn btn-ghost btn-sm mt-2" (click)="addControl()">
-            <app-icon-plus [width]="14" [height]="14" /> Agregar control
+            <app-icon-plus [width]="14" [height]="14" /> Agregar Control
           </button>
         </div>
       }
@@ -1019,7 +1019,7 @@ interface PerfilProgramaRow {
           }
         </div>
         <button class="btn btn-ghost btn-sm mt-2" (click)="addPerfPrograma()">
-          <app-icon-plus [width]="14" [height]="14" /> Agregar programa
+          <app-icon-plus [width]="14" [height]="14" /> Agregar Programa
         </button>
       </div>
       <ng-template pTemplate="footer">
@@ -1302,7 +1302,7 @@ interface PerfilProgramaRow {
 
       <div class="row gap-2 mb-3">
         <button class="btn btn-ghost" (click)="downloadBulkTemplate()">
-          <app-icon-download [width]="14" [height]="14" /> Descargar plantilla
+          <app-icon-download [width]="14" [height]="14" /> Descargar Plantilla
         </button>
       </div>
 
@@ -1354,7 +1354,7 @@ interface PerfilProgramaRow {
 
       <div class="row gap-2 mb-3">
         <button class="btn btn-ghost" (click)="downloadPerfilBulkTemplate()">
-          <app-icon-download [width]="14" [height]="14" /> Descargar plantilla
+          <app-icon-download [width]="14" [height]="14" /> Descargar Plantilla
         </button>
       </div>
 

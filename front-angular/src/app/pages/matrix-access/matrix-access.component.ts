@@ -18,7 +18,7 @@ import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from 
       </div>
       <div class="row gap-2">
         <button class="btn btn-ghost" (click)="downloadTemplate()">
-          <app-icon-download [width]="15" [height]="15" /> Descargar plantilla
+          <app-icon-download [width]="15" [height]="15" /> Descargar Plantilla
         </button>
         <button class="btn btn-primary" (click)="triggerFileInput()" [disabled]="uploading()">
           <app-icon-upload [width]="15" [height]="15" />

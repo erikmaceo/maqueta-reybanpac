@@ -76,7 +76,7 @@ interface SystemForm {
         <p>Cada sistema expone un catálogo de accesos que luego se agrupan en roles para autorizar usuarios.</p>
       </div>
       <button class="btn btn-primary" (click)="openCreate()">
-        <app-icon-plus /> Nuevo sistema
+        <app-icon-plus /> Nuevo Sistema
       </button>
     </div>
 
@@ -92,7 +92,7 @@ interface SystemForm {
           <p class="muted small">Cree el primer sistema gobernado por la consola.</p>
           <div class="mt-4">
             <button class="btn btn-primary" (click)="openCreate()">
-              <app-icon-plus /> Nuevo sistema
+              <app-icon-plus /> Nuevo Sistema
             </button>
           </div>
         </div>
@@ -194,7 +194,7 @@ interface SystemForm {
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeFormDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="save()">
-          {{ editId ? 'Guardar cambios' : 'Crear sistema' }}
+          {{ editId ? 'Guardar Cambios' : 'Crear sistema' }}
         </button>
       </ng-template>
     </p-dialog>
@@ -246,7 +246,7 @@ interface SystemForm {
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeDetailDialog()">Cerrar</button>
         <button class="btn btn-primary" (click)="showPermForm = true">
-          <app-icon-plus /> Nuevo acceso
+          <app-icon-plus /> Nuevo Acceso
         </button>
       </ng-template>
     </p-dialog>

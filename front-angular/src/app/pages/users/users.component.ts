@@ -101,7 +101,7 @@ interface UserForm {
     <div class="row between mb-4">
       <app-search-box [value]="q()" (valueChange)="q.set($event)" placeholder="Buscar usuario…" />
       <button class="btn btn-primary" (click)="showCreateDialog = true">
-        <app-icon-user-plus /> Nuevo usuario
+        <app-icon-user-plus /> Nuevo Usuario
       </button>
     </div>
 
@@ -117,7 +117,7 @@ interface UserForm {
           <p class="muted small">Cree un administrador local o integre un cliente final desde LDAP.</p>
           <div class="mt-4">
             <button class="btn btn-primary" (click)="showCreateDialog = true">
-              <app-icon-user-plus /> Nuevo usuario
+              <app-icon-user-plus /> Nuevo Usuario
             </button>
           </div>
         </div>
@@ -239,7 +239,7 @@ interface UserForm {
       </div>
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeCreateDialog()">Cancelar</button>
-        <button class="btn btn-primary" (click)="createUser()">Crear usuario</button>
+        <button class="btn btn-primary" (click)="createUser()">Crear Usuario</button>
       </ng-template>
     </p-dialog>
 
@@ -289,7 +289,7 @@ interface UserForm {
       }
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeEditDialog()">Cancelar</button>
-        <button class="btn btn-primary" (click)="updateUser()">Guardar cambios</button>
+        <button class="btn btn-primary" (click)="updateUser()">Guardar Cambios</button>
       </ng-template>
     </p-dialog>
 
@@ -335,7 +335,7 @@ interface UserForm {
       }
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeRolesDialog()">Cancelar</button>
-        <button class="btn btn-primary" (click)="saveRoles()">Guardar roles</button>
+        <button class="btn btn-primary" (click)="saveRoles()">Guardar Roles</button>
       </ng-template>
     </p-dialog>
 

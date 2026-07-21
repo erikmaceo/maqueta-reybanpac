@@ -66,7 +66,7 @@ interface NodoView extends NodoSegregacion {
                   [ngModel]="searchNivel()" (ngModelChange)="searchNivel.set($event)" />
               </div>
               <button class="btn btn-primary" (click)="openNivelDialog()">
-                <app-icon-plus [width]="14" [height]="14" /> Nuevo nivel
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo Nivel
               </button>
             </div>
             <div class="card table-wrap">
@@ -126,10 +126,10 @@ interface NodoView extends NodoSegregacion {
               </div>
               <div class="row gap-2">
                 <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
-                  <app-icon-plus [width]="14" [height]="14" /> Nuevo nodo
+                  <app-icon-plus [width]="14" [height]="14" /> Nuevo Nodo
                 </button>
                 <button class="btn btn-primary" (click)="openBulkDialog()" [disabled]="niveles().length === 0">
-                  <app-icon-upload [width]="14" [height]="14" /> Carga masiva
+                  <app-icon-upload [width]="14" [height]="14" /> Carga Masiva
                 </button>
               </div>
             </div>
@@ -232,7 +232,7 @@ interface NodoView extends NodoSegregacion {
                   [ngModel]="searchAtributo()" (ngModelChange)="searchAtributo.set($event)" />
               </div>
               <button class="btn btn-primary" (click)="openAtributoDialog()" [disabled]="niveles().length === 0">
-                <app-icon-plus [width]="14" [height]="14" /> Nuevo atributo
+                <app-icon-plus [width]="14" [height]="14" /> Nuevo Atributo
               </button>
             </div>
             <div class="card table-wrap">
@@ -436,7 +436,7 @@ interface NodoView extends NodoSegregacion {
 
       <div class="row gap-2 mb-3">
         <button class="btn btn-ghost" (click)="downloadBulkTemplate()">
-          <app-icon-download [width]="14" [height]="14" /> Descargar plantilla
+          <app-icon-download [width]="14" [height]="14" /> Descargar Plantilla
         </button>
       </div>
 

@@ -104,13 +104,13 @@ export default function Roles() {
         </div>
         <div className="row gap-3">
           <SearchBox value={q} onChange={setQ} placeholder="Buscar rol…" />
-          <button className="btn btn-primary" onClick={openCreate}><IconPlus /> Nuevo rol</button>
+          <button className="btn btn-primary" onClick={openCreate}><IconPlus /> Nuevo Rol</button>
         </div>
       </div>
 
       {loading ? <TableSkeleton rows={6} cols={3} /> : error ? <ErrorState message={error} onRetry={load} /> : filtered.length === 0 ? (
         <div className="card"><Empty icon={<IconRoles />} title="Sin roles" hint="Cree el primer rol y seleccione sus accesos."
-          action={<button className="btn btn-primary" onClick={openCreate}><IconPlus /> Nuevo rol</button>} /></div>
+          action={<button className="btn btn-primary" onClick={openCreate}><IconPlus /> Nuevo Rol</button>} /></div>
       ) : (
         <div className="grid cols-3">
           {filtered.map((r) => {
@@ -136,7 +136,7 @@ export default function Roles() {
                 <div className="tiny dim">Autorizador: <b style={{ color: 'var(--text-2)' }}>{auth ? `${auth.firstName} ${auth.lastName}` : '— sin asignar'}</b></div>
                 <div className="divider" style={{ margin: '4px 0' }} />
                 <div className="row gap-2">
-                  <button className="btn btn-ghost btn-sm grow" onClick={() => openEdit(r)}><IconEdit width={14} height={14} /> Editar accesos</button>
+                  <button className="btn btn-ghost btn-sm grow" onClick={() => openEdit(r)}><IconEdit width={14} height={14} /> Editar Accesos</button>
                   <button className="btn btn-danger btn-sm btn-icon" title="Eliminar" aria-label={`Eliminar rol ${r.name}`} disabled={r.isAdmin} onClick={() => setToDelete(r)}><IconTrash width={15} height={15} /></button>
                 </div>
               </div>
@@ -151,7 +151,7 @@ export default function Roles() {
           footer={<>
             <span className="muted small grow">{form.isAdmin ? `Acceso completo · ${permissions.length} accesos` : `${form.permissionIds.length} accesos seleccionados`}</span>
             <button className="btn btn-ghost" onClick={() => { setForm(null); setEditId(null); }}>Cancelar</button>
-            <button className="btn btn-primary" onClick={save}>{editId ? 'Guardar cambios' : 'Crear rol'}</button>
+            <button className="btn btn-primary" onClick={save}>{editId ? 'Guardar Cambios' : 'Crear rol'}</button>
           </>}>
           <div className="form-grid">
             <Field label="Nombre del rol"><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="KS8 DEV — Edit" /></Field>

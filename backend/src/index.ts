@@ -1077,6 +1077,118 @@ app.delete('/api/seg-perfiles/:id', requireAuth, requireGlobalAdmin, (req, res) 
   res.json({ ok: true });
 });
 
+interface BulkPerfilRow {
+  row: number;
+  perfilCodigo: string;
+  perfilNombre: string;
+  perfilDescripcion: string;
+  prgCodigo: string;
+  nuevo: string;
+  modificar: string;
+  anular: string;
+  imprimir: string;
+  consultar: string;
+  estado: string;
+}
+
+function parseBool(v: string): boolean {
+  const s = String(v || '').trim().toLowerCase();
+  return s === 'true' || s === '1' || s === 'si' || s === 'sí' || s === 'verdadero' || s === 'x';
+}
+
+app.post('/api/seg-perfiles/bulk', requireAuth, requireGlobalAdmin, (req, res) => {
+  const rows: BulkPerfilRow[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (!rows.length) return res.status(400).json({ ok: false, error: 'No se recibieron filas para procesar.' });
+
+  const errors: { row: number; message: string }[] = [];
+  let processedPerfiles = 0;
+  let createdPerfiles = 0;
+  let updatedPerfiles = 0;
+
+  // Agrupar filas por PERFIL_CODIGO (case-insensitive), preservando el orden de aparición.
+  const grupos = new Map<string, BulkPerfilRow[]>();
+  const ordenCodigos: string[] = [];
+  for (const r of rows) {
+    const cod = r.perfilCodigo?.trim();
+    if (!cod) { errors.push({ row: r.row, message: 'El campo PERFIL_CODIGO es obligatorio.' }); continue; }
+    const key = cod.toLowerCase();
+    if (!grupos.has(key)) { grupos.set(key, []); ordenCodigos.push(key); }
+    grupos.get(key)!.push(r);
+  }
+
+  // Validar y construir perfiles
+  type PerfilData = {
+    codigo: string;
+    nombre: string;
+    descripcion: string;
+    estado: string;
+    programas: PerfilPrograma[];
+  };
+  const perfilsData: PerfilData[] = [];
+
+  for (const codKey of ordenCodigos) {
+    const grupo = grupos.get(codKey)!;
+    const primeraRow = grupo.find(r => r.perfilNombre?.trim()) || grupo[0];
+    const codigo = grupo[0].perfilCodigo.trim();
+    const nombre = primeraRow.perfilNombre?.trim() || '';
+    const descripcion = grupo[0].perfilDescripcion?.trim() || '';
+    const estadoRaw = grupo[0].estado?.trim() || 'ACTIVO';
+    const estado = estadoRaw.toUpperCase();
+    const programas: PerfilPrograma[] = [];
+    let grupoTieneError = false;
+
+    if (!nombre) { errors.push({ row: grupo[0].row, message: `El campo PERFIL_NOMBRE es obligatorio para el perfil "${codigo}".` }); grupoTieneError = true; }
+    if (estado !== 'ACTIVO' && estado !== 'INACTIVO') { errors.push({ row: grupo[0].row, message: `El estado "${estadoRaw}" no es válido. Use ACTIVO o INACTIVO.` }); grupoTieneError = true; }
+
+    const prgVistos = new Set<string>();
+    for (const r of grupo) {
+      const prgCodigo = r.prgCodigo?.trim();
+      if (!prgCodigo) { errors.push({ row: r.row, message: `El campo PRG_CODIGO es obligatorio (perfil "${codigo}").` }); grupoTieneError = true; continue; }
+      if (!db.programas.some(p => p.codigo.toLowerCase() === prgCodigo.toLowerCase())) { errors.push({ row: r.row, message: `El programa "${prgCodigo}" no existe.` }); grupoTieneError = true; continue; }
+      if (prgVistos.has(prgCodigo.toLowerCase())) { errors.push({ row: r.row, message: `El programa "${prgCodigo}" está duplicado para el perfil "${codigo}".` }); grupoTieneError = true; continue; }
+      prgVistos.add(prgCodigo.toLowerCase());
+      programas.push({
+        prgCodigo,
+        nuevo: parseBool(r.nuevo),
+        modificar: parseBool(r.modificar),
+        anular: parseBool(r.anular),
+        procesar: false,
+        imprimir: parseBool(r.imprimir),
+        consultar: parseBool(r.consultar),
+      });
+    }
+
+    if (!grupoTieneError && programas.length === 0) { errors.push({ row: grupo[0].row, message: `El perfil "${codigo}" debe tener al menos un programa.` }); grupoTieneError = true; }
+
+    if (grupoTieneError) continue;
+    perfilsData.push({ codigo, nombre, descripcion, estado, programas });
+  }
+
+  // Aplicar
+  for (const pd of perfilsData) {
+    const existing = db.perfiles.find(p => p.codigo.toLowerCase() === pd.codigo.toLowerCase());
+    if (existing) {
+      existing.nombre = pd.nombre;
+      existing.descripcion = pd.descripcion;
+      existing.estado = pd.estado as Perfil['estado'];
+      existing.programas = pd.programas;
+      updatedPerfiles++;
+      logAudit(actorName(req), 'UPDATE_PERFIL', 'perfil', existing.id, `Perfil "${pd.nombre}" actualizado por carga masiva con ${pd.programas.length} programa(s).`);
+    } else {
+      const perf: Perfil = { id: newId('seg_perf'), codigo: pd.codigo, nombre: pd.nombre, descripcion: pd.descripcion, programas: pd.programas, estado: pd.estado as Perfil['estado'], createdAt: nowIso() };
+      db.perfiles.push(perf);
+      createdPerfiles++;
+      logAudit(actorName(req), 'CREATE_PERFIL', 'perfil', perf.id, `Perfil "${pd.nombre}" creado por carga masiva con ${pd.programas.length} programa(s).`);
+    }
+    processedPerfiles++;
+  }
+
+  if (errors.length) {
+    return res.status(400).json({ ok: false, processed: processedPerfiles, created: createdPerfiles, updated: updatedPerfiles, errors });
+  }
+  res.json({ ok: true, processed: processedPerfiles, created: createdPerfiles, updated: updatedPerfiles, errors: [] });
+});
+
 // --- Controles ---
 function ordenarControles(items: Control[]): Control[] {
   return [...items].sort((a, b) => {

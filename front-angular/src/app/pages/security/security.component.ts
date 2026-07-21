@@ -465,6 +465,9 @@ interface PerfilProgramaRow {
               <button class="btn btn-primary" (click)="openPerfDialog()">
                 <app-icon-plus [width]="14" [height]="14" /> Nuevo perfil
               </button>
+              <button class="btn btn-primary" (click)="openPerfilBulkDialog()">
+                <app-icon-upload [width]="14" [height]="14" /> Carga masiva
+              </button>
             </div>
           </div>
           <div class="card table-wrap">
@@ -1337,6 +1340,58 @@ interface PerfilProgramaRow {
       </ng-template>
     </p-dialog>
 
+    <!-- ============ DIÁLOGO CARGA MASIVA PERFILES ============ -->
+    <p-dialog
+      [(visible)]="showPerfilBulkDlg"
+      header="Carga masiva de perfiles"
+      [modal]="true" [style]="{ width: '620px' }" [closable]="true"
+      (onHide)="closePerfilBulkDialog()"
+    >
+      <p class="mb-3 muted small">
+        El archivo debe tener las columnas: <b>PERFIL_CODIGO</b>, <b>PERFIL_NOMBRE</b>, <b>PERFIL_DESCRIPCION</b>, <b>PRG_CODIGO</b>, <b>NUEVO</b>, <b>MODIFICAR</b>, <b>ANULAR</b>, <b>IMPRIMIR</b>, <b>CONSULTAR</b> y <b>ESTADO</b>.
+        Una fila por cada programa asignado al perfil. Permisos: TRUE/FALSE.
+      </p>
+
+      <div class="row gap-2 mb-3">
+        <button class="btn btn-ghost" (click)="downloadPerfilBulkTemplate()">
+          <app-icon-download [width]="14" [height]="14" /> Descargar plantilla
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Archivo Excel</label>
+        <input type="file" accept=".xlsx,.xls" (change)="onPerfilBulkFileSelected($event)" />
+        @if (perfilBulkFileName()) {
+          <div class="small mt-1">{{ perfilBulkFileName() }}</div>
+        }
+      </div>
+
+      @if (perfilBulkSuccess()) {
+        <div class="alert alert-success mb-3">{{ perfilBulkSuccess() }}</div>
+      }
+
+      @if (perfilBulkErrors().length > 0) {
+        <div class="alert alert-error mb-3">
+          <ul class="mb-0">
+            @for (e of perfilBulkErrors(); track e.row + e.message) {
+              <li>Fila {{ e.row }}: {{ e.message }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closePerfilBulkDialog()">Cerrar</button>
+        <button class="btn btn-primary" (click)="processPerfilBulkFile()" [disabled]="!perfilBulkFile || perfilBulkLoading()">
+          @if (perfilBulkLoading()) {
+            <span>Procesando...</span>
+          } @else {
+            <span>Procesar</span>
+          }
+        </button>
+      </ng-template>
+    </p-dialog>
+
     <p-confirmDialog></p-confirmDialog>
   `,
   styles: [`
@@ -1595,6 +1650,13 @@ export class SecurityComponent implements OnInit {
   bulkErrors = signal<{ row: number; message: string }[]>([]);
   bulkSuccess = signal('');
   bulkLoading = signal(false);
+
+  showPerfilBulkDlg = false;
+  perfilBulkFile: File | null = null;
+  perfilBulkFileName = signal('');
+  perfilBulkErrors = signal<{ row: number; message: string }[]>([]);
+  perfilBulkSuccess = signal('');
+  perfilBulkLoading = signal(false);
 
   // --- Diálogo búsqueda de aplicación (para módulo) ---
   showAppSearchDlg = false;
@@ -2794,6 +2856,166 @@ export class SecurityComponent implements OnInit {
     } catch (e: any) {
       this.bulkErrors.set([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
       this.bulkLoading.set(false);
+    }
+  }
+
+  openPerfilBulkDialog(): void {
+    this.showPerfilBulkDlg = true;
+    this.perfilBulkFile = null;
+    this.perfilBulkFileName.set('');
+    this.perfilBulkErrors.set([]);
+    this.perfilBulkSuccess.set('');
+    this.perfilBulkLoading.set(false);
+  }
+
+  closePerfilBulkDialog(): void {
+    this.showPerfilBulkDlg = false;
+    this.perfilBulkFile = null;
+    this.perfilBulkFileName.set('');
+    this.perfilBulkErrors.set([]);
+    this.perfilBulkSuccess.set('');
+    this.perfilBulkLoading.set(false);
+  }
+
+  downloadPerfilBulkTemplate(): void {
+    const headers = ['PERFIL_CODIGO', 'PERFIL_NOMBRE', 'PERFIL_DESCRIPCION', 'PRG_CODIGO', 'NUEVO', 'MODIFICAR', 'ANULAR', 'IMPRIMIR', 'CONSULTAR', 'ESTADO'];
+    const rows: any[] = [headers];
+
+    const perfilesActivos = this.perfiles().filter(p => p.estado === 'ACTIVO');
+
+    if (perfilesActivos.length > 0) {
+      for (const p of perfilesActivos.sort((x, y) => x.codigo.localeCompare(y.codigo))) {
+        for (const pp of p.programas) {
+          rows.push([
+            p.codigo, p.nombre, p.descripcion, pp.prgCodigo,
+            pp.nuevo ? 'TRUE' : 'FALSE',
+            pp.modificar ? 'TRUE' : 'FALSE',
+            pp.anular ? 'TRUE' : 'FALSE',
+            pp.imprimir ? 'TRUE' : 'FALSE',
+            pp.consultar ? 'TRUE' : 'FALSE',
+            p.estado,
+          ]);
+        }
+      }
+    } else {
+      // Ejemplo con dos perfiles y algunos programas
+      rows.push(['PERF-FI-VIS', 'FI Visualizador', 'Visualización de documentos contables', 'PRG-FI-001', 'FALSE', 'FALSE', 'FALSE', 'TRUE', 'TRUE', 'ACTIVO']);
+      rows.push(['PERF-FI-VIS', 'FI Visualizador', 'Visualización de documentos contables', 'PRG-FI-002', 'FALSE', 'FALSE', 'FALSE', 'TRUE', 'TRUE', 'ACTIVO']);
+      rows.push(['PERF-FI-ADM', 'FI Administrador', 'Administración de documentos contables', 'PRG-FI-001', 'TRUE', 'TRUE', 'TRUE', 'TRUE', 'TRUE', 'ACTIVO']);
+      rows.push(['PERF-FI-ADM', 'FI Administrador', 'Administración de documentos contables', 'PRG-FI-002', 'TRUE', 'TRUE', 'TRUE', 'TRUE', 'TRUE', 'ACTIVO']);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'plantilla-perfiles');
+    XLSX.writeFile(wb, 'plantilla-perfiles.xlsx');
+  }
+
+  onPerfilBulkFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.perfilBulkFile = file;
+    this.perfilBulkFileName.set(file ? file.name : '');
+    this.perfilBulkErrors.set([]);
+    this.perfilBulkSuccess.set('');
+  }
+
+  async processPerfilBulkFile(): Promise<void> {
+    if (!this.perfilBulkFile) return;
+    this.perfilBulkLoading.set(true);
+    this.perfilBulkErrors.set([]);
+    this.perfilBulkSuccess.set('');
+
+    try {
+      const data = await this.perfilBulkFile.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+      if (rawRows.length < 2) {
+        this.perfilBulkErrors.set([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        this.perfilBulkLoading.set(false);
+        return;
+      }
+
+      const headerRow = rawRows[0].map((h: any) => String(h).trim().toUpperCase());
+      const expected = ['PERFIL_CODIGO', 'PERFIL_NOMBRE', 'PERFIL_DESCRIPCION', 'PRG_CODIGO', 'NUEVO', 'MODIFICAR', 'ANULAR', 'IMPRIMIR', 'CONSULTAR', 'ESTADO'];
+      const missing = expected.filter(h => !headerRow.includes(h));
+      if (missing.length > 0) {
+        this.perfilBulkErrors.set([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        this.perfilBulkLoading.set(false);
+        return;
+      }
+
+      const idx = (h: string) => headerRow.indexOf(h);
+      const rows: { row: number; perfilCodigo: string; perfilNombre: string; perfilDescripcion: string; prgCodigo: string; nuevo: string; modificar: string; anular: string; imprimir: string; consultar: string; estado: string }[] = [];
+      for (let i = 1; i < rawRows.length; i++) {
+        const raw = rawRows[i];
+        if (raw.every((v: any) => !v || String(v).trim() === '')) continue;
+        rows.push({
+          row: i + 1,
+          perfilCodigo: this.parseBulkCell(raw[idx('PERFIL_CODIGO')]),
+          perfilNombre: this.parseBulkCell(raw[idx('PERFIL_NOMBRE')]),
+          perfilDescripcion: this.parseBulkCell(raw[idx('PERFIL_DESCRIPCION')]),
+          prgCodigo: this.parseBulkCell(raw[idx('PRG_CODIGO')]),
+          nuevo: this.parseBulkCell(raw[idx('NUEVO')]),
+          modificar: this.parseBulkCell(raw[idx('MODIFICAR')]),
+          anular: this.parseBulkCell(raw[idx('ANULAR')]),
+          imprimir: this.parseBulkCell(raw[idx('IMPRIMIR')]),
+          consultar: this.parseBulkCell(raw[idx('CONSULTAR')]),
+          estado: this.parseBulkCell(raw[idx('ESTADO')]),
+        });
+      }
+
+      if (!rows.length) {
+        this.perfilBulkErrors.set([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        this.perfilBulkLoading.set(false);
+        return;
+      }
+
+      this.api.bulkCreatePerfiles(rows).subscribe({
+        next: (res) => {
+          if (res.ok) {
+            this.perfilBulkSuccess.set(`Se procesaron ${res.processed} perfiles: ${res.created} creados, ${res.updated} actualizados.`);
+            this.perfilBulkFile = null;
+            this.perfilBulkFileName.set('');
+            this.events.emitDataChanged();
+          } else {
+            this.perfilBulkErrors.set(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
+          }
+          this.perfilBulkLoading.set(false);
+        },
+        error: (e) => {
+          console.error('bulkCreatePerfiles error', e);
+          let message = 'Error al procesar el archivo.';
+          if (e instanceof HttpErrorResponse) {
+            if (e.status === 0) {
+              message = 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.';
+            } else if (e.status >= 500) {
+              message = `Error interno del servidor (${e.status}). Revise la consola del backend.`;
+            } else if (e.error?.error) {
+              message = e.error.error;
+            } else if (Array.isArray(e.error?.errors)) {
+              this.perfilBulkErrors.set(e.error.errors);
+              this.perfilBulkLoading.set(false);
+              return;
+            } else if (e.message) {
+              message = e.message;
+            }
+          } else if (e?.error?.errors) {
+            this.perfilBulkErrors.set(e.error.errors);
+            this.perfilBulkLoading.set(false);
+            return;
+          } else if (e?.error?.error) {
+            message = e.error.error;
+          }
+          this.perfilBulkErrors.set([{ row: 0, message }]);
+          this.perfilBulkLoading.set(false);
+        },
+      });
+    } catch (e: any) {
+      this.perfilBulkErrors.set([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      this.perfilBulkLoading.set(false);
     }
   }
 }

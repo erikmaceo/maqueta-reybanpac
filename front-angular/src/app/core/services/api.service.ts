@@ -252,6 +252,9 @@ export class ApiService {
   deletePerfil(id: string): Observable<{ ok: boolean }> {
     return this.request<{ ok: boolean }>('DELETE', `/seg-perfiles/${id}`);
   }
+  bulkCreatePerfiles(rows: { row: number; perfilCodigo: string; perfilNombre: string; perfilDescripcion: string; prgCodigo: string; nuevo: string; modificar: string; anular: string; imprimir: string; consultar: string; estado: string }[]): Observable<{ ok: boolean; processed: number; created: number; updated: number; errors: { row: number; message: string }[] }> {
+    return this.request<{ ok: boolean; processed: number; created: number; updated: number; errors: { row: number; message: string }[] }>('POST', '/seg-perfiles/bulk', { rows });
+  }
 
   // --- Seguridades: Controles ---
   listControles(): Observable<Control[]> {

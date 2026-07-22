@@ -1,7 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { DragDropModule, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { IconChevronRightComponent, IconServerComponent, IconSettingsComponent } from '../../shared/components/icons';
@@ -10,29 +13,78 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
 @Component({
   selector: 'app-soluciones',
   standalone: true,
-  imports: [CommonModule, DragDropModule, IconChevronRightComponent, IconServerComponent, IconSettingsComponent],
+  imports: [CommonModule, FormsModule, DragDropModule, DialogModule, ButtonModule, IconChevronRightComponent, IconServerComponent, IconSettingsComponent],
   template: `
-    @if (loading()) {
-      <div class="page-head">
-        <div>
-          <h1>Cargando...</h1>
-        </div>
+    <div class="page-head">
+      <div>
+        <h1>Ordenar Soluciones</h1>
+        <p>Seleccione una aplicación para ordenar su jerarquía de seguridades.</p>
       </div>
-    } @else if (app()) {
-      <div class="page-head">
-        <div>
-          <h1>{{ app()!.nombre }}</h1>
-          <p>{{ app()!.descripcion || 'Aplicación sin descripción' }}</p>
-        </div>
-        <span class="badge" [class.badge-green]="app()!.estado === 'ACTIVO'" [class.badge-gray]="app()!.estado !== 'ACTIVO'">
-          {{ app()!.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-        </span>
+    </div>
+
+    @if (loading()) {
+      <div class="skeleton-row"></div>
+    } @else {
+      <div class="card table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of paginatedApps(); track a.id) {
+              <tr>
+                <td class="mono">{{ a.codigo }}</td>
+                <td><div class="cell-strong">{{ a.nombre }}</div></td>
+                <td class="muted small">{{ a.descripcion || '—' }}</td>
+                <td>
+                  <span class="badge" [class.badge-green]="a.estado === 'ACTIVO'" [class.badge-gray]="a.estado !== 'ACTIVO'">
+                    {{ a.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-primary btn-sm" (click)="openOrderDialog(a)">Ordenar</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin aplicaciones registradas.</td></tr>
+            }
+          </tbody>
+        </table>
       </div>
 
-      <!-- breadcrumb -->
-      <div class="breadcrumb">
-        <button class="btn btn-ghost btn-sm" (click)="goBack()">‹ Volver a Ordenar Soluciones</button>
-      </div>
+      @if (apps().length > pageSize()) {
+        <div class="pagination">
+          <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">Anterior</button>
+          <span>Página {{ page() + 1 }} de {{ totalPages() }} ({{ apps().length }} registros)</span>
+          <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">Siguiente</button>
+        </div>
+      }
+    }
+
+    <!-- ============ DIÁLOGO ORDENAR SOLUCIÓN ============ -->
+    <p-dialog
+      [(visible)]="showOrderDlg"
+      [header]="'Ordenar: ' + (app()?.nombre || '')"
+      [modal]="true" [style]="{ width: '900px', maxWidth: '95vw' }" [closable]="true"
+      (onHide)="closeOrderDialog()"
+    >
+      @if (app()) {
+        <div class="dialog-head">
+          <div>
+            <div class="cell-strong">{{ app()!.codigo }}</div>
+            <div class="muted small">{{ app()!.descripcion || 'Sin descripción' }}</div>
+          </div>
+          <span class="badge" [class.badge-green]="app()!.estado === 'ACTIVO'" [class.badge-gray]="app()!.estado !== 'ACTIVO'">
+            {{ app()!.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+          </span>
+        </div>
+      }
 
       <!-- MÓDULOS -->
       <div class="section-title">
@@ -124,17 +176,11 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
         </div>
       }
 
-      <div class="actions-footer">
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="closeOrderDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="saveOrder()">Actualizar Orden</button>
-      </div>
-    } @else {
-      <div class="page-head">
-        <div>
-          <h1>Ordenar Soluciones</h1>
-          <p>Seleccione una aplicación para ver su jerarquía de seguridades.</p>
-        </div>
-      </div>
-    }
+      </ng-template>
+    </p-dialog>
   `,
   styles: [`
     .breadcrumb {
@@ -344,6 +390,26 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
       justify-content: flex-end;
       margin-top: 24px;
     }
+    .dialog-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
   `],
 })
 export class SolucionesComponent implements OnInit {
@@ -352,6 +418,7 @@ export class SolucionesComponent implements OnInit {
   private router = inject(Router);
   private toast = inject(ToastService);
 
+  apps = signal<Aplicacion[]>([]);
   app = signal<Aplicacion | null>(null);
   modulos = signal<Modulo[]>([]);
   programas = signal<Programa[]>([]);
@@ -362,21 +429,42 @@ export class SolucionesComponent implements OnInit {
   loadingPrgs = signal(false);
   loadingCtrls = signal(false);
 
+  showOrderDlg = false;
+  page = signal(0);
+  pageSize = signal(10);
+  paginatedApps = computed(() => {
+    const start = this.page() * this.pageSize();
+    return this.apps().slice(start, start + this.pageSize());
+  });
+  totalPages = computed(() => Math.max(1, Math.ceil(this.apps().length / this.pageSize())));
+
   expandedMods = signal<Set<string>>(new Set());
   expandedPrgs = signal<Set<string>>(new Set());
 
   ngOnInit(): void {
+    this.loadApps();
     this.route.paramMap.subscribe((params) => {
       const codigo = params.get('codigo');
       if (codigo) {
-        this.loadApp(codigo);
-      } else {
-        this.loading.set(false);
+        this.loadAppForRoute(codigo);
       }
     });
   }
 
-  private loadApp(codigo: string): void {
+  private loadApps(): void {
+    this.loading.set(true);
+    this.api.listAplicaciones().subscribe({
+      next: (apps) => {
+        this.apps.set(apps);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private loadAppForRoute(codigo: string): void {
     this.loading.set(true);
     this.api.listAplicaciones().subscribe({
       next: (apps) => {
@@ -384,6 +472,7 @@ export class SolucionesComponent implements OnInit {
         this.app.set(found || null);
         this.loading.set(false);
         if (found) {
+          this.showOrderDlg = true;
           this.loadModulos();
         }
       },
@@ -391,6 +480,28 @@ export class SolucionesComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  openOrderDialog(a: Aplicacion): void {
+    this.app.set(a);
+    this.showOrderDlg = true;
+    this.expandedMods.set(new Set());
+    this.expandedPrgs.set(new Set());
+    this.loadModulos();
+  }
+
+  closeOrderDialog(): void {
+    this.showOrderDlg = false;
+    this.app.set(null);
+    this.modulos.set([]);
+    this.programas.set([]);
+    this.controles.set([]);
+    this.expandedMods.set(new Set());
+    this.expandedPrgs.set(new Set());
+  }
+
+  setPage(p: number): void {
+    this.page.set(p);
   }
 
   private loadModulos(): void {
@@ -477,6 +588,7 @@ export class SolucionesComponent implements OnInit {
       completed++;
       if (completed === total) {
         this.toast.success('Orden actualizado', 'El nuevo orden se ha persistido correctamente.');
+        this.closeOrderDialog();
       }
     };
 
@@ -512,7 +624,4 @@ export class SolucionesComponent implements OnInit {
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/soluciones']);
-  }
 }

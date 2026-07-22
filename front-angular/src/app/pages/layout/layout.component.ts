@@ -7,12 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { EventsService } from '../../core/services/events.service';
 import { AvatarComponent } from '../../shared/components/ui';
-import type { Aplicacion } from '../../shared/models/types';
+
 import {
   IconDashboardComponent, IconSystemsComponent, IconRolesComponent,
   IconUsersComponent, IconAuthorizerComponent, IconAccessComponent,
   IconAuditComponent, IconLogoutComponent, IconLdapComponent,
-  IconSecurityComponent, IconMatrixComponent, IconServerComponent, IconChevronRightComponent,
+  IconSecurityComponent, IconMatrixComponent, IconServerComponent,
   IconBuildingComponent, IconSettingsComponent, IconMobileComponent,
 } from '../../shared/components/icons';
 
@@ -38,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/acceso-dispositivos', label: 'Dispositivos Autorizados', icon: IconMobileComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true },
-  { path: '/soluciones', label: 'Ordenar Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true, isSection: true },
+  { path: '/soluciones', label: 'Ordenar Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true },
   { path: '/auditoria', label: 'Auditoría', icon: IconAuditComponent, group: 'Operación', adminOnly: true },
 ];
 
@@ -78,7 +78,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
     IconAuditComponent,
     IconLogoutComponent,
     IconLdapComponent,
-    IconSecurityComponent, IconMatrixComponent, IconServerComponent, IconChevronRightComponent,
+    IconSecurityComponent, IconMatrixComponent, IconServerComponent,
     IconBuildingComponent, IconSettingsComponent, IconMobileComponent,
   ],
   template: `
@@ -115,30 +115,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
                     }
                   </a>
                 }
-                @if (item.group === group && item.isSection) {
-                  <button class="nav-link nav-section-header" (click)="toggleSoluciones()">
-                    <span class="chevron-wrap">
-                      <app-icon-chevron-right [width]="14" [height]="14" [class.rotated]="solucionesExpanded()" />
-                    </span>
-                    <span>Ordenar Soluciones</span>
-                    <span class="apps-count">{{ solucionApps().length }}</span>
-                  </button>
-                  @if (solucionesExpanded()) {
-                    @for (app of solucionApps(); track app.id) {
-                      <a
-                        [routerLink]="'/soluciones/' + app.codigo"
-                        routerLinkActive="active"
-                        class="nav-link nav-sub-link"
-                      >
-                        <span></span>
-                        <span class="sub-label">{{ app.nombre }}</span>
-                      </a>
-                    }
-                    @if (solucionApps().length === 0) {
-                      <span class="nav-link sub-empty">Cargando...</span>
-                    }
-                  }
-                }
+
               }
             </div>
           }
@@ -292,8 +269,6 @@ export class LayoutComponent implements OnInit {
 
   user = this.auth.user;
   pendingCount = signal(0);
-  solucionApps = signal<Aplicacion[]>([]);
-  solucionesExpanded = signal(true);
 
   groups = signal<string[]>([]);
   visibleNavItems = signal<NavItem[]>([]);
@@ -303,11 +278,9 @@ export class LayoutComponent implements OnInit {
     this.updateNav();
     this.refreshPending();
     this.updateMetaFromPath();
-    this.loadSolucionApps();
 
     this.events.onDataChanged(() => {
       this.refreshPending();
-      this.loadSolucionApps();
     });
 
     this.router.events
@@ -315,15 +288,7 @@ export class LayoutComponent implements OnInit {
       .subscribe(() => {
         this.updateMetaFromPath();
         this.refreshPending();
-        this.loadSolucionApps();
       });
-  }
-
-  private loadSolucionApps(): void {
-    this.api.listAplicaciones().subscribe({
-      next: (apps) => this.solucionApps.set(apps),
-      error: () => {},
-    });
   }
 
   private updateNav(): void {
@@ -363,10 +328,6 @@ export class LayoutComponent implements OnInit {
 
   getIconClass(icon: any): string {
     return '';
-  }
-
-  toggleSoluciones(): void {
-    this.solucionesExpanded.update(v => !v);
   }
 
   logout(): void {

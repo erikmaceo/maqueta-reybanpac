@@ -25,6 +25,7 @@ interface NavItem {
   adminOnly?: boolean;
   badge?: boolean;
   isSection?: boolean;
+  hidden?: boolean;
   children?: { label: string; path: string }[];
 }
 
@@ -36,8 +37,8 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/acceso-usuarios', label: 'Accesos por usuario', icon: IconRolesComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/acceso-dispositivos', label: 'Dispositivos Autorizados', icon: IconMobileComponent, group: 'Sistemas y Configuración', adminOnly: true },
-  { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Sistemas y Configuración', adminOnly: true },
-  { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true },
+  { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
+  { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
   { path: '/soluciones', label: 'Ordenar Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true },
   { path: '/auditoria', label: 'Auditoría', icon: IconAuditComponent, group: 'Operación', adminOnly: true },
 ];
@@ -293,7 +294,7 @@ export class LayoutComponent implements OnInit {
 
   private updateNav(): void {
     const isAdmin = this.auth.isAdmin();
-    const visible = NAV_ITEMS.filter(n => isAdmin || !n.adminOnly);
+    const visible = NAV_ITEMS.filter(n => !n.hidden && (isAdmin || !n.adminOnly));
     const groupSet = [...new Set(visible.map(n => n.group))];
     this.groups.set(groupSet);
     this.visibleNavItems.set(visible);

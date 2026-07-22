@@ -388,9 +388,9 @@ export const ldapFallbackUsers = [
 // Seguridades — jerarquía Aplicación → Modulo → Programa → Perfil
 // ===========================================================================
 export const aplicaciones: Aplicacion[] = [
-  { id: 'seg_app_1', codigo: 'APP-SAP', nombre: 'SAP ERP', descripcion: 'SAP ERP Reybanpac — Finanzas, Compras y Logística.', estado: 'ACTIVO', createdAt: iso(120) },
-  { id: 'seg_app_2', codigo: 'APP-KS8', nombre: 'Kubernetes KS8', descripcion: 'Clúster Kubernetes KS8 (No Productivo).', estado: 'ACTIVO', createdAt: iso(100) },
-  { id: 'seg_app_3', codigo: 'APP-RPA', nombre: 'RPA Cubolac', descripcion: 'Plataforma de automatización robótica Cubolac.', estado: 'ACTIVO', createdAt: iso(80) },
+  { id: 'seg_app_1', codigo: 'APP-SAP', nombre: 'SAP ERP', descripcion: 'SAP ERP Reybanpac — Finanzas, Compras y Logística.', estado: 'ACTIVO', nodoIds: ['nod_emp_1'], createdAt: iso(120) },
+  { id: 'seg_app_2', codigo: 'APP-KS8', nombre: 'Kubernetes KS8', descripcion: 'Clúster Kubernetes KS8 (No Productivo).', estado: 'ACTIVO', nodoIds: ['nod_emp_1'], createdAt: iso(100) },
+  { id: 'seg_app_3', codigo: 'APP-RPA', nombre: 'RPA Cubolac', descripcion: 'Plataforma de automatización robótica Cubolac.', estado: 'ACTIVO', nodoIds: ['nod_emp_1'], createdAt: iso(80) },
 ];
 
 export const modulos: Modulo[] = [

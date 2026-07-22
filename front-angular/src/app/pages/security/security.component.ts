@@ -17,7 +17,7 @@ import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSecurityComponent, IconSearchComponent, IconDownloadComponent,
   IconCheckComponent, IconCloseComponent, IconUploadComponent,
 } from '../../shared/components/icons';
-import type { Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, TipoPrograma, TipoControl, Control } from '../../shared/models/types';
+import type { Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, TipoPrograma, TipoControl, Control, NivelSegregacion, NodoSegregacion } from '../../shared/models/types';
 
 type Estado = 'ACTIVO' | 'INACTIVO';
 
@@ -104,6 +104,7 @@ interface PerfilProgramaRow {
                   <th>Código</th>
                   <th>Nombre</th>
                   <th>Descripción</th>
+                  <th>Nodos de Segregación</th>
                   <th>Estado</th>
                   <th></th>
                 </tr>
@@ -114,6 +115,17 @@ interface PerfilProgramaRow {
                     <td class="mono">{{ a.codigo }}</td>
                     <td><div class="cell-strong">{{ a.nombre }}</div></td>
                     <td class="muted small">{{ a.descripcion || '—' }}</td>
+                    <td>
+                      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                        @for (nodoId of a.nodoIds || []; track nodoId) {
+                          <span class="badge badge-blue" [title]="nodoMapSegregacion().get(nodoId)?.nombre || ''">
+                            {{ nodoMapSegregacion().get(nodoId)?.codigo || nodoId }}
+                          </span>
+                        } @empty {
+                          <span class="muted small">—</span>
+                        }
+                      </div>
+                    </td>
                     <td>
                       <span class="badge" [class.badge-green]="a.estado === 'ACTIVO'" [class.badge-gray]="a.estado !== 'ACTIVO'">
                         {{ a.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
@@ -131,7 +143,7 @@ interface PerfilProgramaRow {
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin aplicaciones registradas.</td></tr>
+                  <tr><td colspan="6" class="muted center" style="padding: 24px;">Sin aplicaciones registradas.</td></tr>
                 }
               </tbody>
             </table>
@@ -566,10 +578,80 @@ interface PerfilProgramaRow {
           <option value="INACTIVO">Inactivo</option>
         </select>
       </div>
+      <div class="field">
+        <label>Nodo de Segregación</label>
+        <div class="search-field">
+          <input class="select" type="text" [ngModel]="appNodoSearchText()" readonly placeholder="Seleccione un nodo padre..." />
+          <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppNodoSearchDialog()" title="Buscar nodo">
+            <app-icon-search [width]="16" [height]="16" />
+          </button>
+          @if (appForm.nodoIds?.length) {
+            <button class="btn btn-danger btn-sm btn-icon" type="button" (click)="clearAppNodo()" title="Quitar nodo">
+              <app-icon-trash [width]="16" [height]="16" />
+            </button>
+          }
+        </div>
+      </div>
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeAppDialog()">Cancelar</button>
         <button class="btn btn-primary" (click)="saveApp()">{{ editAppId ? 'Guardar' : 'Crear' }}</button>
       </ng-template>
+    </p-dialog>
+
+    <!-- ============ DIÁLOGO BÚSQUEDA NODO PADRE ============ -->
+    <p-dialog
+      [(visible)]="showAppNodoSearchDlg"
+      header="Buscar nodo de segregación"
+      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
+      (onHide)="closeAppNodoSearchDialog()"
+    >
+      <div class="filter-row">
+        <div class="field">
+          <label>Código</label>
+          <input type="text" class="select" [(ngModel)]="appNodoSearchCodigo" placeholder="Código de nodo" />
+        </div>
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" class="select" [(ngModel)]="appNodoSearchNombre" placeholder="Nombre de nodo" />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="applyAppNodoFilters()">Buscar</button>
+        <button class="btn btn-ghost" (click)="clearAppNodoFilters()">Limpiar</button>
+      </div>
+
+      <div class="card table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Nivel</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (n of paginatedAppNodosForSearch(); track n.id) {
+              <tr>
+                <td class="mono">{{ n.codigo }}</td>
+                <td><div class="cell-strong">{{ n.nombre }}</div></td>
+                <td>{{ nivelMapSegregacion().get(n.nivelId)?.nombre || n.nivelId }}</td>
+                <td>
+                  <button class="btn btn-primary btn-sm" (click)="selectAppNodoFromDialog(n)">Seleccionar</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="muted center" style="padding: 24px;">Sin nodos padre activos.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button class="btn btn-ghost btn-sm" [disabled]="appNodoSearchPage() === 1" (click)="changeAppNodoSearchPage(-1)">Anterior</button>
+        <span>Página {{ appNodoSearchPage() }} de {{ appNodoSearchTotalPages() }} ({{ filteredAppNodosForSearch().length }} registros)</span>
+        <button class="btn btn-ghost btn-sm" [disabled]="appNodoSearchPage() === appNodoSearchTotalPages()" (click)="changeAppNodoSearchPage(1)">Siguiente</button>
+      </div>
     </p-dialog>
 
     <!-- ============ DIÁLOGO MÓDULO ============ -->
@@ -1586,6 +1668,8 @@ export class SecurityComponent implements OnInit {
   modulos = signal<Modulo[]>([]);
   programas = signal<Programa[]>([]);
   perfiles = signal<Perfil[]>([]);
+  nivelesSegregacion = signal<NivelSegregacion[]>([]);
+  nodosSegregacion = signal<NodoSegregacion[]>([]);
   selectedPerfil = signal<Perfil | null>(null);
 
   perfilDetalleProgramas = computed(() => {
@@ -1669,6 +1753,16 @@ export class SecurityComponent implements OnInit {
   appSearchPage = signal(1);
   appSearchPageSize = signal(10);
   modAppSearchText = signal('');
+
+  // --- Diálogo búsqueda de nodo padre (para aplicación) ---
+  showAppNodoSearchDlg = false;
+  appNodoSearchCodigo = '';
+  appNodoSearchNombre = '';
+  appliedAppNodoSearchCodigo = signal('');
+  appliedAppNodoSearchNombre = signal('');
+  appNodoSearchPage = signal(1);
+  appNodoSearchPageSize = signal(10);
+  appNodoSearchText = signal('');
 
   // --- Diálogo búsqueda de aplicación (para programa) ---
   showPrgAppSearchDlg = false;
@@ -1808,6 +1902,39 @@ export class SecurityComponent implements OnInit {
 
   // --- Computed para búsqueda de aplicación en diálogo de módulo ---
   aplicacionMap = computed(() => new Map(this.aplicaciones().map(a => [a.codigo, a])));
+
+  nivelMapSegregacion = computed(() => new Map(this.nivelesSegregacion().map(n => [n.id, n])));
+  nodoMapSegregacion = computed(() => new Map(this.nodosSegregacion().map(n => [n.id, n])));
+  nodosSegregacionPadresActivos = computed(() => {
+    return this.nodosSegregacion()
+      .filter(n => n.estado === 'ACTIVO' && n.padreId === null)
+      .sort((a, b) => a.codigo.localeCompare(b.codigo));
+  });
+  filteredAppNodosForSearch = computed(() => {
+    const qCodigo = this.appliedAppNodoSearchCodigo().toLowerCase().trim();
+    const qNombre = this.appliedAppNodoSearchNombre().toLowerCase().trim();
+    return this.nodosSegregacionPadresActivos().filter(n => {
+      if (qCodigo && !n.codigo.toLowerCase().includes(qCodigo)) return false;
+      if (qNombre && !n.nombre.toLowerCase().includes(qNombre)) return false;
+      return true;
+    });
+  });
+  paginatedAppNodosForSearch = computed(() => {
+    const list = this.filteredAppNodosForSearch();
+    const start = (this.appNodoSearchPage() - 1) * this.appNodoSearchPageSize();
+    return list.slice(start, start + this.appNodoSearchPageSize());
+  });
+  appNodoSearchTotalPages = computed(() => Math.ceil(this.filteredAppNodosForSearch().length / this.appNodoSearchPageSize()) || 1);
+  nodosSegregacionActivos = computed(() => {
+    return this.nodosSegregacion()
+      .filter(n => n.estado === 'ACTIVO')
+      .sort((a, b) => {
+        const oa = this.nivelMapSegregacion().get(a.nivelId)?.orden ?? 0;
+        const ob = this.nivelMapSegregacion().get(b.nivelId)?.orden ?? 0;
+        if (oa !== ob) return oa - ob;
+        return a.codigo.localeCompare(b.codigo);
+      });
+  });
 
   filteredAppsForSearch = computed(() => {
     const qCodigo = this.appliedAppSearchCodigo().toLowerCase().trim();
@@ -1958,10 +2085,14 @@ export class SecurityComponent implements OnInit {
   }
 
   exportApps(): void {
+    const data = this.filteredApps().map(a => ({
+      ...a,
+      nodoCodigos: (a.nodoIds || []).map(id => this.nodoMapSegregacion().get(id)?.codigo || id).join(', '),
+    }));
     this.exportXlsx(
-      this.filteredApps(),
-      ['Código', 'Nombre', 'Descripción', 'Estado'],
-      ['codigo', 'nombre', 'descripcion', 'estado'],
+      data,
+      ['Código', 'Nombre', 'Descripción', 'Nodos', 'Estado'],
+      ['codigo', 'nombre', 'descripcion', 'nodoCodigos', 'estado'],
       'aplicaciones'
     );
   }
@@ -2028,8 +2159,9 @@ export class SecurityComponent implements OnInit {
     this._loadMod();
     this._loadPrg();
     this._loadPerf();
+    this._loadSegregacion();
     this.events.onDataChanged(() => {
-      this._loadApp(); this._loadMod(); this._loadPrg(); this._loadPerf();
+      this._loadApp(); this._loadMod(); this._loadPrg(); this._loadPerf(); this._loadSegregacion();
     });
     effect(() => { this.searchApp(); this.pageApp.set(0); }, { allowSignalWrites: true });
     effect(() => { this.searchMod(); this.pageMod.set(0); }, { allowSignalWrites: true });
@@ -2083,18 +2215,44 @@ export class SecurityComponent implements OnInit {
       complete: () => this.loadingPerf.set(false),
     });
   }
+  private _loadSegregacion(): void {
+    this.api.listNivelesSegregacion().subscribe({
+      next: (d) => this.nivelesSegregacion.set(d),
+      error: () => {},
+    });
+    this.api.listNodosSegregacion().subscribe({
+      next: (d) => this.nodosSegregacion.set(d),
+      error: () => {},
+    });
+  }
 
   // ============ FORMS BLANK ============
-  blankApp() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
+  blankApp() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado, nodoIds: [] as string[] }; }
   blankMod() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', estado: 'ACTIVO' as Estado }; }
   blankPrg() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', modCodigo: '', tipo: '' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
   blankPerf() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
   perfProgramas: PerfilProgramaRow[] = [];
 
-  // ============ APLICACIÓN CRUD ============
+// ============ APLICACIÓN CRUD ============
   openAppDialog(a?: Aplicacion): void {
-    if (a) { this.appForm = { codigo: a.codigo, nombre: a.nombre, descripcion: a.descripcion, estado: a.estado }; this.editAppId = a.id; }
-    else { this.appForm = this.blankApp(); this.editAppId = null; }
+    const padreIds = new Set(this.nodosSegregacionPadresActivos().map(n => n.id));
+    if (a) {
+      const nodoIds = (a.nodoIds || []).filter(id => padreIds.has(id)).slice(0, 1);
+      this.appForm = {
+        codigo: a.codigo,
+        nombre: a.nombre,
+        descripcion: a.descripcion,
+        estado: a.estado,
+        nodoIds,
+      };
+      this.editAppId = a.id;
+      const nodo = nodoIds[0] ? this.nodoMapSegregacion().get(nodoIds[0]) : undefined;
+      this.appNodoSearchText.set(nodo ? `${nodo.codigo} · ${nodo.nombre}` : '');
+    } else {
+      this.appForm = this.blankApp();
+      this.editAppId = null;
+      this.appNodoSearchText.set('');
+    }
     this.appTouched = false;
     this.showAppDlg = true;
   }
@@ -2102,9 +2260,12 @@ export class SecurityComponent implements OnInit {
   async saveApp(): Promise<void> {
     this.appTouched = true;
     if (!this.appForm.codigo || !this.appForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
+    const padreIds = new Set(this.nodosSegregacionPadresActivos().map(n => n.id));
+    const nodoIds = (this.appForm.nodoIds || []).filter(id => padreIds.has(id)).slice(0, 1);
+    const payload = { ...this.appForm, nodoIds };
     try {
-      if (this.editAppId) { await this.api.updateAplicacion(this.editAppId, this.appForm).toPromise(); this.toast.success('Aplicación actualizada'); }
-      else { await this.api.createAplicacion(this.appForm).toPromise(); this.toast.success('Aplicación creada'); }
+      if (this.editAppId) { await this.api.updateAplicacion(this.editAppId, payload).toPromise(); this.toast.success('Aplicación actualizada'); }
+      else { await this.api.createAplicacion(payload).toPromise(); this.toast.success('Aplicación creada'); }
       this.events.emitDataChanged(); this.closeAppDialog(); this._loadApp();
     } catch (e: any) {
       const msg = e?.error?.error || e?.message || 'Error inesperado.';
@@ -2162,6 +2323,51 @@ export class SecurityComponent implements OnInit {
   selectAppFromDialog(a: Aplicacion): void {
     this.selectApp(a);
     this.closeAppSearchDialog();
+  }
+
+  // --- Búsqueda de nodo padre para diálogo de aplicación ---
+  openAppNodoSearchDialog(): void {
+    this.appNodoSearchCodigo = '';
+    this.appNodoSearchNombre = '';
+    this.appliedAppNodoSearchCodigo.set('');
+    this.appliedAppNodoSearchNombre.set('');
+    this.appNodoSearchPage.set(1);
+    this.showAppNodoSearchDlg = true;
+  }
+
+  closeAppNodoSearchDialog(): void {
+    this.showAppNodoSearchDlg = false;
+  }
+
+  applyAppNodoFilters(): void {
+    this.appliedAppNodoSearchCodigo.set(this.appNodoSearchCodigo);
+    this.appliedAppNodoSearchNombre.set(this.appNodoSearchNombre);
+    this.appNodoSearchPage.set(1);
+  }
+
+  clearAppNodoFilters(): void {
+    this.appNodoSearchCodigo = '';
+    this.appNodoSearchNombre = '';
+    this.applyAppNodoFilters();
+  }
+
+  changeAppNodoSearchPage(delta: number): void {
+    this.appNodoSearchPage.set(Math.min(Math.max(this.appNodoSearchPage() + delta, 1), this.appNodoSearchTotalPages()));
+  }
+
+  selectAppNodo(nodo: NodoSegregacion): void {
+    this.appForm.nodoIds = [nodo.id];
+    this.appNodoSearchText.set(`${nodo.codigo} · ${nodo.nombre}`);
+  }
+
+  selectAppNodoFromDialog(nodo: NodoSegregacion): void {
+    this.selectAppNodo(nodo);
+    this.closeAppNodoSearchDialog();
+  }
+
+  clearAppNodo(): void {
+    this.appForm.nodoIds = [];
+    this.appNodoSearchText.set('');
   }
 
   // ============ MÓDULO CRUD ============

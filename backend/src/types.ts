@@ -17,6 +17,7 @@ export interface Aplicacion {
   nombre: string;
   descripcion: string;
   estado: SegEstado;
+  nodoIds: string[];
   createdAt: string;
 }
 

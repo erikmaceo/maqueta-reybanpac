@@ -741,10 +741,15 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: nowIso() }));
 app.get('/api/seg-aplicaciones', requireAuth, (_req, res) => res.json(db.aplicaciones));
 
 app.post('/api/seg-aplicaciones', requireAuth, requireGlobalAdmin, (req, res) => {
-  const { codigo, nombre, descripcion, estado } = req.body || {};
+  const { codigo, nombre, descripcion, estado, nodoIds } = req.body || {};
   if (!codigo || !nombre) return res.status(400).json({ error: 'codigo y nombre son obligatorios.' });
   if (db.aplicaciones.some((a) => a.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
-  const app: Aplicacion = { id: newId('seg_app'), codigo, nombre, descripcion: descripcion || '', estado: estado || 'ACTIVO', createdAt: nowIso() };
+  const nodos = Array.isArray(nodoIds) ? nodoIds : [];
+  const nodosInvalidos = nodos.filter((id: string) => !db.nodosSegregacion.some((n) => n.id === id));
+  if (nodosInvalidos.length > 0) {
+    return res.status(400).json({ error: `Algunos nodos de segregación no existen: ${nodosInvalidos.join(', ')}.` });
+  }
+  const app: Aplicacion = { id: newId('seg_app'), codigo, nombre, descripcion: descripcion || '', estado: estado || 'ACTIVO', nodoIds: nodos, createdAt: nowIso() };
   db.aplicaciones.push(app);
   logAudit(actorName(req), 'CREATE_APLICACION', 'aplicacion', app.id, `Aplicación "${nombre}" creada.`);
   res.status(201).json(app);
@@ -753,9 +758,17 @@ app.post('/api/seg-aplicaciones', requireAuth, requireGlobalAdmin, (req, res) =>
 app.put('/api/seg-aplicaciones/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const app = db.aplicaciones.find((a) => a.id === req.params.id);
   if (!app) return res.status(404).json({ error: 'Aplicación no encontrada.' });
-  const { codigo, nombre, descripcion, estado } = req.body || {};
+  const { codigo, nombre, descripcion, estado, nodoIds } = req.body || {};
   if (codigo && db.aplicaciones.some((a) => a.id !== app.id && a.codigo === codigo))
     return res.status(409).json({ error: 'El código ya existe.' });
+  if (nodoIds !== undefined) {
+    const nodos = Array.isArray(nodoIds) ? nodoIds : [];
+    const nodosInvalidos = nodos.filter((id: string) => !db.nodosSegregacion.some((n) => n.id === id));
+    if (nodosInvalidos.length > 0) {
+      return res.status(400).json({ error: `Algunos nodos de segregación no existen: ${nodosInvalidos.join(', ')}.` });
+    }
+    app.nodoIds = nodos;
+  }
   Object.assign(app, definedOnly({ codigo, nombre, descripcion, estado }));
   logAudit(actorName(req), 'UPDATE_APLICACION', 'aplicacion', app.id, `Aplicación "${app.nombre}" actualizada.`);
   res.json(app);
@@ -993,7 +1006,7 @@ app.post('/api/seg-aplicaciones/bulk', requireAuth, requireGlobalAdmin, (req, re
         updatedApps++;
         logAudit(actorName(req), 'UPDATE_APLICACION', 'aplicacion', existing.id, `Aplicación "${nombre}" actualizada por carga masiva.`);
       } else {
-        const app: Aplicacion = { id: newId('seg_app'), codigo, nombre, descripcion, estado: estado as Aplicacion['estado'], createdAt: nowIso() };
+        const app: Aplicacion = { id: newId('seg_app'), codigo, nombre, descripcion, estado: estado as Aplicacion['estado'], nodoIds: [], createdAt: nowIso() };
         db.aplicaciones.push(app);
         createdApps++;
         logAudit(actorName(req), 'CREATE_APLICACION', 'aplicacion', app.id, `Aplicación "${nombre}" creada por carga masiva.`);
@@ -1354,7 +1367,7 @@ app.post('/api/seg-matriz/upload', requireAuth, requireGlobalAdmin, upload.singl
       if (appCodigo && appNombre) {
         let app = db.aplicaciones.find(a => a.codigo === appCodigo);
         if (!app) {
-          app = { id: newId('seg_app'), codigo: appCodigo, nombre: appNombre, descripcion: normalize(r['app_descripcion']), estado: 'ACTIVO', createdAt: nowIso() };
+          app = { id: newId('seg_app'), codigo: appCodigo, nombre: appNombre, descripcion: normalize(r['app_descripcion']), estado: 'ACTIVO', nodoIds: [], createdAt: nowIso() };
           db.aplicaciones.push(app);
           created.apps++;
         }

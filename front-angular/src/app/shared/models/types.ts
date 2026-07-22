@@ -11,6 +11,7 @@ export interface Aplicacion {
   nombre: string;
   descripcion: string;
   estado: 'ACTIVO' | 'INACTIVO';
+  nodoIds: string[];
   createdAt: string;
 }
 

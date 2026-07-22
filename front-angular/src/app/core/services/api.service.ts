@@ -199,10 +199,10 @@ export class ApiService {
   listAplicaciones(): Observable<Aplicacion[]> {
     return this.request<Aplicacion[]>('GET', '/seg-aplicaciones');
   }
-  createAplicacion(body: Partial<Aplicacion>): Observable<Aplicacion> {
+  createAplicacion(body: Partial<Aplicacion> & { nodoIds?: string[] }): Observable<Aplicacion> {
     return this.request<Aplicacion>('POST', '/seg-aplicaciones', body);
   }
-  updateAplicacion(id: string, body: Partial<Aplicacion>): Observable<Aplicacion> {
+  updateAplicacion(id: string, body: Partial<Aplicacion> & { nodoIds?: string[] }): Observable<Aplicacion> {
     return this.request<Aplicacion>('PUT', `/seg-aplicaciones/${id}`, body);
   }
   deleteAplicacion(id: string): Observable<{ ok: boolean }> {

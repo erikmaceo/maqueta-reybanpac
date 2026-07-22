@@ -16,6 +16,7 @@ import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconUploadComponent, IconDownloadComponent,
 } from '../../shared/components/icons';
 import type { NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad } from '../../shared/models/types';
+import { validateBulkFileSize } from '../../shared/utils/file-validation';
 
 type TabValue = 'niveles' | 'nodos' | 'atributos';
 type Estado = 'ACTIVO' | 'INACTIVO';
@@ -1176,6 +1177,16 @@ export class SegregationLevelsComponent implements OnInit {
   onBulkFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] || null;
+    const validation = validateBulkFileSize(file);
+    if (!validation.valid) {
+      this.toast.error('Archivo demasiado grande', validation.message || 'El archivo excede el tamaño permitido.');
+      this.bulkFile = null;
+      this.bulkFileName.set('');
+      this.bulkErrors.set([]);
+      this.bulkSuccess.set('');
+      input.value = '';
+      return;
+    }
     this.bulkFile = file;
     this.bulkFileName.set(file ? file.name : '');
     this.bulkErrors.set([]);

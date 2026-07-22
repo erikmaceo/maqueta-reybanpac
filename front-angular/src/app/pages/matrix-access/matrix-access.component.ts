@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
+import { validateBulkFileSize } from '../../shared/utils/file-validation';
 import { IconUploadComponent, IconDownloadComponent, IconMatrixComponent } from '../../shared/components/icons';
 
 @Component({
@@ -156,6 +157,12 @@ export class MatrixAccessComponent {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    const validation = validateBulkFileSize(file);
+    if (!validation.valid) {
+      this.toast.error('Archivo demasiado grande', validation.message || 'El archivo excede el tamaño permitido.');
+      input.value = '';
+      return;
+    }
     this.uploadFile(file);
     input.value = '';
   }

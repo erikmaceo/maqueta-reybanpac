@@ -16,6 +16,7 @@ import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent, IconUploadComponent,
 } from '../../shared/components/icons';
 import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shared/models/types';
+import { validateBulkFileSize } from '../../shared/utils/file-validation';
 
 @Component({
   selector: 'app-user-access',
@@ -1005,6 +1006,16 @@ export class UserAccessComponent implements OnInit {
   onBulkFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] || null;
+    const validation = validateBulkFileSize(file);
+    if (!validation.valid) {
+      this.toast.error('Archivo demasiado grande', validation.message || 'El archivo excede el tamaño permitido.');
+      this.bulkFile = null;
+      this.bulkFileName.set('');
+      this.bulkErrors.set([]);
+      this.bulkSuccess.set('');
+      input.value = '';
+      return;
+    }
     this.bulkFile = file;
     this.bulkFileName.set(file ? file.name : '');
     this.bulkErrors.set([]);

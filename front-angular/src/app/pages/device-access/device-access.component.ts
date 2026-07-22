@@ -52,7 +52,7 @@ interface AccesoView extends AccesoDispositivoMovil {
   template: `
     <div class="page-head">
       <div>
-        <h1>Accesos por dispositivo móvil</h1>
+        <h1>Dispositivos Autorizados</h1>
         <p>Gestión de dispositivos móviles asignados a cada usuario.</p>
       </div>
     </div>

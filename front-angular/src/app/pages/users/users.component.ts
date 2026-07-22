@@ -45,6 +45,7 @@ interface UserForm {
   cargo: string;
   department: string;
   password: string;
+  source: 'LOCAL' | 'LDAP';
   roleIds: string[];
 }
 
@@ -203,6 +204,13 @@ interface UserForm {
       [closable]="true"
       (onHide)="closeCreateDialog()"
     >
+      <div class="field">
+        <label>Origen</label>
+        <select class="select" [(ngModel)]="userForm.source">
+          <option value="LOCAL">Local</option>
+          <option value="LDAP">LDAP</option>
+        </select>
+      </div>
       <div class="form-grid">
         <div class="field">
           <label>Usuario</label>
@@ -252,6 +260,13 @@ interface UserForm {
       (onHide)="closeEditDialog()"
     >
       @if (editUser) {
+        <div class="field">
+          <label>Origen</label>
+          <select class="select" [(ngModel)]="userForm.source">
+            <option value="LOCAL">Local</option>
+            <option value="LDAP">LDAP</option>
+          </select>
+        </div>
         <div class="form-grid">
           <div class="field">
             <label>Usuario</label>
@@ -390,7 +405,7 @@ export class UsersComponent implements OnInit {
   }
 
   blankForm(): UserForm {
-    return { username: '', firstName: '', lastName: '', email: '', cargo: '', department: '', password: '', roleIds: [] };
+    return { username: '', firstName: '', lastName: '', email: '', cargo: '', department: '', password: '', source: 'LOCAL', roleIds: [] };
   }
 
   filtered(): User[] {
@@ -419,6 +434,7 @@ export class UsersComponent implements OnInit {
       cargo: u.cargo,
       department: u.department,
       password: '',
+      source: u.source,
       roleIds: [...u.roleIds],
     };
     this.showEditDialog = true;
@@ -482,6 +498,7 @@ export class UsersComponent implements OnInit {
       email: this.userForm.email,
       cargo: this.userForm.cargo,
       department: this.userForm.department,
+      source: this.userForm.source,
     };
     if (this.userForm.password) {
       payload.password = this.userForm.password;

@@ -281,16 +281,10 @@ app.get('/api/users', requireAuth, (req, res) => {
 
 app.post('/api/users', requireAuth, requireGlobalAdmin, (req, res) => {
   const body = req.body || {};
-  const type: User['type'] = body.type === 'CLIENTE_FINAL' ? 'CLIENTE_FINAL' : 'ADMIN';
+  const source: User['source'] = body.source === 'LDAP' ? 'LDAP' : 'LOCAL';
+  // El tipo se deriva del origen: LOCAL permite ADMIN; LDAP se asocia a CLIENTE_FINAL.
+  const type: User['type'] = source === 'LDAP' ? 'CLIENTE_FINAL' : 'ADMIN';
 
-  // Regla de negocio (hermética): los administradores se crean localmente en la
-  // consola; los clientes finales SOLO se integran desde LDAP (/api/ldap/import),
-  // nunca por esta vía, independientemente del 'source' enviado.
-  if (type === 'CLIENTE_FINAL') {
-    return res.status(400).json({
-      error: 'Los usuarios "cliente final" solo pueden integrarse desde LDAP. Use /api/ldap/import.',
-    });
-  }
   if (!body.username || !body.firstName) {
     return res.status(400).json({ error: 'username y firstName son obligatorios.' });
   }
@@ -310,7 +304,7 @@ app.post('/api/users', requireAuth, requireGlobalAdmin, (req, res) => {
     nodoIds: Array.isArray(body.nodoIds) ? body.nodoIds : [],
     perfilCodigos: [],
     type,
-    source: 'LOCAL',
+    source,
     status: body.status || 'ACTIVE',
     roleIds: Array.isArray(body.roleIds) ? body.roleIds : [],
     createdAt: nowIso(),
@@ -319,7 +313,7 @@ app.post('/api/users', requireAuth, requireGlobalAdmin, (req, res) => {
   };
   db.users.push(user);
   logAudit(actorName(req), 'CREATE_USER', 'user', user.id,
-    `Usuario administrador local "${user.username}" creado.`);
+    `Usuario "${user.username}" creado (origen: ${source}).`);
   res.status(201).json(publicUser(user));
 });
 
@@ -327,12 +321,16 @@ app.put('/api/users/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const user = db.users.find((u) => u.id === req.params.id);
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
   const body = { ...req.body };
-  // Campos inmutables por esta vía: id, origen y tipo (preservan la invariante
-  // LOCAL<->ADMIN / LDAP<->CLIENTE_FINAL). Los roles solo cambian por /roles o el autorizador.
+  // Campos inmutables por esta vía: id, tipo y roles. El origen sí se puede modificar
+  // desde el formulario de edición; el tipo se ajusta automáticamente según el origen.
   delete body.id;
-  delete body.source;
   delete body.type;
   delete body.roleIds;
+  if (body.source !== undefined) {
+    const source: User['source'] = body.source === 'LDAP' ? 'LDAP' : 'LOCAL';
+    body.source = source;
+    body.type = source === 'LDAP' ? 'CLIENTE_FINAL' : 'ADMIN';
+  }
   if (body.password === '' || body.password == null) delete body.password;
   // Renombrar exige unicidad de username (igual que en el alta).
   if (body.username && db.users.some((u) => u.id !== user.id && u.username.toLowerCase() === String(body.username).toLowerCase())) {

@@ -149,24 +149,21 @@ interface PerfilProgramaRow {
               </tbody>
             </table>
           </div>
-          @if (totalPagesApp() > 1) {
+          @if (filteredApps().length > 0) {
             <div class="pagination">
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pageApp() === 0" (click)="setPage('app', pageApp() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pageApp() + 1 }} de {{ totalPagesApp() }} ({{ filteredApps().length }} registros)</span>
               <div class="page-size-selector">
-                <span class="muted small">Mostrar</span>
-                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
                   <option [value]="5">5</option>
                   <option [value]="10">10</option>
                   <option [value]="15">15</option>
                   <option [value]="20">20</option>
                 </select>
-                <span class="muted small">registros</span>
-              </div>
-              <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pageApp() === 0" (click)="setPage('app', pageApp() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesApp(), pageApp()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pageApp()" [class.btn-ghost]="p !== pageApp()" (click)="setPage('app', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pageApp() === totalPagesApp() - 1" (click)="setPage('app', pageApp() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageApp() === totalPagesApp() - 1" (click)="setPage('app', pageApp() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -234,24 +231,21 @@ interface PerfilProgramaRow {
               </tbody>
             </table>
           </div>
-          @if (totalPagesMod() > 1) {
+          @if (filteredMods().length > 0) {
             <div class="pagination">
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pageMod() === 0" (click)="setPage('mod', pageMod() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pageMod() + 1 }} de {{ totalPagesMod() }} ({{ filteredMods().length }} registros)</span>
               <div class="page-size-selector">
-                <span class="muted small">Mostrar</span>
-                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
                   <option [value]="5">5</option>
                   <option [value]="10">10</option>
                   <option [value]="15">15</option>
                   <option [value]="20">20</option>
                 </select>
-                <span class="muted small">registros</span>
-              </div>
-              <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pageMod() === 0" (click)="setPage('mod', pageMod() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesMod(), pageMod()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pageMod()" [class.btn-ghost]="p !== pageMod()" (click)="setPage('mod', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pageMod() === totalPagesMod() - 1" (click)="setPage('mod', pageMod() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageMod() === totalPagesMod() - 1" (click)="setPage('mod', pageMod() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -321,24 +315,21 @@ interface PerfilProgramaRow {
               </tbody>
             </table>
           </div>
-          @if (totalPagesPrg() > 1) {
+          @if (filteredPrgs().length > 0) {
             <div class="pagination">
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePrg() === 0" (click)="setPage('prg', pagePrg() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pagePrg() + 1 }} de {{ totalPagesPrg() }} ({{ filteredPrgs().length }} registros)</span>
               <div class="page-size-selector">
-                <span class="muted small">Mostrar</span>
-                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
                   <option [value]="5">5</option>
                   <option [value]="10">10</option>
                   <option [value]="15">15</option>
                   <option [value]="20">20</option>
                 </select>
-                <span class="muted small">registros</span>
-              </div>
-              <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pagePrg() === 0" (click)="setPage('prg', pagePrg() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesPrg(), pagePrg()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pagePrg()" [class.btn-ghost]="p !== pagePrg()" (click)="setPage('prg', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pagePrg() === totalPagesPrg() - 1" (click)="setPage('prg', pagePrg() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePrg() === totalPagesPrg() - 1" (click)="setPage('prg', pagePrg() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -524,24 +515,21 @@ interface PerfilProgramaRow {
               </tbody>
             </table>
           </div>
-          @if (totalPagesPerf() > 1) {
+          @if (filteredPerfs().length > 0) {
             <div class="pagination">
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePerf() === 0" (click)="setPage('perf', pagePerf() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pagePerf() + 1 }} de {{ totalPagesPerf() }} ({{ filteredPerfs().length }} registros)</span>
               <div class="page-size-selector">
-                <span class="muted small">Mostrar</span>
-                <select class="select" style="width:auto;padding:5px 10px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
                   <option [value]="5">5</option>
                   <option [value]="10">10</option>
                   <option [value]="15">15</option>
                   <option [value]="20">20</option>
                 </select>
-                <span class="muted small">registros</span>
-              </div>
-              <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pagePerf() === 0" (click)="setPage('perf', pagePerf() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesPerf(), pagePerf()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pagePerf()" [class.btn-ghost]="p !== pagePerf()" (click)="setPage('perf', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pagePerf() === totalPagesPerf() - 1" (click)="setPage('perf', pagePerf() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePerf() === totalPagesPerf() - 1" (click)="setPage('perf', pagePerf() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -2068,12 +2056,6 @@ export class SecurityComponent implements OnInit {
     this.pageMod.set(0);
     this.pagePrg.set(0);
     this.pagePerf.set(0);
-  }
-
-  getPageNumbers(total: number, current: number): number[] {
-    const pages: number[] = [];
-    for (let i = 0; i < total; i++) pages.push(i);
-    return pages;
   }
 
   private exportXlsx(data: any[], headers: string[], cols: string[], filename: string): void {

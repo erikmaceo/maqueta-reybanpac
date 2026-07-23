@@ -64,7 +64,7 @@ interface NodoView extends NodoSegregacion {
               <div class="search">
                 <app-icon-search [width]="15" [height]="15" />
                 <input type="text" placeholder="Buscar nivel..."
-                  [ngModel]="searchNivel()" (ngModelChange)="searchNivel.set($event)" />
+                  [ngModel]="searchNivel()" (ngModelChange)="onSearchNivelChange($event)" />
               </div>
               <button class="btn btn-primary" (click)="openNivelDialog()">
                 <app-icon-plus [width]="14" [height]="14" /> Nuevo Nivel
@@ -82,7 +82,7 @@ interface NodoView extends NodoSegregacion {
                   </tr>
                 </thead>
                 <tbody>
-                  @for (n of filteredNiveles(); track n.id) {
+                  @for (n of paginatedNiveles(); track n.id) {
                     <tr>
                       <td class="mono">{{ n.orden }}</td>
                       <td class="mono">{{ n.codigo }}</td>
@@ -109,6 +109,25 @@ interface NodoView extends NodoSegregacion {
                 </tbody>
               </table>
             </div>
+
+            @if (filteredNiveles().length > 0) {
+              <div class="pagination">
+                <div class="page-controls">
+                  <button class="btn btn-ghost btn-sm" [disabled]="nivelPage() === 1" (click)="changeNivelPage(-1)">Anterior</button>
+                </div>
+                <span>Página {{ nivelPage() }} de {{ totalNivelPages() }} ({{ totalNivelItems() }} registros)</span>
+                <div class="page-size-selector">
+                  <label class="small muted">Registros por página</label>
+                  <select class="select" style="width: auto; min-width: 60px;" [ngModel]="nivelPageSize()" (ngModelChange)="changeNivelPageSize($event)">
+                    <option [value]="5">5</option>
+                    <option [value]="10">10</option>
+                    <option [value]="15">15</option>
+                    <option [value]="20">20</option>
+                  </select>
+                  <button class="btn btn-ghost btn-sm" [disabled]="nivelPage() === totalNivelPages()" (click)="changeNivelPage(1)">Siguiente</button>
+                </div>
+              </div>
+            }
           }
         </p-tabpanel>
 
@@ -230,7 +249,7 @@ interface NodoView extends NodoSegregacion {
               <div class="search">
                 <app-icon-search [width]="15" [height]="15" />
                 <input type="text" placeholder="Buscar atributo..."
-                  [ngModel]="searchAtributo()" (ngModelChange)="searchAtributo.set($event)" />
+                  [ngModel]="searchAtributo()" (ngModelChange)="onSearchAtributoChange($event)" />
               </div>
               <button class="btn btn-primary" (click)="openAtributoDialog()" [disabled]="niveles().length === 0">
                 <app-icon-plus [width]="14" [height]="14" /> Nuevo Atributo
@@ -251,7 +270,7 @@ interface NodoView extends NodoSegregacion {
                   </tr>
                 </thead>
                 <tbody>
-                  @for (a of filteredAtributos(); track a.id) {
+                  @for (a of paginatedAtributos(); track a.id) {
                     <tr>
                       <td class="mono">{{ a.orden }}</td>
                       <td><span class="badge badge-blue">{{ nivelMap().get(a.nivelId)?.nombre || a.nivelId }}</span></td>
@@ -285,6 +304,25 @@ interface NodoView extends NodoSegregacion {
                 </tbody>
               </table>
             </div>
+
+            @if (filteredAtributos().length > 0) {
+              <div class="pagination">
+                <div class="page-controls">
+                  <button class="btn btn-ghost btn-sm" [disabled]="atributoPage() === 1" (click)="changeAtributoPage(-1)">Anterior</button>
+                </div>
+                <span>Página {{ atributoPage() }} de {{ totalAtributoPages() }} ({{ totalAtributoItems() }} registros)</span>
+                <div class="page-size-selector">
+                  <label class="small muted">Registros por página</label>
+                  <select class="select" style="width: auto; min-width: 60px;" [ngModel]="atributoPageSize()" (ngModelChange)="changeAtributoPageSize($event)">
+                    <option [value]="5">5</option>
+                    <option [value]="10">10</option>
+                    <option [value]="15">15</option>
+                    <option [value]="20">20</option>
+                  </select>
+                  <button class="btn btn-ghost btn-sm" [disabled]="atributoPage() === totalAtributoPages()" (click)="changeAtributoPage(1)">Siguiente</button>
+                </div>
+              </div>
+            }
           }
         </p-tabpanel>
 
@@ -604,6 +642,11 @@ export class SegregationLevelsComponent implements OnInit {
   searchNodo = signal('');
   searchAtributo = signal('');
 
+  nivelPage = signal(1);
+  nivelPageSize = signal(10);
+  atributoPage = signal(1);
+  atributoPageSize = signal(10);
+
   showNivelDlg = false;
   editNivelId: string | null = null;
   nivelForm: any = {};
@@ -688,6 +731,13 @@ export class SegregationLevelsComponent implements OnInit {
       String(n.orden).includes(q)
     );
   });
+  paginatedNiveles = computed(() => {
+    const list = this.filteredNiveles();
+    const start = (this.nivelPage() - 1) * this.nivelPageSize();
+    return list.slice(start, start + this.nivelPageSize());
+  });
+  totalNivelPages = computed(() => Math.max(1, Math.ceil(this.filteredNiveles().length / this.nivelPageSize())));
+  totalNivelItems = computed(() => this.filteredNiveles().length);
 
   nodosView = computed<NodoView[]>(() => {
     return this.nodos().map(n => {
@@ -840,6 +890,13 @@ export class SegregationLevelsComponent implements OnInit {
       (this.nivelMap().get(a.nivelId)?.nombre || '').toLowerCase().includes(q)
     );
   });
+  paginatedAtributos = computed(() => {
+    const list = this.filteredAtributos();
+    const start = (this.atributoPage() - 1) * this.atributoPageSize();
+    return list.slice(start, start + this.atributoPageSize());
+  });
+  totalAtributoPages = computed(() => Math.max(1, Math.ceil(this.filteredAtributos().length / this.atributoPageSize())));
+  totalAtributoItems = computed(() => this.filteredAtributos().length);
 
   ngOnInit(): void {
     this.loadNiveles();
@@ -856,6 +913,40 @@ export class SegregationLevelsComponent implements OnInit {
       this.loadProvincias();
       this.loadCiudades();
     });
+  }
+
+  // --- Paginación Niveles ---
+  changeNivelPage(delta: number): void {
+    this.nivelPage.set(Math.min(Math.max(this.nivelPage() + delta, 1), this.totalNivelPages()));
+  }
+  setNivelPage(p: number): void {
+    this.nivelPage.set(p);
+  }
+  changeNivelPageSize(value: any): void {
+    this.nivelPageSize.set(Number(value));
+    this.nivelPage.set(1);
+  }
+
+  // --- Paginación Atributos ---
+  changeAtributoPage(delta: number): void {
+    this.atributoPage.set(Math.min(Math.max(this.atributoPage() + delta, 1), this.totalAtributoPages()));
+  }
+  setAtributoPage(p: number): void {
+    this.atributoPage.set(p);
+  }
+  changeAtributoPageSize(value: any): void {
+    this.atributoPageSize.set(Number(value));
+    this.atributoPage.set(1);
+  }
+
+  onSearchNivelChange(value: string): void {
+    this.searchNivel.set(value);
+    this.nivelPage.set(1);
+  }
+
+  onSearchAtributoChange(value: string): void {
+    this.searchAtributo.set(value);
+    this.atributoPage.set(1);
   }
 
   loadNiveles = (): void => {

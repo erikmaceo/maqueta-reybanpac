@@ -119,14 +119,21 @@ const MOCK_CIUDADES: Ciudad[] = [
               </tbody>
             </table>
           </div>
-          @if (totalPagesPais() > 1) {
+          @if (filteredPaises().length > 0) {
             <div class="pagination">
               <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pagePais() === 0" (click)="setPage('pais', pagePais() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesPais(), pagePais()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pagePais()" [class.btn-ghost]="p !== pagePais()" (click)="setPage('pais', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pagePais() === totalPagesPais() - 1" (click)="setPage('pais', pagePais() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePais() === 0" (click)="setPage('pais', pagePais() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pagePais() + 1 }} de {{ totalPagesPais() }} ({{ filteredPaises().length }} registros)</span>
+              <div class="page-size-selector">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" [disabled]="pagePais() === totalPagesPais() - 1" (click)="setPage('pais', pagePais() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -187,14 +194,21 @@ const MOCK_CIUDADES: Ciudad[] = [
               </tbody>
             </table>
           </div>
-          @if (totalPagesProv() > 1) {
+          @if (filteredProvincias().length > 0) {
             <div class="pagination">
               <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pageProv() === 0" (click)="setPage('prov', pageProv() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesProv(), pageProv()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pageProv()" [class.btn-ghost]="p !== pageProv()" (click)="setPage('prov', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pageProv() === totalPagesProv() - 1" (click)="setPage('prov', pageProv() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageProv() === 0" (click)="setPage('prov', pageProv() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pageProv() + 1 }} de {{ totalPagesProv() }} ({{ filteredProvincias().length }} registros)</span>
+              <div class="page-size-selector">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageProv() === totalPagesProv() - 1" (click)="setPage('prov', pageProv() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -257,14 +271,21 @@ const MOCK_CIUDADES: Ciudad[] = [
               </tbody>
             </table>
           </div>
-          @if (totalPagesCiu() > 1) {
+          @if (filteredCiudades().length > 0) {
             <div class="pagination">
               <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pageCiu() === 0" (click)="setPage('ciu', pageCiu() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesCiu(), pageCiu()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pageCiu()" [class.btn-ghost]="p !== pageCiu()" (click)="setPage('ciu', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pageCiu() === totalPagesCiu() - 1" (click)="setPage('ciu', pageCiu() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageCiu() === 0" (click)="setPage('ciu', pageCiu() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pageCiu() + 1 }} de {{ totalPagesCiu() }} ({{ filteredCiudades().length }} registros)</span>
+              <div class="page-size-selector">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageCiu() === totalPagesCiu() - 1" (click)="setPage('ciu', pageCiu() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -321,14 +342,21 @@ const MOCK_CIUDADES: Ciudad[] = [
               </tbody>
             </table>
           </div>
-          @if (totalPagesDisp() > 1) {
+          @if (filteredDispositivos().length > 0) {
             <div class="pagination">
               <div class="page-controls">
-                <button class="btn btn-ghost btn-sm" [disabled]="pageDisp() === 0" (click)="setPage('disp', pageDisp() - 1)">‹</button>
-                @for (p of getPageNumbers(totalPagesDisp(), pageDisp()); track p) {
-                  <button class="btn btn-sm" [class.btn-primary]="p === pageDisp()" [class.btn-ghost]="p !== pageDisp()" (click)="setPage('disp', p)">{{ p + 1 }}</button>
-                }
-                <button class="btn btn-ghost btn-sm" [disabled]="pageDisp() === totalPagesDisp() - 1" (click)="setPage('disp', pageDisp() + 1)">›</button>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageDisp() === 0" (click)="setPage('disp', pageDisp() - 1)">Anterior</button>
+              </div>
+              <span>Página {{ pageDisp() + 1 }} de {{ totalPagesDisp() }} ({{ filteredDispositivos().length }} registros)</span>
+              <div class="page-size-selector">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" [disabled]="pageDisp() === totalPagesDisp() - 1" (click)="setPage('disp', pageDisp() + 1)">Siguiente</button>
               </div>
             </div>
           }
@@ -586,10 +614,12 @@ export class ParametersConfigurationComponent implements OnInit {
     else this.pageDisp.set(page);
   }
 
-  getPageNumbers(total: number, current: number): number[] {
-    const pages: number[] = [];
-    for (let i = 0; i < total; i++) pages.push(i);
-    return pages;
+  changePageSize(value: any): void {
+    this.pageSize.set(Number(value));
+    this.pagePais.set(0);
+    this.pageProv.set(0);
+    this.pageCiu.set(0);
+    this.pageDisp.set(0);
   }
 
   ngOnInit(): void {

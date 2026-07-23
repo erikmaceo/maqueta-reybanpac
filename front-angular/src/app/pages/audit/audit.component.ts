@@ -109,9 +109,22 @@ import type { AuditEntry } from '../../shared/models/types';
       </div>
 
       <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="page() === 1" (click)="changePage(-1)">Anterior</button>
-        <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages()" (click)="changePage(1)">Siguiente</button>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="page() === 1" (click)="changePage(-1)">Anterior</button>
+          <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} registros)</span>
+        </div>
+        <div class="page-size-selector">
+          <label class="small muted">Registros por página</label>
+          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+        </div>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages()" (click)="changePage(1)">Siguiente</button>
+        </div>
       </div>
     }
 
@@ -130,7 +143,7 @@ export class AuditComponent implements OnInit {
   desde = signal('');
   hasta = signal('');
   page = signal(1);
-  pageSize = signal(25);
+  pageSize = signal(10);
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
   pageNumbers = computed(() => {

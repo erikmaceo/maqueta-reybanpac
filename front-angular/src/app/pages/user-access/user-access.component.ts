@@ -155,10 +155,81 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       <div class="field">
         <label>Nodos de Segregación</label>
         <div style="display:flex;flex-direction:column;gap:12px;">
-          @for (nivel of niveles(); track nivel.id) {
+          @for (nivel of niveles(); track nivel.id; let i = $index) {
             <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <span class="small muted"><b>{{ nivel.nombre }}</b></span>
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;gap:8px;">
+                @if (i === 0) {
+                  <div class="empresa-autocomplete" style="flex: 1;">
+                    <label class="small muted" style="display:block; margin-bottom: 4px;"><b>{{ nivel.nombre }}</b></label>
+                    <input
+                      type="text"
+                      class="select"
+                      placeholder="Buscar empresa..."
+                      [ngModel]="empresaAutoQuery()"
+                      (ngModelChange)="empresaAutoQuery.set($event); empresaAutoOpen.set(true)"
+                      (focus)="empresaAutoOpen.set(true)"
+                      (blur)="closeEmpresaAutocomplete()"
+                    />
+                    @if (empresaAutoOpen() && empresaSuggestions().length > 0) {
+                      <div class="empresa-autocomplete-list">
+                        @for (n of empresaSuggestions(); track n.id) {
+                          <div class="empresa-autocomplete-item" (mousedown)="selectEmpresa(n)">
+                            <span class="mono small">{{ n.codigo }}</span>
+                            <span class="small">{{ n.nombre }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else if (i === 1) {
+                  <div class="empresa-autocomplete" style="flex: 1;">
+                    <label class="small muted" style="display:block; margin-bottom: 4px;"><b>{{ nivel.nombre }}</b></label>
+                    <input
+                      type="text"
+                      class="select"
+                      placeholder="Buscar sucursal..."
+                      [ngModel]="sucursalAutoQuery()"
+                      (ngModelChange)="sucursalAutoQuery.set($event); sucursalAutoOpen.set(true)"
+                      (focus)="sucursalAutoOpen.set(true)"
+                      (blur)="closeSucursalAutocomplete()"
+                    />
+                    @if (sucursalAutoOpen() && sucursalSuggestions().length > 0) {
+                      <div class="empresa-autocomplete-list">
+                        @for (n of sucursalSuggestions(); track n.id) {
+                          <div class="empresa-autocomplete-item" (mousedown)="selectSucursal(n)">
+                            <span class="mono small">{{ n.codigo }}</span>
+                            <span class="small">{{ n.nombre }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else if (i === 2) {
+                  <div class="empresa-autocomplete" style="flex: 1;">
+                    <label class="small muted" style="display:block; margin-bottom: 4px;"><b>{{ nivel.nombre }}</b></label>
+                    <input
+                      type="text"
+                      class="select"
+                      placeholder="Buscar punto de venta..."
+                      [ngModel]="puntoVentaAutoQuery()"
+                      (ngModelChange)="puntoVentaAutoQuery.set($event); puntoVentaAutoOpen.set(true)"
+                      (focus)="puntoVentaAutoOpen.set(true)"
+                      (blur)="closePuntoVentaAutocomplete()"
+                    />
+                    @if (puntoVentaAutoOpen() && puntoVentaSuggestions().length > 0) {
+                      <div class="empresa-autocomplete-list">
+                        @for (n of puntoVentaSuggestions(); track n.id) {
+                          <div class="empresa-autocomplete-item" (mousedown)="selectPuntoVenta(n)">
+                            <span class="mono small">{{ n.codigo }}</span>
+                            <span class="small">{{ n.nombre }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <span class="small muted"><b>{{ nivel.nombre }}</b></span>
+                }
                 <button class="btn btn-ghost btn-sm" type="button" (click)="openNodoSearchDialog(nivel.id, nivel.nombre)" [disabled]="!puedeBuscarNivel(nivel.id)" [title]="puedeBuscarNivel(nivel.id) ? 'Buscar ' + nivel.nombre : 'Seleccione primero un ' + getNivelNombre(getNivelPadreId(nivel.id)!)" >
                   <app-icon-search [width]="14" [height]="14" /> Buscar {{ nivel.nombre }}
                 </button>
@@ -472,6 +543,42 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
   `,
   styles: [`
     .center { text-align: center; }
+    .empresa-autocomplete {
+      position: relative;
+      width: 100%;
+      min-width: 220px;
+    }
+    .empresa-autocomplete input {
+      width: 100%;
+    }
+    .empresa-autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 4px;
+    }
+    .empresa-autocomplete-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    .empresa-autocomplete-item:last-child {
+      border-bottom: none;
+    }
+    .empresa-autocomplete-item:hover {
+      background: var(--surface-2);
+    }
   `],
 })
 export class UserAccessComponent implements OnInit {
@@ -546,6 +653,63 @@ export class UserAccessComponent implements OnInit {
   search = signal('');
   pageSize = signal(10);
   page = signal(0);
+
+  empresaAutoQuery = signal('');
+  empresaAutoOpen = signal(false);
+  empresaAutoTimer: any = null;
+
+  sucursalAutoQuery = signal('');
+  sucursalAutoOpen = signal(false);
+  sucursalAutoTimer: any = null;
+
+  puntoVentaAutoQuery = signal('');
+  puntoVentaAutoOpen = signal(false);
+  puntoVentaAutoTimer: any = null;
+
+  primerNivel = computed(() => {
+    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
+    return sorted[0] || null;
+  });
+
+  segundoNivel = computed(() => {
+    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
+    return sorted[1] || null;
+  });
+
+  tercerNivel = computed(() => {
+    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
+    return sorted[2] || null;
+  });
+
+  empresaSuggestions = computed(() => {
+    const primer = this.primerNivel();
+    if (!primer) return [];
+    const q = this.empresaAutoQuery().toLowerCase().trim();
+    return this.nodos()
+      .filter(n => n.nivelId === primer.id && n.estado === 'ACTIVO' &&
+        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
+      .slice(0, 8);
+  });
+
+  sucursalSuggestions = computed(() => {
+    const segundo = this.segundoNivel();
+    if (!segundo) return [];
+    const q = this.sucursalAutoQuery().toLowerCase().trim();
+    return this.nodos()
+      .filter(n => n.nivelId === segundo.id && n.estado === 'ACTIVO' &&
+        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
+      .slice(0, 8);
+  });
+
+  puntoVentaSuggestions = computed(() => {
+    const tercer = this.tercerNivel();
+    if (!tercer) return [];
+    const q = this.puntoVentaAutoQuery().toLowerCase().trim();
+    return this.nodos()
+      .filter(n => n.nivelId === tercer.id && n.estado === 'ACTIVO' &&
+        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
+      .slice(0, 8);
+  });
 
   filteredUsers = computed(() => {
     const q = this.search().toLowerCase().trim();
@@ -672,6 +836,48 @@ export class UserAccessComponent implements OnInit {
   changePageSize(value: any): void {
     this.pageSize.set(Number(value));
     this.page.set(0);
+  }
+
+  selectEmpresa(n: NodoSegregacion): void {
+    this.editForm.update(f => ({
+      ...f,
+      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
+    }));
+    this.empresaAutoQuery.set('');
+    this.empresaAutoOpen.set(false);
+    clearTimeout(this.empresaAutoTimer);
+  }
+
+  selectSucursal(n: NodoSegregacion): void {
+    this.editForm.update(f => ({
+      ...f,
+      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
+    }));
+    this.sucursalAutoQuery.set('');
+    this.sucursalAutoOpen.set(false);
+    clearTimeout(this.sucursalAutoTimer);
+  }
+
+  selectPuntoVenta(n: NodoSegregacion): void {
+    this.editForm.update(f => ({
+      ...f,
+      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
+    }));
+    this.puntoVentaAutoQuery.set('');
+    this.puntoVentaAutoOpen.set(false);
+    clearTimeout(this.puntoVentaAutoTimer);
+  }
+
+  closeEmpresaAutocomplete(): void {
+    this.empresaAutoTimer = setTimeout(() => this.empresaAutoOpen.set(false), 150);
+  }
+
+  closeSucursalAutocomplete(): void {
+    this.sucursalAutoTimer = setTimeout(() => this.sucursalAutoOpen.set(false), 150);
+  }
+
+  closePuntoVentaAutocomplete(): void {
+    this.puntoVentaAutoTimer = setTimeout(() => this.puntoVentaAutoOpen.set(false), 150);
   }
 
   onSearchChange(value: string): void {

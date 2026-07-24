@@ -45,11 +45,6 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
-        path: 'acceso-usuarios',
-        loadComponent: () => import('./pages/user-access/user-access.component').then(m => m.UserAccessComponent),
-        canActivate: [adminGuard],
-      },
-      {
         path: 'acceso-dispositivos',
         loadComponent: () => import('./pages/device-access/device-access.component').then(m => m.DeviceAccessComponent),
         canActivate: [adminGuard],

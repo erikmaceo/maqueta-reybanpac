@@ -64,7 +64,7 @@ interface AccesoView extends AccesoDispositivoMovil {
         <div class="search">
           <app-icon-search [width]="15" [height]="15" />
           <input type="text" placeholder="Buscar por usuario o dispositivo..."
-            [ngModel]="search()" (ngModelChange)="search.set($event)" />
+            [ngModel]="search()" (ngModelChange)="onSearchChange($event)" />
         </div>
         <button class="btn btn-primary" (click)="openDialog()">
           <app-icon-plus [width]="14" [height]="14" /> Nuevo Acceso
@@ -83,7 +83,7 @@ interface AccesoView extends AccesoDispositivoMovil {
             </tr>
           </thead>
           <tbody>
-            @for (a of filteredAccesos(); track a.id) {
+            @for (a of paginatedAccesos(); track a.id) {
               <tr>
                 <td class="mono">{{ a.username }}</td>
                 <td><div class="cell-strong">{{ a.firstName }}</div></td>
@@ -111,6 +111,25 @@ interface AccesoView extends AccesoDispositivoMovil {
           </tbody>
         </table>
       </div>
+
+      @if (filteredAccesos().length > 0) {
+        <div class="pagination">
+          <div class="page-controls">
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">Anterior</button>
+          </div>
+          <span>Página {{ page() + 1 }} de {{ totalPages() }} ({{ filteredAccesos().length }} registros)</span>
+          <div class="page-size-selector">
+            <label class="small muted">Registros por página</label>
+            <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="15">15</option>
+              <option [value]="20">20</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">Siguiente</button>
+          </div>
+        </div>
+      }
     }
 
     <p-dialog
@@ -319,6 +338,9 @@ export class DeviceAccessComponent implements OnInit {
   dispSearchPage = signal(1);
   dispSearchPageSize = signal(10);
 
+  page = signal(0);
+  pageSize = signal(10);
+
   userMap = computed(() => new Map(this.usuarios().map(u => [u.id, u])));
   dispositivoMap = computed(() => new Map(this.dispositivos().map(d => [d.id, d])));
 
@@ -347,6 +369,11 @@ export class DeviceAccessComponent implements OnInit {
       a.dispositivoCodigo.toLowerCase().includes(q)
     );
   });
+  paginatedAccesos = computed(() => {
+    const start = this.page() * this.pageSize();
+    return this.filteredAccesos().slice(start, start + this.pageSize());
+  });
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredAccesos().length / this.pageSize())));
 
   filteredUsersForSearch = computed(() => {
     const qCodigo = this.appliedUserFilterCodigo().toLowerCase().trim();
@@ -480,6 +507,20 @@ export class DeviceAccessComponent implements OnInit {
   selectDispFromDialog(d: DispositivoMovil): void {
     this.selectDispositivo(d);
     this.closeDispSearchDialog();
+  }
+
+  setPage(p: number): void {
+    this.page.set(p);
+  }
+
+  changePageSize(value: any): void {
+    this.pageSize.set(Number(value));
+    this.page.set(0);
+  }
+
+  onSearchChange(value: string): void {
+    this.search.set(value);
+    this.page.set(0);
   }
 
   ngOnInit(): void {

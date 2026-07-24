@@ -35,7 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/seguridades', label: 'Aplicaciones', icon: IconSecurityComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/parametros', label: 'Parámetros y Configuración', icon: IconSettingsComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Sistemas y Configuración', adminOnly: true },
-  { path: '/acceso-usuarios', label: 'Accesos por usuario', icon: IconRolesComponent, group: 'Sistemas y Configuración', adminOnly: true },
+
   { path: '/acceso-dispositivos', label: 'Dispositivos Autorizados', icon: IconMobileComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/matriz-acceso', label: 'Matriz de Acceso', icon: IconMatrixComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
@@ -51,7 +51,6 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/configuracion': { title: 'Niveles de Segregación', sub: 'Gestión dinámica de la jerarquía de segregación' },
   '/parametros': { title: 'Parámetros y Configuración', sub: 'Gestión de países, provincias y ciudades' },
   '/usuarios': { title: 'Usuarios', sub: 'Administradores locales y clientes finales desde LDAP' },
-  '/acceso-usuarios': { title: 'Accesos por usuario', sub: 'Gestión de Nodos de Segregación y Perfiles asignados a cada usuario' },
   '/acceso-dispositivos': { title: 'Dispositivos Autorizados', sub: 'Gestión de dispositivos móviles asignados a cada usuario' },
   '/matriz-acceso': { title: 'Matriz de Acceso', sub: 'Carga masiva de seguridades mediante archivo Excel' },
   '/directorio': { title: 'Directorio LDAP', sub: 'Usuarios cliente final integrados desde el directorio corporativo' },

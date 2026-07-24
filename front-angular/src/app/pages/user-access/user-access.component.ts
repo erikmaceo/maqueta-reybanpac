@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -28,12 +28,14 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent, IconUploadComponent,
   ],
   template: `
-    <div class="page-head">
-      <div>
-        <h1>Accesos por usuario</h1>
-        <p>Gestión de Nodos de Segregación y Perfiles asignados a cada usuario.</p>
+    @if (!embedded()) {
+      <div class="page-head">
+        <div>
+          <h1>Accesos por usuario</h1>
+          <p>Gestión de Nodos de Segregación y Perfiles asignados a cada usuario.</p>
+        </div>
       </div>
-    </div>
+    }
 
     @if (loading()) {
       <app-table-skeleton [rows]="5" [cols]="5" />
@@ -44,7 +46,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
         <div class="search">
           <app-icon-search [width]="15" [height]="15" />
           <input type="text" placeholder="Buscar por nombre, usuario o empresa..."
-            [ngModel]="search()" (ngModelChange)="search.set($event)" />
+            [ngModel]="search()" (ngModelChange)="onSearchChange($event)" />
         </div>
         <div class="row gap-2">
           <button class="btn btn-ghost" (click)="exportData()">
@@ -112,14 +114,21 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
           </tbody>
         </table>
       </div>
-      @if (totalPages() > 1) {
+      @if (filteredUsers().length > 0) {
         <div class="pagination">
           <div class="page-controls">
-            <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">‹</button>
-            @for (p of getPageNumbers(totalPages(), page()); track p) {
-              <button class="btn btn-sm" [class.btn-primary]="p === page()" [class.btn-ghost]="p !== page()" (click)="setPage(p)">{{ p + 1 }}</button>
-            }
-            <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">›</button>
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">Anterior</button>
+          </div>
+          <span>Página {{ page() + 1 }} de {{ totalPages() }} ({{ filteredUsers().length }} registros)</span>
+          <div class="page-size-selector">
+            <label class="small muted">Registros por página</label>
+            <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="15">15</option>
+              <option [value]="20">20</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">Siguiente</button>
           </div>
         </div>
       }
@@ -475,6 +484,8 @@ export class UserAccessComponent implements OnInit {
   nodos = signal<NodoSegregacion[]>([]);
   perfiles = signal<Perfil[]>([]);
 
+  embedded = input(false);
+
   loading = signal(true);
   error = signal<string | null>(null);
 
@@ -658,10 +669,14 @@ export class UserAccessComponent implements OnInit {
     this.page.set(p);
   }
 
-  getPageNumbers(total: number, current: number): number[] {
-    const pages: number[] = [];
-    for (let i = 0; i < total; i++) pages.push(i);
-    return pages;
+  changePageSize(value: any): void {
+    this.pageSize.set(Number(value));
+    this.page.set(0);
+  }
+
+  onSearchChange(value: string): void {
+    this.search.set(value);
+    this.page.set(0);
   }
 
   ngOnInit(): void {

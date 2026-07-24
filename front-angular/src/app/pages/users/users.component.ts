@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -34,8 +34,9 @@ import {
   IconCloseComponent,
 } from '../../shared/components/icons';
 import type { LdapPerson, Role, User, UserType } from '../../shared/models/types';
+import { UserAccessComponent } from '../user-access/user-access.component';
 
-type Tab = 'ALL' | 'ADMIN' | 'CLIENTE_FINAL';
+type Tab = 'USUARIOS' | 'ACCESOS';
 
 interface UserForm {
   username: string;
@@ -78,6 +79,7 @@ interface UserForm {
     IconDownloadComponent,
     IconCheckComponent,
     IconCloseComponent,
+    UserAccessComponent,
   ],
   template: `
     <div class="page-head">
@@ -88,29 +90,27 @@ interface UserForm {
     </div>
 
     <div class="tabs mb-4">
-      <button [class.active]="tab() === 'ALL'" (click)="tab.set('ALL')">
-        Todos ({{ totalCount }})
+      <button [class.active]="tab() === 'USUARIOS'" (click)="tab.set('USUARIOS')">
+        Usuarios
       </button>
-      <button [class.active]="tab() === 'ADMIN'" (click)="tab.set('ADMIN')">
-        Administradores ({{ adminCount }})
-      </button>
-      <button [class.active]="tab() === 'CLIENTE_FINAL'" (click)="tab.set('CLIENTE_FINAL')">
-        Clientes finales ({{ clienteFinalCount }})
+      <button [class.active]="tab() === 'ACCESOS'" (click)="tab.set('ACCESOS')">
+        Accesos por usuario
       </button>
     </div>
 
-    <div class="row between mb-4">
-      <app-search-box [value]="q()" (valueChange)="q.set($event)" placeholder="Buscar usuario…" />
-      <button class="btn btn-primary" (click)="showCreateDialog = true">
-        <app-icon-user-plus /> Nuevo Usuario
-      </button>
-    </div>
+    @if (tab() === 'USUARIOS') {
+      <div class="row between mb-4">
+        <app-search-box [value]="q()" (valueChange)="onSearchChange($event)" placeholder="Buscar usuario…" />
+        <button class="btn btn-primary" (click)="showCreateDialog = true">
+          <app-icon-user-plus /> Nuevo Usuario
+        </button>
+      </div>
 
-    @if (loading()) {
+      @if (loading()) {
       <app-table-skeleton [rows]="6" [cols]="6" />
     } @else if (error()) {
       <app-error-state [message]="error()!" [onRetry]="load" />
-    } @else if (filtered().length === 0) {
+    } @else if (filteredUsers().length === 0) {
       <div class="card">
         <div class="empty">
           <div class="empty-icon"><app-icon-users /></div>
@@ -138,7 +138,7 @@ interface UserForm {
             </tr>
           </thead>
           <tbody>
-            @for (u of filtered(); track u.id) {
+            @for (u of paginatedUsers(); track u.id) {
               <tr>
                 <td>
                   <div class="row gap-3">
@@ -194,6 +194,25 @@ interface UserForm {
           </tbody>
         </table>
       </div>
+
+      @if (filteredUsers().length > 0) {
+        <div class="pagination">
+          <div class="page-controls">
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">Anterior</button>
+          </div>
+          <span>Página {{ page() + 1 }} de {{ totalPages() }} ({{ filteredUsers().length }} registros)</span>
+          <div class="page-size-selector">
+            <label class="small muted">Registros por página</label>
+            <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="15">15</option>
+              <option [value]="20">20</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">Siguiente</button>
+          </div>
+        </div>
+      }
     }
 
     <p-dialog
@@ -353,6 +372,11 @@ interface UserForm {
         <button class="btn btn-primary" (click)="saveRoles()">Guardar Roles</button>
       </ng-template>
     </p-dialog>
+    }
+
+    @if (tab() === 'ACCESOS') {
+      <app-user-access [embedded]="true" />
+    }
 
     <p-confirmDialog></p-confirmDialog>
   `,
@@ -366,8 +390,23 @@ export class UsersComponent implements OnInit {
   roles = signal<Role[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
-  tab = signal<Tab>('ALL');
+  tab = signal<Tab>('USUARIOS');
   q = signal('');
+  page = signal(0);
+  pageSize = signal(10);
+
+  filteredUsers = computed(() => {
+    const q = this.q().toLowerCase().trim();
+    if (!q) return this.users();
+    return this.users().filter(u =>
+      `${u.firstName} ${u.lastName} ${u.username} ${u.cargo} ${u.department}`.toLowerCase().includes(q)
+    );
+  });
+  paginatedUsers = computed(() => {
+    const start = this.page() * this.pageSize();
+    return this.filteredUsers().slice(start, start + this.pageSize());
+  });
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())));
 
   showCreateDialog = false;
   showEditDialog = false;
@@ -378,10 +417,6 @@ export class UsersComponent implements OnInit {
   selectedRoleIds: string[] = [];
 
   load = () => this.loadData();
-
-  get totalCount(): number { return this.users().length; }
-  get adminCount(): number { return this.users().filter(u => u.type === 'ADMIN').length; }
-  get clienteFinalCount(): number { return this.users().filter(u => u.type === 'CLIENTE_FINAL').length; }
 
   ngOnInit(): void {
     this.loadData();
@@ -410,13 +445,26 @@ export class UsersComponent implements OnInit {
 
   filtered(): User[] {
     return this.users()
-      .filter(u => this.tab() === 'ALL' || u.type === this.tab())
       .filter(u => `${u.firstName} ${u.lastName} ${u.username} ${u.cargo} ${u.department}`.toLowerCase().includes(this.q().toLowerCase()));
   }
 
   getRoleName(roleId: string): string {
     const role = this.roles().find(r => r.id === roleId);
     return role?.name || roleId;
+  }
+
+  setPage(p: number): void {
+    this.page.set(p);
+  }
+
+  changePageSize(value: any): void {
+    this.pageSize.set(Number(value));
+    this.page.set(0);
+  }
+
+  onSearchChange(value: string): void {
+    this.q.set(value);
+    this.page.set(0);
   }
 
   closeCreateDialog(): void {

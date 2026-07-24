@@ -111,8 +111,8 @@ import type { AuditEntry } from '../../shared/models/types';
       <div class="pagination">
         <div class="page-controls">
           <button class="btn btn-ghost btn-sm" [disabled]="page() === 1" (click)="changePage(-1)">Anterior</button>
-          <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} registros)</span>
         </div>
+        <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} registros)</span>
         <div class="page-size-selector">
           <label class="small muted">Registros por página</label>
           <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
@@ -121,8 +121,6 @@ import type { AuditEntry } from '../../shared/models/types';
             <option [value]="15">15</option>
             <option [value]="20">20</option>
           </select>
-        </div>
-        <div class="page-controls">
           <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages()" (click)="changePage(1)">Siguiente</button>
         </div>
       </div>

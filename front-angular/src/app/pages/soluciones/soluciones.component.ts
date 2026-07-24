@@ -170,11 +170,22 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
           </table>
         </div>
 
-        @if (apps().length > pageSize()) {
+        @if (apps().length > 0) {
           <div class="pagination">
-            <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">Anterior</button>
+            <div class="page-controls">
+              <button class="btn btn-ghost btn-sm" [disabled]="page() === 0" (click)="setPage(page() - 1)">Anterior</button>
+            </div>
             <span>Página {{ page() + 1 }} de {{ totalPages() }} ({{ apps().length }} registros)</span>
-            <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">Siguiente</button>
+            <div class="page-size-selector">
+              <label class="small muted">Registros por página</label>
+              <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="15">15</option>
+                <option [value]="20">20</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages() - 1" (click)="setPage(page() + 1)">Siguiente</button>
+            </div>
           </div>
         }
       }
@@ -392,7 +403,7 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
     .pagination {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       gap: 12px;
       margin-top: 16px;
       font-size: 13px;
@@ -480,6 +491,11 @@ export class SolucionesComponent implements OnInit {
 
   setPage(p: number): void {
     this.page.set(p);
+  }
+
+  changePageSize(value: any): void {
+    this.pageSize.set(Number(value));
+    this.page.set(0);
   }
 
   private loadModulos(): void {

@@ -37,26 +37,44 @@ import type { AuditEntry } from '../../shared/models/types';
       </div>
     </div>
 
-    <div class="row between mb-4 wrap gap-3">
-      <div class="row gap-3 wrap">
-        <div class="row gap-2">
-          <div class="field" style="margin:0;">
-            <label class="small muted">Desde</label>
-            <input type="date" class="select" [ngModel]="desde()" (ngModelChange)="onDesdeChange($event)" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="small muted">Hasta</label>
-            <input type="date" class="select" [ngModel]="hasta()" (ngModelChange)="onHastaChange($event)" />
-          </div>
+    <div class="card mb-4" style="padding: 28px;">
+      <div class="row gap-4 wrap" style="align-items: flex-end;">
+        <div class="field" style="margin:0;">
+          <label class="small muted">Desde</label>
+          <input type="date" class="select" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+        </div>
+        <div class="field" style="margin:0;">
+          <label class="small muted">Hasta</label>
+          <input type="date" class="select" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+        </div>
+        <div class="field" style="margin:0;">
+          <label class="small muted">Actor</label>
+          <input type="text" class="select" placeholder="Usuario..." [ngModel]="actor()" (ngModelChange)="actor.set($event)" />
+        </div>
+        <div class="field" style="margin:0;">
+          <label class="small muted">Acción</label>
+          <input type="text" class="select" placeholder="Ej: CREATE_USER..." [ngModel]="action()" (ngModelChange)="action.set($event)" />
+        </div>
+        <div class="field" style="margin:0;">
+          <label class="small muted">Entidad</label>
+          <input type="text" class="select" placeholder="Ej: user..." [ngModel]="entityType()" (ngModelChange)="entityType.set($event)" />
+        </div>
+        <div class="row gap-2" style="margin-left: auto;">
+          <button class="btn btn-primary" (click)="applyFilters()">
+            Buscar
+          </button>
+          <button class="btn btn-ghost" (click)="clearFilters()">
+            Limpiar
+          </button>
+          <button class="btn btn-ghost" (click)="exportAudit()">
+            <app-icon-download [width]="16" [height]="16" /> Exportar
+          </button>
         </div>
       </div>
-      <button class="btn btn-ghost" (click)="exportAudit()">
-        <app-icon-download [width]="16" [height]="16" /> Exportar
-      </button>
     </div>
 
     @if (loading()) {
-      <app-table-skeleton [rows]="8" [cols]="4" />
+      <app-table-skeleton [rows]="8" [cols]="6" />
     } @else if (entries().length === 0) {
       <div class="card">
         <div class="empty">
@@ -70,6 +88,7 @@ import type { AuditEntry } from '../../shared/models/types';
         <table class="data">
           <thead>
             <tr>
+              <th>Id</th>
               <th>Fecha</th>
               <th>Actor</th>
               <th>Acción</th>
@@ -80,6 +99,7 @@ import type { AuditEntry } from '../../shared/models/types';
           <tbody>
             @for (entry of entries(); track entry.id) {
               <tr>
+                <td class="mono small">{{ formatId(entry.id) }}</td>
                 <td>
                   <div class="row gap-2">
                     <app-icon-clock [width]="14" [height]="14" style="color: var(--text-3);" />
@@ -138,6 +158,9 @@ export class AuditComponent implements OnInit {
   totalItems = signal(0);
   loading = signal(false);
   q = signal('');
+  actor = signal('');
+  action = signal('');
+  entityType = signal('');
   desde = signal('');
   hasta = signal('');
   page = signal(1);
@@ -168,6 +191,9 @@ export class AuditComponent implements OnInit {
     this.loading.set(true);
     this.api.listAudit({
       q: this.q(),
+      actor: this.actor(),
+      action: this.action(),
+      entityType: this.entityType(),
       desde: this.desde(),
       hasta: this.hasta(),
       page: this.page(),
@@ -190,14 +216,18 @@ export class AuditComponent implements OnInit {
     this.loadData();
   }
 
-  onDesdeChange(value: string): void {
-    this.desde.set(value);
+  applyFilters(): void {
     this.page.set(1);
     this.loadData();
   }
 
-  onHastaChange(value: string): void {
-    this.hasta.set(value);
+  clearFilters(): void {
+    this.q.set('');
+    this.actor.set('');
+    this.action.set('');
+    this.entityType.set('');
+    this.desde.set('');
+    this.hasta.set('');
     this.page.set(1);
     this.loadData();
   }
@@ -220,7 +250,7 @@ export class AuditComponent implements OnInit {
 
   exportAudit(): void {
     this.loading.set(true);
-    this.api.listAudit({ q: this.q(), desde: this.desde(), hasta: this.hasta(), page: 1, limit: 10000 }).subscribe({
+    this.api.listAudit({ q: this.q(), actor: this.actor(), action: this.action(), entityType: this.entityType(), desde: this.desde(), hasta: this.hasta(), page: 1, limit: 10000 }).subscribe({
       next: (res) => {
         const rows = res.items.map(e => ({
           Fecha: this.formatDateTime(e.timestamp),
@@ -250,6 +280,10 @@ export class AuditComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  formatId(id: string): string {
+    return id.split('_').pop() || id;
   }
 
   getActionBadgeClass(action: string): string {

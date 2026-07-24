@@ -694,6 +694,9 @@ app.delete('/api/grants/:id', requireAuth, requireGlobalAdmin, (req, res) => {
 
 app.get('/api/audit', requireAuth, (req, res) => {
   const q = String(req.query.q || '').trim().toLowerCase();
+  const actor = String(req.query.actor || '').trim().toLowerCase();
+  const action = String(req.query.action || '').trim().toLowerCase();
+  const entityType = String(req.query.entityType || '').trim().toLowerCase();
   const desde = String(req.query.desde || '').trim();
   const hasta = String(req.query.hasta || '').trim();
   const page = Math.max(1, Number(req.query.page) || 1);
@@ -714,6 +717,15 @@ app.get('/api/audit', requireAuth, (req, res) => {
   }
   if (q) {
     list = list.filter(e => `${e.actor} ${e.action} ${e.entityType} ${e.detail}`.toLowerCase().includes(q));
+  }
+  if (actor) {
+    list = list.filter(e => e.actor.toLowerCase().includes(actor));
+  }
+  if (action) {
+    list = list.filter(e => e.action.toLowerCase().includes(action));
+  }
+  if (entityType) {
+    list = list.filter(e => e.entityType.toLowerCase().includes(entityType));
   }
 
   list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());

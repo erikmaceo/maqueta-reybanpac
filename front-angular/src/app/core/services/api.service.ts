@@ -180,9 +180,12 @@ export class ApiService {
     return this.request<{ ok: boolean; processed: number; errors: { row: number; message: string }[] }>('POST', '/user-access/bulk', { rows });
   }
 
-  listAudit(params?: { q?: string; desde?: string; hasta?: string; page?: number; limit?: number }): Observable<{ items: AuditEntry[]; total: number; page: number; limit: number }> {
+  listAudit(params?: { q?: string; actor?: string; action?: string; entityType?: string; desde?: string; hasta?: string; page?: number; limit?: number }): Observable<{ items: AuditEntry[]; total: number; page: number; limit: number }> {
     const query = new URLSearchParams();
     if (params?.q) query.set('q', params.q);
+    if (params?.actor) query.set('actor', params.actor);
+    if (params?.action) query.set('action', params.action);
+    if (params?.entityType) query.set('entityType', params.entityType);
     if (params?.desde) query.set('desde', params.desde);
     if (params?.hasta) query.set('hasta', params.hasta);
     if (params?.page !== undefined) query.set('page', String(params.page));

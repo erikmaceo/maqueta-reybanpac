@@ -518,16 +518,18 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
         </div>
 
         @if (bulkErrors().length > 0) {
-          <div style="max-height:180px;overflow-y:auto;border:1px solid var(--red-600);border-radius:8px;padding:10px;background:#fef2f2;">
-            <div class="small" style="color:var(--red-600);font-weight:600;margin-bottom:6px;">Errores detectados:</div>
-            @for (e of bulkErrors(); track e.row + e.message) {
-              <div class="small" style="color:var(--red-600);">• Fila {{ e.row }}: {{ e.message }}</div>
-            }
+          <div class="alert alert-error">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+              <span><b>Errores detectados:</b> {{ bulkErrorsSummary() }}</span>
+              <button class="btn btn-ghost btn-sm" (click)="downloadBulkErrors()" style="color:var(--red-700);font-weight:600;">
+                <app-icon-download [width]="14" [height]="14" /> Descargar detalle
+              </button>
+            </div>
           </div>
         }
 
         @if (bulkSuccess()) {
-          <div class="small" style="color:var(--green-600);font-weight:600;">{{ bulkSuccess() }}</div>
+          <div class="alert alert-success">{{ bulkSuccess() }}</div>
         }
       </div>
 
@@ -640,6 +642,7 @@ export class UserAccessComponent implements OnInit {
   bulkFileName = signal('');
   bulkLoading = signal(false);
   bulkErrors = signal<{ row: number; message: string }[]>([]);
+  bulkErrorsSummary = signal('');
   bulkSuccess = signal('');
   nodoSearchNivelNombre = signal('');
   nodoSearchCodigo = '';
@@ -1192,8 +1195,45 @@ export class UserAccessComponent implements OnInit {
     this.bulkFile = null;
     this.bulkFileName.set('');
     this.bulkErrors.set([]);
+    this.bulkErrorsSummary.set('');
     this.bulkSuccess.set('');
     this.bulkLoading.set(false);
+  }
+
+  setBulkErrors(errors: { row: number; message: string }[]): void {
+    this.bulkErrors.set(errors);
+    const count = errors.length;
+    this.bulkErrorsSummary.set(`Se detectaron ${count} error${count !== 1 ? 'es' : ''}`);
+  }
+
+  downloadBulkErrors(): void {
+    if (this.bulkErrors().length === 0) return;
+    const errors = this.bulkErrors();
+    const lines = [
+      'DETALLE DE ERRORES - CARGA MASIVA DE ACCESOS POR USUARIO',
+      '========================================================',
+      '',
+      `Fecha: ${new Date().toLocaleString('es-EC')}`,
+      `Total errores: ${errors.length}`,
+      '',
+      '----------------------------------------------------',
+      'LISTADO DE ERRORES',
+      '----------------------------------------------------',
+      '',
+      ...errors.map(e => `Fila ${e.row}: ${e.message}`),
+      '',
+      '----------------------------------------------------',
+      'FIN DEL REPORTE',
+      '----------------------------------------------------',
+    ];
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `errores_accesos_${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   downloadBulkTemplate(): void {
@@ -1263,7 +1303,7 @@ export class UserAccessComponent implements OnInit {
       const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
       if (rawRows.length < 2) {
-        this.bulkErrors.set([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        this.setBulkErrors([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1276,7 +1316,7 @@ export class UserAccessComponent implements OnInit {
 
       const missing = expectedHeaders.filter(h => !headerRow.includes(h));
       if (missing.length > 0) {
-        this.bulkErrors.set([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        this.setBulkErrors([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1307,7 +1347,7 @@ export class UserAccessComponent implements OnInit {
       }
 
       if (!rows.length) {
-        this.bulkErrors.set([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        this.setBulkErrors([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1321,7 +1361,7 @@ export class UserAccessComponent implements OnInit {
             this.events.emitDataChanged();
             this.loadData();
           } else {
-            this.bulkErrors.set(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
+            this.setBulkErrors(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
           }
           this.bulkLoading.set(false);
         },
@@ -1336,25 +1376,25 @@ export class UserAccessComponent implements OnInit {
             } else if (e.error?.error) {
               message = e.error.error;
             } else if (Array.isArray(e.error?.errors)) {
-              this.bulkErrors.set(e.error.errors);
+              this.setBulkErrors(e.error.errors);
               this.bulkLoading.set(false);
               return;
             } else if (e.message) {
               message = e.message;
             }
           } else if (e?.error?.errors) {
-            this.bulkErrors.set(e.error.errors);
+            this.setBulkErrors(e.error.errors);
             this.bulkLoading.set(false);
             return;
           } else if (e?.error?.error) {
             message = e.error.error;
           }
-          this.bulkErrors.set([{ row: 0, message }]);
+          this.setBulkErrors([{ row: 0, message }]);
           this.bulkLoading.set(false);
         },
       });
     } catch (e: any) {
-      this.bulkErrors.set([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      this.setBulkErrors([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
       this.bulkLoading.set(false);
     }
   }

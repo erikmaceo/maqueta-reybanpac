@@ -1112,6 +1112,26 @@ textarea.input {
   color: var(--text-2);
 }
 
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  border: 1px solid;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border-color: var(--green-600);
+  color: var(--green-800);
+}
+
+.alert-error {
+  background: #fef2f2;
+  border-color: var(--red-600);
+  color: var(--red-700);
+}
+
 @keyframes slidein {
   from {
     opacity: 0;

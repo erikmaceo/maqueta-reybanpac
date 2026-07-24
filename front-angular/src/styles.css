@@ -726,7 +726,7 @@ table.data th {
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: .04em;
-  color: var(--text-3);
+  color: #000;
   padding: 11px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
@@ -1189,9 +1189,14 @@ textarea.input {
 }
 
 .tabs button.active {
-  background: #fff;
-  color: var(--navy-700);
+  background: var(--navy-700);
+  color: #fff;
   box-shadow: var(--shadow-sm);
+}
+
+.tabs button.active:hover {
+  background: var(--navy-800);
+  color: #fff;
 }
 
 .divider {
@@ -1534,10 +1539,15 @@ textarea.input {
 }
 
 .p-tabs .p-tab-active {
-  background: var(--surface) !important;
-  color: var(--navy-700) !important;
+  background: var(--navy-700) !important;
+  color: #fff !important;
   box-shadow: var(--shadow-sm) !important;
   border: none !important;
+}
+
+.p-tabs .p-tab-active:hover {
+  background: var(--navy-800) !important;
+  color: #fff !important;
 }
 
 .p-tabs .p-tabpanels {
@@ -1557,7 +1567,7 @@ textarea.input {
   font-weight: 700 !important;
   letter-spacing: .04em !important;
   text-transform: uppercase !important;
-  color: var(--text-3) !important;
+  color: #000 !important;
 }
 
 .p-datatable .p-datatable-tbody>tr:hover {

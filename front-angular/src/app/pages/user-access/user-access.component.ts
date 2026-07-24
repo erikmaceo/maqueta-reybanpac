@@ -284,31 +284,36 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       <div class="filter-row">
         <div class="field">
           <label>Usuario</label>
-          <input type="text" class="select" [(ngModel)]="userSearchCodigo" placeholder="Usuario" />
+          <input type="text" class="select" placeholder="Usuario"
+            [ngModel]="userSearchCodigo()" (ngModelChange)="userSearchCodigo.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="userSearchNombre" placeholder="Nombre" />
+          <input type="text" class="select" placeholder="Nombre"
+            [ngModel]="userSearchNombre()" (ngModelChange)="userSearchNombre.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Apellido</label>
-          <input type="text" class="select" [(ngModel)]="userSearchApellido" placeholder="Apellido" />
+          <input type="text" class="select" placeholder="Apellido"
+            [ngModel]="userSearchApellido()" (ngModelChange)="userSearchApellido.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Correo</label>
-          <input type="text" class="select" [(ngModel)]="userSearchCorreo" placeholder="Correo" />
+          <input type="text" class="select" placeholder="Correo"
+            [ngModel]="userSearchCorreo()" (ngModelChange)="userSearchCorreo.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Empresa</label>
-          <input type="text" class="select" [(ngModel)]="userSearchEmpresa" placeholder="Empresa" />
+          <input type="text" class="select" placeholder="Empresa"
+            [ngModel]="userSearchEmpresa()" (ngModelChange)="userSearchEmpresa.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Departamento</label>
-          <input type="text" class="select" [(ngModel)]="userSearchDepartamento" placeholder="Departamento" />
+          <input type="text" class="select" placeholder="Departamento"
+            [ngModel]="userSearchDepartamento()" (ngModelChange)="userSearchDepartamento.set($event); userSearchPage.set(1)" />
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyUserFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearUserFilters()">Limpiar</button>
       </div>
 
@@ -424,15 +429,16 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       <div class="filter-row">
         <div class="field">
           <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="nodoSearchCodigo" placeholder="Código de nodo" />
+          <input type="text" class="select" placeholder="Código de nodo"
+            [ngModel]="nodoSearchCodigo()" (ngModelChange)="nodoSearchCodigo.set($event); nodoSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="nodoSearchNombre" placeholder="Nombre de nodo" />
+          <input type="text" class="select" placeholder="Nombre de nodo"
+            [ngModel]="nodoSearchNombre()" (ngModelChange)="nodoSearchNombre.set($event); nodoSearchPage.set(1)" />
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyNodoFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearNodoFilters()">Limpiar</button>
       </div>
 
@@ -606,18 +612,12 @@ export class UserAccessComponent implements OnInit {
 
   // --- Diálogo búsqueda de usuario ---
   showUserSearchDlg = false;
-  userSearchCodigo = '';
-  userSearchNombre = '';
-  userSearchApellido = '';
-  userSearchCorreo = '';
-  userSearchEmpresa = '';
-  userSearchDepartamento = '';
-  appliedUserSearchCodigo = signal('');
-  appliedUserSearchNombre = signal('');
-  appliedUserSearchApellido = signal('');
-  appliedUserSearchCorreo = signal('');
-  appliedUserSearchEmpresa = signal('');
-  appliedUserSearchDepartamento = signal('');
+  userSearchCodigo = signal('');
+  userSearchNombre = signal('');
+  userSearchApellido = signal('');
+  userSearchCorreo = signal('');
+  userSearchEmpresa = signal('');
+  userSearchDepartamento = signal('');
   userSearchPage = signal(1);
   userSearchPageSize = signal(10);
   userSearchDisplayText = signal('');
@@ -645,10 +645,8 @@ export class UserAccessComponent implements OnInit {
   bulkErrorsSummary = signal('');
   bulkSuccess = signal('');
   nodoSearchNivelNombre = signal('');
-  nodoSearchCodigo = '';
-  nodoSearchNombre = '';
-  appliedNodoSearchCodigo = signal('');
-  appliedNodoSearchNombre = signal('');
+  nodoSearchCodigo = signal('');
+  nodoSearchNombre = signal('');
   nodoSearchPage = signal(1);
   nodoSearchPageSize = signal(10);
   tempSelectedNodoIds = signal<string[]>([]);
@@ -736,12 +734,12 @@ export class UserAccessComponent implements OnInit {
   userMap = computed(() => new Map(this.users().map(u => [u.id, u])));
 
   filteredUsersForSearch = computed(() => {
-    const qCodigo = this.appliedUserSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedUserSearchNombre().toLowerCase().trim();
-    const qApellido = this.appliedUserSearchApellido().toLowerCase().trim();
-    const qCorreo = this.appliedUserSearchCorreo().toLowerCase().trim();
-    const qEmpresa = this.appliedUserSearchEmpresa().toLowerCase().trim();
-    const qDepartamento = this.appliedUserSearchDepartamento().toLowerCase().trim();
+    const qCodigo = this.userSearchCodigo().toLowerCase().trim();
+    const qNombre = this.userSearchNombre().toLowerCase().trim();
+    const qApellido = this.userSearchApellido().toLowerCase().trim();
+    const qCorreo = this.userSearchCorreo().toLowerCase().trim();
+    const qEmpresa = this.userSearchEmpresa().toLowerCase().trim();
+    const qDepartamento = this.userSearchDepartamento().toLowerCase().trim();
     return this.users().filter(u =>
       (!qCodigo || u.username.toLowerCase().includes(qCodigo)) &&
       (!qNombre || u.firstName.toLowerCase().includes(qNombre)) &&
@@ -808,8 +806,8 @@ export class UserAccessComponent implements OnInit {
     const parentNivelId = this.getNivelPadreId(nivelId);
     const selectedParentIds = parentNivelId ? this.getSelectedParentIds(nivelId) : [];
     const hasParentFilter = parentNivelId && selectedParentIds.length > 0;
-    const qCodigo = this.appliedNodoSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedNodoSearchNombre().toLowerCase().trim();
+    const qCodigo = this.nodoSearchCodigo().toLowerCase().trim();
+    const qNombre = this.nodoSearchNombre().toLowerCase().trim();
     return this.nodos().filter(n => {
       if (n.nivelId !== nivelId || n.estado !== 'ACTIVO') return false;
       if (hasParentFilter && n.padreId && !selectedParentIds.includes(n.padreId)) return false;
@@ -924,18 +922,12 @@ export class UserAccessComponent implements OnInit {
   closeDialog(): void { this.showDlg = false; this.editUser = null; this.isNew = false; this.selectedUserId = ''; this.userSearchDisplayText.set(''); }
 
   openUserSearchDialog(): void {
-    this.userSearchCodigo = '';
-    this.userSearchNombre = '';
-    this.userSearchApellido = '';
-    this.userSearchCorreo = '';
-    this.userSearchEmpresa = '';
-    this.userSearchDepartamento = '';
-    this.appliedUserSearchCodigo.set('');
-    this.appliedUserSearchNombre.set('');
-    this.appliedUserSearchApellido.set('');
-    this.appliedUserSearchCorreo.set('');
-    this.appliedUserSearchEmpresa.set('');
-    this.appliedUserSearchDepartamento.set('');
+    this.userSearchCodigo.set('');
+    this.userSearchNombre.set('');
+    this.userSearchApellido.set('');
+    this.userSearchCorreo.set('');
+    this.userSearchEmpresa.set('');
+    this.userSearchDepartamento.set('');
     this.userSearchPage.set(1);
     this.showUserSearchDlg = true;
   }
@@ -944,24 +936,14 @@ export class UserAccessComponent implements OnInit {
     this.showUserSearchDlg = false;
   }
 
-  applyUserFilters(): void {
-    this.appliedUserSearchCodigo.set(this.userSearchCodigo);
-    this.appliedUserSearchNombre.set(this.userSearchNombre);
-    this.appliedUserSearchApellido.set(this.userSearchApellido);
-    this.appliedUserSearchCorreo.set(this.userSearchCorreo);
-    this.appliedUserSearchEmpresa.set(this.userSearchEmpresa);
-    this.appliedUserSearchDepartamento.set(this.userSearchDepartamento);
-    this.userSearchPage.set(1);
-  }
-
   clearUserFilters(): void {
-    this.userSearchCodigo = '';
-    this.userSearchNombre = '';
-    this.userSearchApellido = '';
-    this.userSearchCorreo = '';
-    this.userSearchEmpresa = '';
-    this.userSearchDepartamento = '';
-    this.applyUserFilters();
+    this.userSearchCodigo.set('');
+    this.userSearchNombre.set('');
+    this.userSearchApellido.set('');
+    this.userSearchCorreo.set('');
+    this.userSearchEmpresa.set('');
+    this.userSearchDepartamento.set('');
+    this.userSearchPage.set(1);
   }
 
   changeUserSearchPage(delta: number): void {
@@ -1031,10 +1013,8 @@ export class UserAccessComponent implements OnInit {
   openNodoSearchDialog(nivelId: string, nivelNombre: string): void {
     this.nodoSearchNivelId.set(nivelId);
     this.nodoSearchNivelNombre.set(nivelNombre);
-    this.nodoSearchCodigo = '';
-    this.nodoSearchNombre = '';
-    this.appliedNodoSearchCodigo.set('');
-    this.appliedNodoSearchNombre.set('');
+    this.nodoSearchCodigo.set('');
+    this.nodoSearchNombre.set('');
     this.nodoSearchPage.set(1);
     this.tempSelectedNodoIds.set(this.editForm().nodoIds.filter(id => {
       const n = this.nodos().find(x => x.id === id);
@@ -1056,16 +1036,10 @@ export class UserAccessComponent implements OnInit {
     this.tempSelectedNodoIds.set([]);
   }
 
-  applyNodoFilters(): void {
-    this.appliedNodoSearchCodigo.set(this.nodoSearchCodigo);
-    this.appliedNodoSearchNombre.set(this.nodoSearchNombre);
-    this.nodoSearchPage.set(1);
-  }
-
   clearNodoFilters(): void {
-    this.nodoSearchCodigo = '';
-    this.nodoSearchNombre = '';
-    this.applyNodoFilters();
+    this.nodoSearchCodigo.set('');
+    this.nodoSearchNombre.set('');
+    this.nodoSearchPage.set(1);
   }
 
   changeNodoSearchPage(delta: number): void {

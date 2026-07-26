@@ -252,7 +252,29 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       </div>
       <div class="field">
         <label>Perfiles</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:8px;">
+          <div class="perfil-autocomplete" style="position:relative;flex:1;min-width:200px;">
+            <input
+              type="text"
+              class="select"
+              placeholder="Buscar perfil..."
+              style="width:100%;"
+              [ngModel]="perfilAutoQuery()"
+              (ngModelChange)="perfilAutoQuery.set($event); perfilAutoOpen.set(true)"
+              (focus)="perfilAutoOpen.set(true)"
+              (blur)="closePerfilAutocomplete()"
+            />
+            @if (perfilAutoOpen() && perfilSuggestions().length > 0) {
+              <div class="perfil-autocomplete-list" style="position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-md);max-height:200px;overflow-y:auto;margin-top:4px;">
+                @for (p of perfilSuggestions(); track p.id) {
+                  <div class="empresa-autocomplete-item" (mousedown)="addPerfilFromAutocomplete(p)">
+                    <span class="mono small">{{ p.codigo }}</span>
+                    <span class="small">{{ p.nombre }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" (click)="openPerfilSearchDialog()" title="Buscar perfiles">
             <app-icon-search [width]="14" [height]="14" /> Buscar Perfiles
           </button>
@@ -367,15 +389,16 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       <div class="filter-row">
         <div class="field">
           <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="perfilSearchCodigo" placeholder="Código de perfil" />
+          <input type="text" class="select" placeholder="Código de perfil"
+            [ngModel]="perfilSearchCodigo()" (ngModelChange)="perfilSearchCodigo.set($event); perfilSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="perfilSearchNombre" placeholder="Nombre de perfil" />
+          <input type="text" class="select" placeholder="Nombre de perfil"
+            [ngModel]="perfilSearchNombre()" (ngModelChange)="perfilSearchNombre.set($event); perfilSearchPage.set(1)" />
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyPerfilFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearPerfilFilters()">Limpiar</button>
       </div>
 
@@ -587,6 +610,12 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
     .empresa-autocomplete-item:hover {
       background: var(--surface-2);
     }
+    .perfil-autocomplete {
+      position: relative;
+    }
+    .perfil-autocomplete input {
+      width: 100%;
+    }
   `],
 })
 export class UserAccessComponent implements OnInit {
@@ -624,10 +653,8 @@ export class UserAccessComponent implements OnInit {
 
   // --- Diálogo búsqueda de perfiles (multi-selección) ---
   showPerfilSearchDlg = false;
-  perfilSearchCodigo = '';
-  perfilSearchNombre = '';
-  appliedPerfilSearchCodigo = signal('');
-  appliedPerfilSearchNombre = signal('');
+  perfilSearchCodigo = signal('');
+  perfilSearchNombre = signal('');
   perfilSearchPage = signal(1);
   perfilSearchPageSize = signal(10);
   tempSelectedPerfilCodigos = signal<string[]>([]);
@@ -666,6 +693,10 @@ export class UserAccessComponent implements OnInit {
   puntoVentaAutoQuery = signal('');
   puntoVentaAutoOpen = signal(false);
   puntoVentaAutoTimer: any = null;
+
+  perfilAutoQuery = signal('');
+  perfilAutoOpen = signal(false);
+  perfilAutoTimer: any = null;
 
   primerNivel = computed(() => {
     const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
@@ -709,6 +740,14 @@ export class UserAccessComponent implements OnInit {
     return this.nodos()
       .filter(n => n.nivelId === tercer.id && n.estado === 'ACTIVO' &&
         (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
+      .slice(0, 8);
+  });
+
+  perfilSuggestions = computed(() => {
+    const q = this.perfilAutoQuery().toLowerCase().trim();
+    return this.perfiles()
+      .filter(p => p.estado === 'ACTIVO' &&
+        (!q || p.codigo.toLowerCase().includes(q) || p.nombre.toLowerCase().includes(q)))
       .slice(0, 8);
   });
 
@@ -758,8 +797,8 @@ export class UserAccessComponent implements OnInit {
   userSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsersForSearch().length / this.userSearchPageSize())));
 
   filteredPerfilesForSearch = computed(() => {
-    const qCodigo = this.appliedPerfilSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedPerfilSearchNombre().toLowerCase().trim();
+    const qCodigo = this.perfilSearchCodigo().toLowerCase().trim();
+    const qNombre = this.perfilSearchNombre().toLowerCase().trim();
     return this.perfiles().filter(p =>
       (!qCodigo || p.codigo.toLowerCase().includes(qCodigo)) &&
       (!qNombre || p.nombre.toLowerCase().includes(qNombre))
@@ -881,6 +920,29 @@ export class UserAccessComponent implements OnInit {
     this.puntoVentaAutoTimer = setTimeout(() => this.puntoVentaAutoOpen.set(false), 150);
   }
 
+  selectPerfil(p: Perfil): void {
+    if (!this.tempSelectedPerfilCodigos().includes(p.codigo)) {
+      this.tempSelectedPerfilCodigos.set([...this.tempSelectedPerfilCodigos(), p.codigo]);
+    }
+    this.perfilAutoQuery.set('');
+    this.perfilAutoOpen.set(false);
+    clearTimeout(this.perfilAutoTimer);
+  }
+
+  addPerfilFromAutocomplete(p: Perfil): void {
+    const current = this.editForm().perfilCodigos;
+    if (!current.includes(p.codigo)) {
+      this.editForm.update(f => ({ ...f, perfilCodigos: [...f.perfilCodigos, p.codigo] }));
+    }
+    this.perfilAutoQuery.set('');
+    this.perfilAutoOpen.set(false);
+    clearTimeout(this.perfilAutoTimer);
+  }
+
+  closePerfilAutocomplete(): void {
+    this.perfilAutoTimer = setTimeout(() => this.perfilAutoOpen.set(false), 150);
+  }
+
   onSearchChange(value: string): void {
     this.search.set(value);
     this.page.set(0);
@@ -961,10 +1023,8 @@ export class UserAccessComponent implements OnInit {
   }
 
   openPerfilSearchDialog(): void {
-    this.perfilSearchCodigo = '';
-    this.perfilSearchNombre = '';
-    this.appliedPerfilSearchCodigo.set('');
-    this.appliedPerfilSearchNombre.set('');
+    this.perfilSearchCodigo.set('');
+    this.perfilSearchNombre.set('');
     this.perfilSearchPage.set(1);
     this.tempSelectedPerfilCodigos.set([...this.editForm().perfilCodigos]);
     this.showPerfilSearchDlg = true;
@@ -979,16 +1039,10 @@ export class UserAccessComponent implements OnInit {
     this.tempSelectedPerfilCodigos.set([]);
   }
 
-  applyPerfilFilters(): void {
-    this.appliedPerfilSearchCodigo.set(this.perfilSearchCodigo);
-    this.appliedPerfilSearchNombre.set(this.perfilSearchNombre);
-    this.perfilSearchPage.set(1);
-  }
-
   clearPerfilFilters(): void {
-    this.perfilSearchCodigo = '';
-    this.perfilSearchNombre = '';
-    this.applyPerfilFilters();
+    this.perfilSearchCodigo.set('');
+    this.perfilSearchNombre.set('');
+    this.perfilSearchPage.set(1);
   }
 
   changePerfilSearchPage(delta: number): void {

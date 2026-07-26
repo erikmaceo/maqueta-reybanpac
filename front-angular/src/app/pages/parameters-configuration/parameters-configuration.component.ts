@@ -89,7 +89,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                   <th>Código</th>
                   <th>Descripción</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,7 +163,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                   <th>Descripción</th>
                   <th>País</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -239,7 +239,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                   <th>Provincia</th>
                   <th>País</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,7 +313,7 @@ const MOCK_CIUDADES: Ciudad[] = [
                 <tr>
                   <th>Código</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>

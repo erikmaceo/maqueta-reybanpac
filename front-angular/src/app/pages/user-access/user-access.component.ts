@@ -69,7 +69,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
               <th>Nodos de Segregación</th>
               <th>Perfiles</th>
               <th>Estado</th>
-              <th></th>
+              <th style="text-align:center;">Acciones</th>
             </tr>
           </thead>
           <tbody>

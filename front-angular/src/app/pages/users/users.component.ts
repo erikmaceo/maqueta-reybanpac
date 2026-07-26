@@ -134,7 +134,7 @@ interface UserForm {
               <th>Origen</th>
               <th>Roles</th>
               <th>Estado</th>
-              <th></th>
+              <th style="text-align:center;">Acciones</th>
             </tr>
           </thead>
           <tbody>

@@ -78,7 +78,7 @@ interface NodoView extends NodoSegregacion {
                     <th>Código</th>
                     <th>Nombre</th>
                     <th>Estado</th>
-                    <th></th>
+                    <th style="text-align:center;">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,7 +176,7 @@ interface NodoView extends NodoSegregacion {
                             <th>{{ attr.nombre }}</th>
                           }
                           <th>Estado</th>
-                          <th></th>
+                          <th style="text-align:center;">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -266,7 +266,7 @@ interface NodoView extends NodoSegregacion {
                     <th>Tipo</th>
                     <th>Obligatorio</th>
                     <th>Estado</th>
-                    <th></th>
+                    <th style="text-align:center;">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>

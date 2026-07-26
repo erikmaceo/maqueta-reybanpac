@@ -79,7 +79,7 @@ interface AccesoView extends AccesoDispositivoMovil {
               <th>Apellido</th>
               <th>Código dispositivo</th>
               <th>Estado dispositivo</th>
-              <th></th>
+              <th style="text-align:center;">Acciones</th>
             </tr>
           </thead>
           <tbody>

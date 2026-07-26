@@ -107,7 +107,7 @@ interface PerfilProgramaRow {
                   <th>Descripción</th>
                   <th>Nodos de Segregación</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,7 +200,7 @@ interface PerfilProgramaRow {
                   <th>Nombre</th>
                   <th>Aplicación</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -283,7 +283,7 @@ interface PerfilProgramaRow {
                   <th>Módulo</th>
                   <th>Tipo</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -482,7 +482,7 @@ interface PerfilProgramaRow {
                   <th>Nombre</th>
                   <th>Descripcion del perfil</th>
                   <th>Estado</th>
-                  <th></th>
+                  <th style="text-align:center;">Acciones</th>
                 </tr>
               </thead>
               <tbody>

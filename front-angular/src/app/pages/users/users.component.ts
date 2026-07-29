@@ -32,6 +32,7 @@ import {
   IconDownloadComponent,
   IconCheckComponent,
   IconCloseComponent,
+  IconClockComponent,
 } from '../../shared/components/icons';
 import type { LdapPerson, Role, User, UserType } from '../../shared/models/types';
 import { UserAccessComponent } from '../user-access/user-access.component';
@@ -79,6 +80,7 @@ interface UserForm {
     IconDownloadComponent,
     IconCheckComponent,
     IconCloseComponent,
+    IconClockComponent,
     UserAccessComponent,
   ],
   template: `
@@ -225,7 +227,7 @@ interface UserForm {
     >
       <div class="field">
         <label>Origen</label>
-        <select class="select" [(ngModel)]="userForm.source">
+        <select class="select" [(ngModel)]="userForm.source" (ngModelChange)="onUsernameChange()">
           <option value="LOCAL">Local</option>
           <option value="LDAP">LDAP</option>
         </select>
@@ -233,7 +235,12 @@ interface UserForm {
       <div class="form-grid">
         <div class="field">
           <label>Usuario</label>
-          <input class="input" [(ngModel)]="userForm.username" placeholder="juan.perez" />
+          <div class="search-field">
+            <input class="input" [(ngModel)]="userForm.username" (blur)="onUsernameChange()" placeholder="juan.perez" />
+            @if (ldapSearching()) {
+              <app-icon-clock [width]="16" [height]="16" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--amber-600);" />
+            }
+          </div>
         </div>
         <div class="field">
           <label>Contraseña</label>
@@ -281,7 +288,7 @@ interface UserForm {
       @if (editUser) {
         <div class="field">
           <label>Origen</label>
-          <select class="select" [(ngModel)]="userForm.source">
+          <select class="select" [(ngModel)]="userForm.source" (ngModelChange)="onUsernameChange()">
             <option value="LOCAL">Local</option>
             <option value="LDAP">LDAP</option>
           </select>
@@ -289,7 +296,12 @@ interface UserForm {
         <div class="form-grid">
           <div class="field">
             <label>Usuario</label>
-            <input class="input" [(ngModel)]="userForm.username" />
+            <div class="search-field">
+              <input class="input" [(ngModel)]="userForm.username" (blur)="onUsernameChange()" />
+              @if (ldapSearching()) {
+                <app-icon-clock [width]="16" [height]="16" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--amber-600);" />
+              }
+            </div>
           </div>
           <div class="field">
             <label>Nueva contraseña</label>
@@ -395,6 +407,12 @@ export class UsersComponent implements OnInit {
   page = signal(0);
   pageSize = signal(10);
 
+  // LDAP cache
+  ldapUsersCache = signal<LdapPerson[]>([]);
+  ldapLoading = signal(false);
+  ldapError = signal<string | null>(null);
+  ldapSearching = signal(false);
+
   filteredUsers = computed(() => {
     const q = this.q().toLowerCase().trim();
     if (!q) return this.users();
@@ -426,6 +444,7 @@ export class UsersComponent implements OnInit {
   loadData(): void {
     this.loading.set(true);
     this.error.set(null);
+    this.loadLdapUsers();
     Promise.all([
       this.api.listUsers().toPromise(),
       this.api.listRoles().toPromise(),
@@ -439,8 +458,49 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  loadLdapUsers(): void {
+    this.ldapLoading.set(true);
+    this.ldapError.set(null);
+    this.api.ldapUsers().subscribe({
+      next: (res) => {
+        this.ldapUsersCache.set(res.people || []);
+        this.ldapLoading.set(false);
+      },
+      error: (e) => {
+        this.ldapError.set(e.message);
+        this.ldapLoading.set(false);
+      },
+    });
+  }
+
+  searchLdapUser(username: string): LdapPerson | undefined {
+    const normalized = username.toLowerCase().trim();
+    if (!normalized) return undefined;
+    return this.ldapUsersCache().find(
+      p => p.username.toLowerCase() === normalized
+    );
+  }
+
   blankForm(): UserForm {
     return { username: '', firstName: '', lastName: '', email: '', cargo: '', department: '', password: '', source: 'LOCAL', roleIds: [] };
+  }
+
+  onUsernameChange(): void {
+    if (this.userForm.source === 'LDAP' && this.userForm.username.trim()) {
+      this.ldapSearching.set(true);
+      const ldapUser = this.searchLdapUser(this.userForm.username);
+      if (ldapUser) {
+        this.userForm.firstName = ldapUser.firstName || '';
+        this.userForm.lastName = ldapUser.lastName || '';
+        this.userForm.email = ldapUser.email || '';
+        this.userForm.cargo = ldapUser.cargo || '';
+        this.userForm.department = ldapUser.department || '';
+        this.toast.info('LDAP', `Datos cargados desde LDAP para ${ldapUser.username}`);
+      } else {
+        this.toast.info('LDAP', 'Usuario no encontrado en directorio LDAP');
+      }
+      this.ldapSearching.set(false);
+    }
   }
 
   filtered(): User[] {

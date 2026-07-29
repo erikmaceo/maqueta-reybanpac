@@ -45,6 +45,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'perfiles',
+        loadComponent: () => import('./pages/perfiles/perfiles.component').then(m => m.PerfilesComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'acceso-dispositivos',
         loadComponent: () => import('./pages/device-access/device-access.component').then(m => m.DeviceAccessComponent),
         canActivate: [adminGuard],

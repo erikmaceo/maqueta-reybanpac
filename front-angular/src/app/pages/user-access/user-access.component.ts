@@ -189,11 +189,13 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
                       class="select"
                       placeholder="Buscar sucursal..."
                       [ngModel]="sucursalAutoQuery()"
-                      (ngModelChange)="sucursalAutoQuery.set($event); sucursalAutoOpen.set(true)"
-                      (focus)="sucursalAutoOpen.set(true)"
+                      (ngModelChange)="sucursalAutoQuery.set($event)"
+                      (focus)="onSucursalAutocompleteFocus(nivel.id)"
                       (blur)="closeSucursalAutocomplete()"
+                      [disabled]="!puedeBuscarNivel(nivel.id)"
+                      [attr.title]="puedeBuscarNivel(nivel.id) ? '' : 'Seleccione primero una ' + getNivelNombre(getNivelPadreId(nivel.id)!)"
                     />
-                    @if (sucursalAutoOpen() && sucursalSuggestions().length > 0) {
+                    @if (sucursalAutoOpen() && sucursalSuggestions().length > 0 && puedeBuscarNivel(nivel.id)) {
                       <div class="empresa-autocomplete-list">
                         @for (n of sucursalSuggestions(); track n.id) {
                           <div class="empresa-autocomplete-item" (mousedown)="selectSucursal(n)">
@@ -212,11 +214,13 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
                       class="select"
                       placeholder="Buscar punto de venta..."
                       [ngModel]="puntoVentaAutoQuery()"
-                      (ngModelChange)="puntoVentaAutoQuery.set($event); puntoVentaAutoOpen.set(true)"
-                      (focus)="puntoVentaAutoOpen.set(true)"
+                      (ngModelChange)="puntoVentaAutoQuery.set($event)"
+                      (focus)="onPuntoVentaAutocompleteFocus(nivel.id)"
                       (blur)="closePuntoVentaAutocomplete()"
+                      [disabled]="!puedeBuscarNivel(nivel.id)"
+                      [attr.title]="puedeBuscarNivel(nivel.id) ? '' : 'Seleccione primero una ' + getNivelNombre(getNivelPadreId(nivel.id)!)"
                     />
-                    @if (puntoVentaAutoOpen() && puntoVentaSuggestions().length > 0) {
+                    @if (puntoVentaAutoOpen() && puntoVentaSuggestions().length > 0 && puedeBuscarNivel(nivel.id)) {
                       <div class="empresa-autocomplete-list">
                         @for (n of puntoVentaSuggestions(); track n.id) {
                           <div class="empresa-autocomplete-item" (mousedown)="selectPuntoVenta(n)">
@@ -906,6 +910,18 @@ export class UserAccessComponent implements OnInit {
     this.puntoVentaAutoQuery.set('');
     this.puntoVentaAutoOpen.set(false);
     clearTimeout(this.puntoVentaAutoTimer);
+  }
+
+  onSucursalAutocompleteFocus(nivelId: string): void {
+    if (this.puedeBuscarNivel(nivelId)) {
+      this.sucursalAutoOpen.set(true);
+    }
+  }
+
+  onPuntoVentaAutocompleteFocus(nivelId: string): void {
+    if (this.puedeBuscarNivel(nivelId)) {
+      this.puntoVentaAutoOpen.set(true);
+    }
   }
 
   closeEmpresaAutocomplete(): void {

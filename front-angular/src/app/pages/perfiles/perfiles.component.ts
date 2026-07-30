@@ -417,7 +417,7 @@ interface PerfilProgramaRow {
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPerfAppFromDialog(a)">Seleccionar</button>
+                  <button class="btn btn-primary btn-sm" (click)="selectPerfAppFromDialog(a)" [disabled]="a.estado !== 'ACTIVO'">Seleccionar</button>
                 </td>
               </tr>
             } @empty {
@@ -474,7 +474,7 @@ interface PerfilProgramaRow {
                 <td><div class="cell-strong">{{ m.nombre }}</div></td>
                 <td><span class="badge badge-blue">{{ m.appCodigo }}</span></td>
                 <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPerfModFromDialog(m)">Seleccionar</button>
+                  <button class="btn btn-primary btn-sm" (click)="selectPerfModFromDialog(m)" [disabled]="m.estado !== 'ACTIVO'">Seleccionar</button>
                 </td>
               </tr>
             } @empty {
@@ -531,7 +531,7 @@ interface PerfilProgramaRow {
                 <td><div class="cell-strong">{{ p.nombre }}</div></td>
                 <td><span class="badge badge-amber">{{ p.tipo }}</span></td>
                 <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPerfPrgFromDialog(p)">Seleccionar</button>
+                  <button class="btn btn-primary btn-sm" (click)="selectPerfPrgFromDialog(p)" [disabled]="p.estado !== 'ACTIVO'">Seleccionar</button>
                 </td>
               </tr>
             } @empty {

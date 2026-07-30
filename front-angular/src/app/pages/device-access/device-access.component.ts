@@ -171,27 +171,31 @@ interface AccesoView extends AccesoDispositivoMovil {
       <div class="filter-row">
         <div class="field">
           <label>Usuario</label>
-          <input type="text" class="select" [(ngModel)]="userFilterCodigo" placeholder="Usuario" />
+          <input type="text" class="select" placeholder="Usuario"
+            [ngModel]="userFilterCodigo()" (ngModelChange)="userFilterCodigo.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="userFilterNombre" placeholder="Nombre" />
+          <input type="text" class="select" placeholder="Nombre"
+            [ngModel]="userFilterNombre()" (ngModelChange)="userFilterNombre.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Apellido</label>
-          <input type="text" class="select" [(ngModel)]="userFilterApellido" placeholder="Apellido" />
+          <input type="text" class="select" placeholder="Apellido"
+            [ngModel]="userFilterApellido()" (ngModelChange)="userFilterApellido.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Correo</label>
-          <input type="text" class="select" [(ngModel)]="userFilterCorreo" placeholder="Correo" />
+          <input type="text" class="select" placeholder="Correo"
+            [ngModel]="userFilterCorreo()" (ngModelChange)="userFilterCorreo.set($event); userSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Departamento</label>
-          <input type="text" class="select" [(ngModel)]="userFilterDepartamento" placeholder="Departamento" />
+          <input type="text" class="select" placeholder="Departamento"
+            [ngModel]="userFilterDepartamento()" (ngModelChange)="userFilterDepartamento.set($event); userSearchPage.set(1)" />
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyUserFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearUserFilters()">Limpiar</button>
       </div>
 
@@ -242,11 +246,13 @@ interface AccesoView extends AccesoDispositivoMovil {
       <div class="filter-row">
         <div class="field">
           <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="dispFilterCodigo" placeholder="Código de dispositivo" />
+          <input type="text" class="select" placeholder="Código de dispositivo"
+            [ngModel]="dispFilterCodigo()" (ngModelChange)="dispFilterCodigo.set($event); dispSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Estado</label>
-          <select class="select" [(ngModel)]="dispFilterEstado">
+          <select class="select"
+            [ngModel]="dispFilterEstado()" (ngModelChange)="dispFilterEstado.set($event); dispSearchPage.set(1)">
             <option value="">Todos</option>
             <option value="ACTIVO">Activo</option>
             <option value="INACTIVO">Inactivo</option>
@@ -254,7 +260,6 @@ interface AccesoView extends AccesoDispositivoMovil {
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyDispFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearDispFilters()">Limpiar</button>
       </div>
 
@@ -277,7 +282,7 @@ interface AccesoView extends AccesoDispositivoMovil {
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectDispFromDialog(d)">Seleccionar</button>
+                  <button class="btn btn-primary btn-sm" (click)="selectDispFromDialog(d)" [disabled]="d.estado !== 'ACTIVO'">Seleccionar</button>
                 </td>
               </tr>
             } @empty {
@@ -318,23 +323,16 @@ export class DeviceAccessComponent implements OnInit {
   showUserSearchDlg = false;
   showDispSearchDlg = false;
 
-  userFilterCodigo = '';
-  userFilterNombre = '';
-  userFilterApellido = '';
-  userFilterCorreo = '';
-  userFilterDepartamento = '';
-  appliedUserFilterCodigo = signal('');
-  appliedUserFilterNombre = signal('');
-  appliedUserFilterApellido = signal('');
-  appliedUserFilterCorreo = signal('');
-  appliedUserFilterDepartamento = signal('');
+  userFilterCodigo = signal('');
+  userFilterNombre = signal('');
+  userFilterApellido = signal('');
+  userFilterCorreo = signal('');
+  userFilterDepartamento = signal('');
   userSearchPage = signal(1);
   userSearchPageSize = signal(10);
 
-  dispFilterCodigo = '';
-  dispFilterEstado = '';
-  appliedDispFilterCodigo = signal('');
-  appliedDispFilterEstado = signal('');
+  dispFilterCodigo = signal('');
+  dispFilterEstado = signal('');
   dispSearchPage = signal(1);
   dispSearchPageSize = signal(10);
 
@@ -376,11 +374,11 @@ export class DeviceAccessComponent implements OnInit {
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredAccesos().length / this.pageSize())));
 
   filteredUsersForSearch = computed(() => {
-    const qCodigo = this.appliedUserFilterCodigo().toLowerCase().trim();
-    const qNombre = this.appliedUserFilterNombre().toLowerCase().trim();
-    const qApellido = this.appliedUserFilterApellido().toLowerCase().trim();
-    const qCorreo = this.appliedUserFilterCorreo().toLowerCase().trim();
-    const qDepartamento = this.appliedUserFilterDepartamento().toLowerCase().trim();
+    const qCodigo = this.userFilterCodigo().toLowerCase().trim();
+    const qNombre = this.userFilterNombre().toLowerCase().trim();
+    const qApellido = this.userFilterApellido().toLowerCase().trim();
+    const qCorreo = this.userFilterCorreo().toLowerCase().trim();
+    const qDepartamento = this.userFilterDepartamento().toLowerCase().trim();
     return this.usuarios().filter(u =>
       (!qCodigo || u.username.toLowerCase().includes(qCodigo)) &&
       (!qNombre || u.firstName.toLowerCase().includes(qNombre)) &&
@@ -401,8 +399,8 @@ export class DeviceAccessComponent implements OnInit {
   });
 
   filteredDispsForSearch = computed(() => {
-    const qCodigo = this.appliedDispFilterCodigo().toLowerCase().trim();
-    const qEstado = this.appliedDispFilterEstado().trim();
+    const qCodigo = this.dispFilterCodigo().toLowerCase().trim();
+    const qEstado = this.dispFilterEstado().trim();
     return this.dispositivos().filter(d =>
       (!qCodigo || d.codigo.toLowerCase().includes(qCodigo)) &&
       (!qEstado || d.estado === qEstado)
@@ -430,16 +428,11 @@ export class DeviceAccessComponent implements OnInit {
   }
 
   openUserSearchDialog(): void {
-    this.userFilterCodigo = '';
-    this.userFilterNombre = '';
-    this.userFilterApellido = '';
-    this.userFilterCorreo = '';
-    this.userFilterDepartamento = '';
-    this.appliedUserFilterCodigo.set('');
-    this.appliedUserFilterNombre.set('');
-    this.appliedUserFilterApellido.set('');
-    this.appliedUserFilterCorreo.set('');
-    this.appliedUserFilterDepartamento.set('');
+    this.userFilterCodigo.set('');
+    this.userFilterNombre.set('');
+    this.userFilterApellido.set('');
+    this.userFilterCorreo.set('');
+    this.userFilterDepartamento.set('');
     this.userSearchPage.set(1);
     this.showUserSearchDlg = true;
   }
@@ -448,22 +441,13 @@ export class DeviceAccessComponent implements OnInit {
     this.showUserSearchDlg = false;
   }
 
-  applyUserFilters(): void {
-    this.appliedUserFilterCodigo.set(this.userFilterCodigo);
-    this.appliedUserFilterNombre.set(this.userFilterNombre);
-    this.appliedUserFilterApellido.set(this.userFilterApellido);
-    this.appliedUserFilterCorreo.set(this.userFilterCorreo);
-    this.appliedUserFilterDepartamento.set(this.userFilterDepartamento);
-    this.userSearchPage.set(1);
-  }
-
   clearUserFilters(): void {
-    this.userFilterCodigo = '';
-    this.userFilterNombre = '';
-    this.userFilterApellido = '';
-    this.userFilterCorreo = '';
-    this.userFilterDepartamento = '';
-    this.applyUserFilters();
+    this.userFilterCodigo.set('');
+    this.userFilterNombre.set('');
+    this.userFilterApellido.set('');
+    this.userFilterCorreo.set('');
+    this.userFilterDepartamento.set('');
+    this.userSearchPage.set(1);
   }
 
   changeUserPage(delta: number): void {
@@ -476,10 +460,8 @@ export class DeviceAccessComponent implements OnInit {
   }
 
   openDispSearchDialog(): void {
-    this.dispFilterCodigo = '';
-    this.dispFilterEstado = '';
-    this.appliedDispFilterCodigo.set('');
-    this.appliedDispFilterEstado.set('');
+    this.dispFilterCodigo.set('');
+    this.dispFilterEstado.set('');
     this.dispSearchPage.set(1);
     this.showDispSearchDlg = true;
   }
@@ -488,16 +470,10 @@ export class DeviceAccessComponent implements OnInit {
     this.showDispSearchDlg = false;
   }
 
-  applyDispFilters(): void {
-    this.appliedDispFilterCodigo.set(this.dispFilterCodigo);
-    this.appliedDispFilterEstado.set(this.dispFilterEstado);
-    this.dispSearchPage.set(1);
-  }
-
   clearDispFilters(): void {
-    this.dispFilterCodigo = '';
-    this.dispFilterEstado = '';
-    this.applyDispFilters();
+    this.dispFilterCodigo.set('');
+    this.dispFilterEstado.set('');
+    this.dispSearchPage.set(1);
   }
 
   changeDispPage(delta: number): void {

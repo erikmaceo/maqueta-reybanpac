@@ -372,15 +372,18 @@ interface PerfilProgramaRow {
       <div class="filter-row">
         <div class="field">
           <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="perfAppSearchCodigo" placeholder="Código de aplicación" />
+          <input type="text" class="select" placeholder="Código de aplicación"
+            [ngModel]="perfAppSearchCodigo()" (ngModelChange)="perfAppSearchCodigo.set($event); perfAppSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="perfAppSearchNombre" placeholder="Nombre de aplicación" />
+          <input type="text" class="select" placeholder="Nombre de aplicación"
+            [ngModel]="perfAppSearchNombre()" (ngModelChange)="perfAppSearchNombre.set($event); perfAppSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Estado</label>
-          <select class="select" [(ngModel)]="perfAppSearchEstado">
+          <select class="select"
+            [ngModel]="perfAppSearchEstado()" (ngModelChange)="perfAppSearchEstado.set($event); perfAppSearchPage.set(1)">
             <option value="">Todos</option>
             <option value="ACTIVO">Activo</option>
             <option value="INACTIVO">Inactivo</option>
@@ -388,7 +391,6 @@ interface PerfilProgramaRow {
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyPerfAppFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearPerfAppFilters()">Limpiar</button>
       </div>
 
@@ -442,15 +444,16 @@ interface PerfilProgramaRow {
       <div class="filter-row">
         <div class="field">
           <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="perfModSearchCodigo" placeholder="Código de módulo" />
+          <input type="text" class="select" placeholder="Código de módulo"
+            [ngModel]="perfModSearchCodigo()" (ngModelChange)="perfModSearchCodigo.set($event); perfModSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="perfModSearchNombre" placeholder="Nombre de módulo" />
+          <input type="text" class="select" placeholder="Nombre de módulo"
+            [ngModel]="perfModSearchNombre()" (ngModelChange)="perfModSearchNombre.set($event); perfModSearchPage.set(1)" />
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyPerfModFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearPerfModFilters()">Limpiar</button>
       </div>
 
@@ -498,15 +501,16 @@ interface PerfilProgramaRow {
       <div class="filter-row">
         <div class="field">
           <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="perfPrgSearchCodigo" placeholder="Código de programa" />
+          <input type="text" class="select" placeholder="Código de programa"
+            [ngModel]="perfPrgSearchCodigo()" (ngModelChange)="perfPrgSearchCodigo.set($event); perfPrgSearchPage.set(1)" />
         </div>
         <div class="field">
           <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="perfPrgSearchNombre" placeholder="Nombre de programa" />
+          <input type="text" class="select" placeholder="Nombre de programa"
+            [ngModel]="perfPrgSearchNombre()" (ngModelChange)="perfPrgSearchNombre.set($event); perfPrgSearchPage.set(1)" />
         </div>
       </div>
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyPerfPrgFilters()">Buscar</button>
         <button class="btn btn-ghost" (click)="clearPerfPrgFilters()">Limpiar</button>
       </div>
 
@@ -832,28 +836,21 @@ export class PerfilesComponent implements OnInit {
   perfPrgSearchTexts = signal<string[]>([]);
 
   showPerfAppSearchDlg = false;
-  perfAppSearchCodigo = '';
-  perfAppSearchNombre = '';
-  perfAppSearchEstado = '';
-  appliedPerfAppSearchCodigo = signal('');
-  appliedPerfAppSearchNombre = signal('');
-  appliedPerfAppSearchEstado = signal('');
+  perfAppSearchCodigo = signal('');
+  perfAppSearchNombre = signal('');
+  perfAppSearchEstado = signal('');
   perfAppSearchPage = signal(1);
   perfAppSearchPageSize = signal(10);
 
   showPerfModSearchDlg = false;
-  perfModSearchCodigo = '';
-  perfModSearchNombre = '';
-  appliedPerfModSearchCodigo = signal('');
-  appliedPerfModSearchNombre = signal('');
+  perfModSearchCodigo = signal('');
+  perfModSearchNombre = signal('');
   perfModSearchPage = signal(1);
   perfModSearchPageSize = signal(10);
 
   showPerfPrgSearchDlg = false;
-  perfPrgSearchCodigo = '';
-  perfPrgSearchNombre = '';
-  appliedPerfPrgSearchCodigo = signal('');
-  appliedPerfPrgSearchNombre = signal('');
+  perfPrgSearchCodigo = signal('');
+  perfPrgSearchNombre = signal('');
   perfPrgSearchPage = signal(1);
   perfPrgSearchPageSize = signal(10);
 
@@ -889,9 +886,9 @@ export class PerfilesComponent implements OnInit {
 
   // --- Search computed for perfil dialogs ---
   filteredAppsForPerfSearch = computed(() => {
-    const qCodigo = this.appliedPerfAppSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedPerfAppSearchNombre().toLowerCase().trim();
-    const qEstado = this.appliedPerfAppSearchEstado().trim();
+    const qCodigo = this.perfAppSearchCodigo().toLowerCase().trim();
+    const qNombre = this.perfAppSearchNombre().toLowerCase().trim();
+    const qEstado = this.perfAppSearchEstado().trim();
     return this.aplicaciones().filter(a =>
       (!qCodigo || a.codigo.toLowerCase().includes(qCodigo)) &&
       (!qNombre || a.nombre.toLowerCase().includes(qNombre)) &&
@@ -909,8 +906,8 @@ export class PerfilesComponent implements OnInit {
   filteredModsForPerfSearch = computed(() => {
     const idx = this.activePerfRowIdx();
     const appCod = idx >= 0 ? this.perfProgramas[idx]?.appCodigo || '' : '';
-    const qCodigo = this.appliedPerfModSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedPerfModSearchNombre().toLowerCase().trim();
+    const qCodigo = this.perfModSearchCodigo().toLowerCase().trim();
+    const qNombre = this.perfModSearchNombre().toLowerCase().trim();
     let mods = appCod ? this.modulos().filter(m => m.appCodigo === appCod) : this.modulos();
     return mods.filter(m =>
       (!qCodigo || m.codigo.toLowerCase().includes(qCodigo)) &&
@@ -928,8 +925,8 @@ export class PerfilesComponent implements OnInit {
   filteredPrgsForPerfSearch = computed(() => {
     const idx = this.activePerfRowIdx();
     const modCod = idx >= 0 ? this.perfProgramas[idx]?.modCodigo || '' : '';
-    const qCodigo = this.appliedPerfPrgSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedPerfPrgSearchNombre().toLowerCase().trim();
+    const qCodigo = this.perfPrgSearchCodigo().toLowerCase().trim();
+    const qNombre = this.perfPrgSearchNombre().toLowerCase().trim();
     let prgs = modCod ? this.programas().filter(p => p.modCodigo === modCod) : this.programas();
     return prgs.filter(p =>
       (!qCodigo || p.codigo.toLowerCase().includes(qCodigo)) &&
@@ -1179,12 +1176,9 @@ export class PerfilesComponent implements OnInit {
 
   openPerfAppSearchDialog(idx: number): void {
     this.activePerfRowIdx.set(idx);
-    this.perfAppSearchCodigo = '';
-    this.perfAppSearchNombre = '';
-    this.perfAppSearchEstado = '';
-    this.appliedPerfAppSearchCodigo.set('');
-    this.appliedPerfAppSearchNombre.set('');
-    this.appliedPerfAppSearchEstado.set('');
+    this.perfAppSearchCodigo.set('');
+    this.perfAppSearchNombre.set('');
+    this.perfAppSearchEstado.set('');
     this.perfAppSearchPage.set(1);
     this.showPerfAppSearchDlg = true;
   }
@@ -1194,18 +1188,11 @@ export class PerfilesComponent implements OnInit {
     this.activePerfRowIdx.set(-1);
   }
 
-  applyPerfAppFilters(): void {
-    this.appliedPerfAppSearchCodigo.set(this.perfAppSearchCodigo);
-    this.appliedPerfAppSearchNombre.set(this.perfAppSearchNombre);
-    this.appliedPerfAppSearchEstado.set(this.perfAppSearchEstado);
-    this.perfAppSearchPage.set(1);
-  }
-
   clearPerfAppFilters(): void {
-    this.perfAppSearchCodigo = '';
-    this.perfAppSearchNombre = '';
-    this.perfAppSearchEstado = '';
-    this.applyPerfAppFilters();
+    this.perfAppSearchCodigo.set('');
+    this.perfAppSearchNombre.set('');
+    this.perfAppSearchEstado.set('');
+    this.perfAppSearchPage.set(1);
   }
 
   changePerfAppSearchPage(delta: number): void {
@@ -1232,10 +1219,8 @@ export class PerfilesComponent implements OnInit {
 
   openPerfModSearchDialog(idx: number): void {
     this.activePerfRowIdx.set(idx);
-    this.perfModSearchCodigo = '';
-    this.perfModSearchNombre = '';
-    this.appliedPerfModSearchCodigo.set('');
-    this.appliedPerfModSearchNombre.set('');
+    this.perfModSearchCodigo.set('');
+    this.perfModSearchNombre.set('');
     this.perfModSearchPage.set(1);
     this.showPerfModSearchDlg = true;
   }
@@ -1245,16 +1230,10 @@ export class PerfilesComponent implements OnInit {
     this.activePerfRowIdx.set(-1);
   }
 
-  applyPerfModFilters(): void {
-    this.appliedPerfModSearchCodigo.set(this.perfModSearchCodigo);
-    this.appliedPerfModSearchNombre.set(this.perfModSearchNombre);
-    this.perfModSearchPage.set(1);
-  }
-
   clearPerfModFilters(): void {
-    this.perfModSearchCodigo = '';
-    this.perfModSearchNombre = '';
-    this.applyPerfModFilters();
+    this.perfModSearchCodigo.set('');
+    this.perfModSearchNombre.set('');
+    this.perfModSearchPage.set(1);
   }
 
   changePerfModSearchPage(delta: number): void {
@@ -1279,10 +1258,8 @@ export class PerfilesComponent implements OnInit {
 
   openPerfPrgSearchDialog(idx: number): void {
     this.activePerfRowIdx.set(idx);
-    this.perfPrgSearchCodigo = '';
-    this.perfPrgSearchNombre = '';
-    this.appliedPerfPrgSearchCodigo.set('');
-    this.appliedPerfPrgSearchNombre.set('');
+    this.perfPrgSearchCodigo.set('');
+    this.perfPrgSearchNombre.set('');
     this.perfPrgSearchPage.set(1);
     this.showPerfPrgSearchDlg = true;
   }
@@ -1292,16 +1269,10 @@ export class PerfilesComponent implements OnInit {
     this.activePerfRowIdx.set(-1);
   }
 
-  applyPerfPrgFilters(): void {
-    this.appliedPerfPrgSearchCodigo.set(this.perfPrgSearchCodigo);
-    this.appliedPerfPrgSearchNombre.set(this.perfPrgSearchNombre);
-    this.perfPrgSearchPage.set(1);
-  }
-
   clearPerfPrgFilters(): void {
-    this.perfPrgSearchCodigo = '';
-    this.perfPrgSearchNombre = '';
-    this.applyPerfPrgFilters();
+    this.perfPrgSearchCodigo.set('');
+    this.perfPrgSearchNombre.set('');
+    this.perfPrgSearchPage.set(1);
   }
 
   changePerfPrgSearchPage(delta: number): void {

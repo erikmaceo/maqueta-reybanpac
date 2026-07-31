@@ -50,6 +50,9 @@ interface NodoView extends NodoSegregacion {
         <p-tab value="0"><i class="pi pi-layer-group mr-2"></i>Niveles</p-tab>
         <p-tab value="1"><i class="pi pi-tags mr-2"></i>Atributos</p-tab>
         <p-tab value="2"><i class="pi pi-sitemap mr-2"></i>Nodos</p-tab>
+        @for (nivel of nivelesOrdenados(); track nivel.id) {
+          <p-tab [value]="nivel.id"><i class="pi pi-building mr-2"></i>{{ nivel.nombre }}</p-tab>
+        }
       </p-tablist>
       <p-tabpanels>
 
@@ -237,6 +240,105 @@ interface NodoView extends NodoSegregacion {
             }
           }
         </p-tabpanel>
+
+        <!-- ============ TABS DINÁMICOS POR NIVEL ============ -->
+        @for (nivel of nivelesOrdenados(); track nivel.id) {
+          <p-tabpanel [value]="nivel.id">
+            @if (loadingNodos()) {
+              <app-table-skeleton [rows]="5" [cols]="6" />
+            } @else if (errorNodos()) {
+              <app-error-state [message]="errorNodos()!" [onRetry]="loadNodos" />
+            } @else {
+              @let data = nivelTabData().get(nivel.id);
+              @let attrs = atributosDeNivel(nivel.id);
+              @let mostrarPadre = !isPrimerNivel(nivel.id);
+              <div class="row between mb-4">
+                <div class="search">
+                  <app-icon-search [width]="15" [height]="15" />
+                  <input type="text" [placeholder]="'Buscar ' + nivel.nombre.toLowerCase() + '...'"
+                    [ngModel]="nivelTabSearch()[nivel.id] || ''" (ngModelChange)="onNivelTabSearchChange(nivel.id, $event)" />
+                </div>
+                <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
+                  <app-icon-plus [width]="14" [height]="14" /> Nuevo Nodo
+                </button>
+              </div>
+              @if (niveles().length === 0) {
+                <div class="card muted center" style="padding: 24px;">
+                  Primero debe crear al menos un nivel de segregación para gestionar nodos.
+                </div>
+              } @else if ((data?.filtered ?? []).length === 0) {
+                <div class="card muted center" style="padding: 24px;">Sin {{ nivel.nombre.toLowerCase() }} configurados.</div>
+              } @else {
+                <div class="card table-wrap">
+                  <table class="data">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        @if (mostrarPadre) {
+                          <th>Padre</th>
+                        }
+                        @for (attr of attrs; track attr.id) {
+                          <th>{{ attr.nombre }}</th>
+                        }
+                        <th>Estado</th>
+                        <th style="text-align:center;">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (n of (data?.paginated ?? []); track n.id) {
+                        <tr>
+                          <td class="mono">{{ n.codigo }}</td>
+                          <td><div class="cell-strong">{{ n.nombre }}</div></td>
+                          @if (mostrarPadre) {
+                            <td>{{ n.padreNombre || '—' }}</td>
+                          }
+                          @for (attr of attrs; track attr.id) {
+                            <td class="small">{{ n.atributos[attr.id] || '—' }}</td>
+                          }
+                          <td>
+                            <span class="badge" [class.badge-green]="n.estado === 'ACTIVO'" [class.badge-gray]="n.estado !== 'ACTIVO'">
+                              {{ n.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+                            </span>
+                          </td>
+                          <td>
+                            <div class="cell-actions">
+                              <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openNodoDialog(n)">
+                                <app-icon-edit [width]="15" [height]="15" />
+                              </button>
+                              <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteNodo(n)">
+                                <app-icon-trash [width]="15" [height]="15" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                @if ((data?.filtered ?? []).length > 0) {
+                  <div class="pagination">
+                    <div class="page-controls">
+                      <button class="btn btn-ghost btn-sm" [disabled]="(nivelTabPage()[nivel.id] || 1) === 1" (click)="changeNivelTabPage(nivel.id, -1)">Anterior</button>
+                    </div>
+                    <span>Página {{ nivelTabPage()[nivel.id] || 1 }} de {{ data?.totalPages ?? 1 }} ({{ data?.totalItems ?? 0 }} registros)</span>
+                    <div class="page-size-selector">
+                      <label class="small muted">Registros por página</label>
+                      <select class="select" style="width: auto; min-width: 60px;" [ngModel]="nivelTabPageSize()[nivel.id] || 10" (ngModelChange)="changeNivelTabPageSize(nivel.id, $event)">
+                        <option [value]="5">5</option>
+                        <option [value]="10">10</option>
+                        <option [value]="15">15</option>
+                        <option [value]="20">20</option>
+                      </select>
+                      <button class="btn btn-ghost btn-sm" [disabled]="(nivelTabPage()[nivel.id] || 1) === data?.totalPages" (click)="changeNivelTabPage(nivel.id, 1)">Siguiente</button>
+                    </div>
+                  </div>
+                }
+              }
+            }
+          </p-tabpanel>
+        }
 
         <!-- ============ ATRIBUTOS ============ -->
         <p-tabpanel value="1">
@@ -648,6 +750,11 @@ export class SegregationLevelsComponent implements OnInit {
   atributoPage = signal(1);
   atributoPageSize = signal(10);
 
+  // --- Dynamic level tabs state ---
+  nivelTabSearch = signal<Record<string, string>>({});
+  nivelTabPage = signal<Record<string, number>>({});
+  nivelTabPageSize = signal<Record<string, number>>({});
+
   showNivelDlg = false;
   editNivelId: string | null = null;
   nivelForm: any = {};
@@ -789,6 +896,41 @@ export class SegregationLevelsComponent implements OnInit {
       (n.padreNombre || '').toLowerCase().includes(q) ||
       Object.values(n.atributos).some(v => v.toLowerCase().includes(q))
     );
+  });
+
+  nivelTabData = computed(() => {
+    const result = new Map<string, { filtered: NodoView[]; paginated: NodoView[]; totalPages: number; totalItems: number }>();
+    const niveles = this.nivelesOrdenados();
+    const primerNivelId = niveles.length > 0 ? niveles[0].id : null;
+
+    for (const nivel of niveles) {
+      const q = (this.nivelTabSearch()[nivel.id] || '').toLowerCase().trim();
+      const esPrimerNivel = nivel.id === primerNivelId;
+      let filtered = this.nodosView().filter(n => n.nivelId === nivel.id);
+
+      if (q) {
+        filtered = filtered.filter(n =>
+          n.codigo.toLowerCase().includes(q) ||
+          n.nombre.toLowerCase().includes(q) ||
+          (!esPrimerNivel && (n.padreNombre || '').toLowerCase().includes(q)) ||
+          Object.values(n.atributos).some(v => v.toLowerCase().includes(q))
+        );
+      }
+
+      const pageSize = this.nivelTabPageSize()[nivel.id] || 10;
+      const page = Math.min(this.nivelTabPage()[nivel.id] || 1, Math.max(1, Math.ceil(filtered.length / pageSize)));
+      const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      const start = (page - 1) * pageSize;
+
+      result.set(nivel.id, {
+        filtered,
+        paginated: filtered.slice(start, start + pageSize),
+        totalPages,
+        totalItems: filtered.length,
+      });
+    }
+
+    return result;
   });
 
   expandedNodosTree = signal<Set<string>>(new Set());
@@ -949,6 +1091,31 @@ export class SegregationLevelsComponent implements OnInit {
   onSearchAtributoChange(value: string): void {
     this.searchAtributo.set(value);
     this.atributoPage.set(1);
+  }
+
+  isPrimerNivel(nivelId: string): boolean {
+    const sorted = this.nivelesOrdenados();
+    return sorted.length > 0 && sorted[0].id === nivelId;
+  }
+
+  onNivelTabSearchChange(nivelId: string, value: string): void {
+    this.nivelTabSearch.update(m => ({ ...m, [nivelId]: value }));
+    this.nivelTabPage.update(m => ({ ...m, [nivelId]: 1 }));
+  }
+
+  changeNivelTabPage(nivelId: string, delta: number): void {
+    const data = this.nivelTabData().get(nivelId);
+    const totalPages = data?.totalPages ?? 1;
+    this.nivelTabPage.update(m => {
+      const current = m[nivelId] || 1;
+      return { ...m, [nivelId]: Math.min(Math.max(current + delta, 1), totalPages) };
+    });
+  }
+
+  changeNivelTabPageSize(nivelId: string, value: any): void {
+    const pageSize = Number(value);
+    this.nivelTabPageSize.update(m => ({ ...m, [nivelId]: pageSize }));
+    this.nivelTabPage.update(m => ({ ...m, [nivelId]: 1 }));
   }
 
   loadNiveles = (): void => {

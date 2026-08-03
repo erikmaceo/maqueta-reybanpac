@@ -9,6 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
@@ -931,12 +932,19 @@ interface ControlRow {
     }
     .check-yes { color: #22c55e; font-weight: 700; }
     .check-no { color: #d1d5db; }
+
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
   `],
 })
 export class SecurityComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private confirmationService = inject(ConfirmationService);
 
   // --- Signals de datos ---
   aplicaciones = signal<Aplicacion[]>([]);
@@ -1321,28 +1329,49 @@ export class SecurityComponent implements OnInit {
     this.showAppDlg = true;
   }
   closeAppDialog(): void { this.showAppDlg = false; this.editAppId = null; this.appTouched = false; }
-  async saveApp(): Promise<void> {
+
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      accept: () => accept(),
+    });
+  }
+
+  saveApp(): void {
     this.appTouched = true;
     if (!this.appForm.codigo || !this.appForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
     const padreIds = new Set(this.nodosSegregacionPadresActivos().map(n => n.id));
     const nodoIds = (this.appForm.nodoIds || []).filter(id => padreIds.has(id)).slice(0, 1);
     const payload = { ...this.appForm, nodoIds };
-    try {
-      if (this.editAppId) { await this.api.updateAplicacion(this.editAppId, payload).toPromise(); this.toast.success('Aplicación actualizada'); }
-      else { await this.api.createAplicacion(payload).toPromise(); this.toast.success('Aplicación creada'); }
-      this.events.emitDataChanged(); this.closeAppDialog(); this._loadApp();
-    } catch (e: any) {
-      const msg = e?.error?.error || e?.message || 'Error inesperado.';
-      this.toast.error('Error', msg);
+
+    const executeSave = async () => {
+      try {
+        if (this.editAppId) { await this.api.updateAplicacion(this.editAppId, payload).toPromise(); this.toast.success('Aplicación actualizada'); }
+        else { await this.api.createAplicacion(payload).toPromise(); this.toast.success('Aplicación creada'); }
+        this.events.emitDataChanged(); this.closeAppDialog(); this._loadApp();
+      } catch (e: any) {
+        const msg = e?.error?.error || e?.message || 'Error inesperado.';
+        this.toast.error('Error', msg);
+      }
+    };
+
+    if (this.editAppId) {
+      this.confirmAction(`Se va a proceder con la edición de la aplicación "${this.appForm.nombre}", ¿desea continuar?`, executeSave);
+    } else {
+      executeSave();
     }
   }
   confirmDeleteApp(a: Aplicacion): void {
-    if (confirm(`¿Eliminar la aplicación "${a.nombre}"? Se eliminarán también sus módulos, programas y perfiles asociados.`)) {
+    this.confirmAction(`Se va a proceder con la eliminación de la aplicación "${a.nombre}", ¿desea continuar?`, () => {
       this.api.deleteAplicacion(a.id).subscribe({
         next: () => { this.toast.success('Aplicación eliminada'); this.events.emitDataChanged(); this._loadApp(); this._loadMod(); this._loadPrg(); },
         error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
-    }
+    });
   }
 
   // --- Búsqueda de aplicación para diálogo de módulo ---
@@ -1456,25 +1485,34 @@ export class SecurityComponent implements OnInit {
     this.modTouched = false;
     this.modAppSearchText.set('');
   }
-  async saveMod(): Promise<void> {
+  saveMod(): void {
     this.modTouched = true;
     if (!this.modForm.codigo || !this.modForm.nombre || !this.modForm.appCodigo) { this.toast.error('Faltan datos', 'Código, nombre y aplicación son obligatorios.'); return; }
-    try {
-      if (this.editModId) { await this.api.updateModulo(this.editModId, this.modForm).toPromise(); this.toast.success('Módulo actualizado'); }
-      else { await this.api.createModulo(this.modForm).toPromise(); this.toast.success('Módulo creado'); }
-      this.events.emitDataChanged(); this.closeModDialog(); this._loadMod();
-    } catch (e: any) {
-      const msg = e?.error?.error || e?.message || 'Error inesperado.';
-      this.toast.error('Error', msg);
+
+    const executeSave = async () => {
+      try {
+        if (this.editModId) { await this.api.updateModulo(this.editModId, this.modForm).toPromise(); this.toast.success('Módulo actualizado'); }
+        else { await this.api.createModulo(this.modForm).toPromise(); this.toast.success('Módulo creado'); }
+        this.events.emitDataChanged(); this.closeModDialog(); this._loadMod();
+      } catch (e: any) {
+        const msg = e?.error?.error || e?.message || 'Error inesperado.';
+        this.toast.error('Error', msg);
+      }
+    };
+
+    if (this.editModId) {
+      this.confirmAction(`Se va a proceder con la edición del módulo "${this.modForm.nombre}", ¿desea continuar?`, executeSave);
+    } else {
+      executeSave();
     }
   }
   confirmDeleteMod(m: Modulo): void {
-    if (confirm(`¿Eliminar el módulo "${m.nombre}"? Se eliminarán también sus programas y perfiles asociados.`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del módulo "${m.nombre}", ¿desea continuar?`, () => {
       this.api.deleteModulo(m.id).subscribe({
         next: () => { this.toast.success('Módulo eliminado'); this.events.emitDataChanged(); this._loadMod(); this._loadPrg(); },
         error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
-    }
+    });
   }
 
   // --- Búsqueda de aplicación para diálogo de programa ---
@@ -1622,7 +1660,7 @@ export class SecurityComponent implements OnInit {
   dropControl(event: CdkDragDrop<ControlRow[]>): void {
     moveItemInArray(this.prgControles, event.previousIndex, event.currentIndex);
   }
-  async savePrg(): Promise<void> {
+  savePrg(): void {
     this.prgTouched = true;
     if (!this.prgForm.codigo || !this.prgForm.nombre || !this.prgForm.appCodigo || !this.prgForm.modCodigo) { this.toast.error('Faltan datos', 'Código, nombre, aplicación y módulo son obligatorios.'); return; }
     const controles = this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú'
@@ -1631,23 +1669,32 @@ export class SecurityComponent implements OnInit {
     if (this.prgForm.tipo !== 'Menú' && this.prgForm.tipo !== 'Submenú' && this.prgControles.length > 0 && controles.length !== this.prgControles.length) {
       this.toast.error('Faltan datos', 'Todos los controles deben tener código, tipo y descripción.'); return;
     }
-    try {
-      const body: any = { ...this.prgForm, controles };
-      if (this.editPrgId) { await this.api.updatePrograma(this.editPrgId, body).toPromise(); this.toast.success('Programa actualizado'); }
-      else { await this.api.createPrograma(body).toPromise(); this.toast.success('Programa creado'); }
-      this.events.emitDataChanged(); this.closePrgDialog(); this._loadPrg();
-    } catch (e: any) {
-      const msg = e?.error?.error || e?.message || 'Error inesperado.';
-      this.toast.error('Error', msg);
+    const body: any = { ...this.prgForm, controles };
+
+    const executeSave = async () => {
+      try {
+        if (this.editPrgId) { await this.api.updatePrograma(this.editPrgId, body).toPromise(); this.toast.success('Programa actualizado'); }
+        else { await this.api.createPrograma(body).toPromise(); this.toast.success('Programa creado'); }
+        this.events.emitDataChanged(); this.closePrgDialog(); this._loadPrg();
+      } catch (e: any) {
+        const msg = e?.error?.error || e?.message || 'Error inesperado.';
+        this.toast.error('Error', msg);
+      }
+    };
+
+    if (this.editPrgId) {
+      this.confirmAction(`Se va a proceder con la edición del programa "${this.prgForm.nombre}", ¿desea continuar?`, executeSave);
+    } else {
+      executeSave();
     }
   }
   confirmDeletePrg(p: Programa): void {
-    if (confirm(`¿Eliminar el programa "${p.nombre}"? Se eliminarán también sus perfiles y controles asociados.`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del programa "${p.nombre}", ¿desea continuar?`, () => {
       this.api.deletePrograma(p.id).subscribe({
         next: () => { this.toast.success('Programa eliminado'); this.events.emitDataChanged(); this._loadPrg(); },
         error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
-    }
+    });
   }
 
   openBulkDialog(): void {

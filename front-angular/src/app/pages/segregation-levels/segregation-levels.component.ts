@@ -8,6 +8,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
@@ -719,12 +720,19 @@ interface NodoView extends NodoSegregacion {
     .tree-child-cell .tree-table .data { margin: 4px 0; }
     .tiny { font-size: 0.72rem; }
     .dim { color: var(--text-3, #9ca3af); }
+
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
   `],
 })
 export class SegregationLevelsComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private confirmationService = inject(ConfirmationService);
 
   niveles = signal<NivelSegregacion[]>([]);
   nodos = signal<NodoSegregacion[]>([]);
@@ -1192,35 +1200,55 @@ export class SegregationLevelsComponent implements OnInit {
 
   closeNivelDialog(): void { this.showNivelDlg = false; this.editNivelId = null; }
 
-  async saveNivel(): Promise<void> {
+  saveNivel(): void {
     if (!this.nivelForm.codigo || !this.nivelForm.nombre || this.nivelForm.orden === '') {
       this.toast.error('Faltan datos', 'Código, nombre y orden son obligatorios.');
       return;
     }
     const body = { ...this.nivelForm, orden: Number(this.nivelForm.orden) };
-    try {
-      if (this.editNivelId) {
-        await this.api.updateNivelSegregacion(this.editNivelId, body).toPromise();
-        this.toast.success('Nivel actualizado');
-      } else {
-        await this.api.createNivelSegregacion(body).toPromise();
-        this.toast.success('Nivel creado');
+
+    const executeSave = async () => {
+      try {
+        if (this.editNivelId) {
+          await this.api.updateNivelSegregacion(this.editNivelId, body).toPromise();
+          this.toast.success('Nivel actualizado');
+        } else {
+          await this.api.createNivelSegregacion(body).toPromise();
+          this.toast.success('Nivel creado');
+        }
+        this.events.emitDataChanged();
+        this.closeNivelDialog();
+        this.loadNiveles();
+      } catch (e: any) {
+        this.toast.error('Error', e?.error?.error || e?.message || 'Error inesperado.');
       }
-      this.events.emitDataChanged();
-      this.closeNivelDialog();
-      this.loadNiveles();
-    } catch (e: any) {
-      this.toast.error('Error', e?.error?.error || e?.message || 'Error inesperado.');
+    };
+
+    if (this.editNivelId) {
+      this.confirmAction(`Se va a proceder con la edición del nivel "${this.nivelForm.nombre}", ¿desea continuar?`, executeSave);
+    } else {
+      executeSave();
     }
   }
 
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      accept: () => accept(),
+    });
+  }
+
   confirmDeleteNivel(n: NivelSegregacion): void {
-    if (confirm(`¿Eliminar el nivel "${n.nombre}"?\n\nSolo se puede eliminar si no tiene nodos asociados.`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del nivel "${n.nombre}", ¿desea continuar?`, () => {
       this.api.deleteNivelSegregacion(n.id).subscribe({
         next: () => { this.toast.success('Nivel eliminado'); this.events.emitDataChanged(); },
         error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
       });
-    }
+    });
   }
 
   blankNodo() { return { codigo: '', nombre: '', nivelId: '', padreId: null as string | null, estado: 'ACTIVO' as Estado, atributos: {} as Record<string, string> }; }
@@ -1252,7 +1280,7 @@ export class SegregationLevelsComponent implements OnInit {
     this.nodoForm.atributos = {};
   }
 
-  async saveNodo(): Promise<void> {
+  saveNodo(): void {
     this.nodoFormSubmitted.set(true);
     if (!this.nodoForm.codigo || !this.nodoForm.nombre || !this.nodoForm.nivelId) {
       this.toast.error('Faltan datos', 'Código, nombre y nivel son obligatorios.');
@@ -1267,29 +1295,38 @@ export class SegregationLevelsComponent implements OnInit {
       .filter(([_, v]) => v !== undefined && v !== '')
       .map(([atributoId, valor]) => ({ atributoId, valor: String(valor) }));
     const body = { ...this.nodoForm, atributos: atributosPayload };
-    try {
-      if (this.editNodoId) {
-        await this.api.updateNodoSegregacion(this.editNodoId, body).toPromise();
-        this.toast.success('Nodo actualizado');
-      } else {
-        await this.api.createNodoSegregacion(body).toPromise();
-        this.toast.success('Nodo creado');
+
+    const executeSave = async () => {
+      try {
+        if (this.editNodoId) {
+          await this.api.updateNodoSegregacion(this.editNodoId, body).toPromise();
+          this.toast.success('Nodo actualizado');
+        } else {
+          await this.api.createNodoSegregacion(body).toPromise();
+          this.toast.success('Nodo creado');
+        }
+        this.events.emitDataChanged();
+        this.closeNodoDialog();
+        this.loadNodos();
+      } catch (e: any) {
+        this.toast.error('Error', e?.error?.error || e?.message || 'Error inesperado.');
       }
-      this.events.emitDataChanged();
-      this.closeNodoDialog();
-      this.loadNodos();
-    } catch (e: any) {
-      this.toast.error('Error', e?.error?.error || e?.message || 'Error inesperado.');
+    };
+
+    if (this.editNodoId) {
+      this.confirmAction(`Se va a proceder con la edición del nodo "${this.nodoForm.nombre}", ¿desea continuar?`, executeSave);
+    } else {
+      executeSave();
     }
   }
 
   confirmDeleteNodo(n: NodoView): void {
-    if (confirm(`¿Eliminar el nodo "${n.nombre}"?\n\nSe eliminarán también sus nodos descendientes.`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del nodo "${n.nombre}", ¿desea continuar?`, () => {
       this.api.deleteNodoSegregacion(n.id).subscribe({
         next: () => { this.toast.success('Nodo eliminado'); this.events.emitDataChanged(); },
         error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
       });
-    }
+    });
   }
 
   blankAtributo() {
@@ -1334,7 +1371,7 @@ export class SegregationLevelsComponent implements OnInit {
 
   closeAtributoDialog(): void { this.showAtributoDlg = false; this.editAtributoId = null; }
 
-  async saveAtributo(): Promise<void> {
+  saveAtributo(): void {
     if (!this.atributoForm.nivelId || !this.atributoForm.codigo || !this.atributoForm.nombre) {
       this.toast.error('Faltan datos', 'Nivel, código y nombre son obligatorios.');
       return;
@@ -1349,29 +1386,38 @@ export class SegregationLevelsComponent implements OnInit {
       obligatorio: this.atributoForm.obligatorio === true || this.atributoForm.obligatorio === 'true',
     };
     delete (body as any).configFuente;
-    try {
-      if (this.editAtributoId) {
-        await this.api.updateNivelAtributo(this.editAtributoId, body).toPromise();
-        this.toast.success('Atributo actualizado');
-      } else {
-        await this.api.createNivelAtributo(body).toPromise();
-        this.toast.success('Atributo creado');
+
+    const executeSave = async () => {
+      try {
+        if (this.editAtributoId) {
+          await this.api.updateNivelAtributo(this.editAtributoId, body).toPromise();
+          this.toast.success('Atributo actualizado');
+        } else {
+          await this.api.createNivelAtributo(body).toPromise();
+          this.toast.success('Atributo creado');
+        }
+        this.events.emitDataChanged();
+        this.closeAtributoDialog();
+        this.loadAtributos();
+      } catch (e: any) {
+        this.toast.error('Error', e?.error?.error || e?.message || 'Error inesperado.');
       }
-      this.events.emitDataChanged();
-      this.closeAtributoDialog();
-      this.loadAtributos();
-    } catch (e: any) {
-      this.toast.error('Error', e?.error?.error || e?.message || 'Error inesperado.');
+    };
+
+    if (this.editAtributoId) {
+      this.confirmAction(`Se va a proceder con la edición del atributo "${this.atributoForm.nombre}", ¿desea continuar?`, executeSave);
+    } else {
+      executeSave();
     }
   }
 
   confirmDeleteAtributo(a: NivelAtributo): void {
-    if (confirm(`¿Eliminar el atributo "${a.nombre}"?\n\nSe eliminarán también los valores asociados a los nodos.`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del atributo "${a.nombre}", ¿desea continuar?`, () => {
       this.api.deleteNivelAtributo(a.id).subscribe({
         next: () => { this.toast.success('Atributo eliminado'); this.events.emitDataChanged(); },
         error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
       });
-    }
+    });
   }
 
   openBulkDialog(): void {

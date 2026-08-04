@@ -5,6 +5,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
@@ -49,6 +50,13 @@ interface AccesoView extends AccesoDispositivoMovil {
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
   ],
+  styles: [`
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
+  `],
   template: `
     <div class="page-head">
       <div>
@@ -306,6 +314,7 @@ export class DeviceAccessComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private confirmationService = inject(ConfirmationService);
 
   usuarios = signal<User[]>([]);
   dispositivos = signal<DispositivoMovil[]>([]);
@@ -557,31 +566,52 @@ export class DeviceAccessComponent implements OnInit {
       this.toast.error('Faltan datos', 'Debe seleccionar usuario y dispositivo móvil.');
       return;
     }
-    if (this.editId) {
-      const idx = this.accesos().findIndex(a => a.id === this.editId);
-      if (idx >= 0) {
-        const updated = [...this.accesos()];
-        updated[idx] = { ...updated[idx], userId: this.form.userId, dispositivoId: this.form.dispositivoId };
-        this.accesos.set(updated);
-        this.toast.success('Acceso actualizado');
+
+    const executeSave = () => {
+      if (this.editId) {
+        const idx = this.accesos().findIndex(a => a.id === this.editId);
+        if (idx >= 0) {
+          const updated = [...this.accesos()];
+          updated[idx] = { ...updated[idx], userId: this.form.userId, dispositivoId: this.form.dispositivoId };
+          this.accesos.set(updated);
+          this.toast.success('Acceso actualizado');
+        }
+      } else {
+        const nuevo: AccesoDispositivoMovil = {
+          id: Date.now().toString(),
+          userId: this.form.userId,
+          dispositivoId: this.form.dispositivoId,
+          createdAt: new Date().toISOString(),
+        };
+        this.accesos.set([...this.accesos(), nuevo]);
+        this.toast.success('Acceso creado');
       }
+      this.closeDialog();
+    };
+
+    if (this.editId) {
+      this.confirmAction(`Se va a proceder con la edición del acceso del usuario "${this.userSearchText()}" al dispositivo "${this.dispositivoSearchText()}", ¿desea continuar?`, executeSave);
     } else {
-      const nuevo: AccesoDispositivoMovil = {
-        id: Date.now().toString(),
-        userId: this.form.userId,
-        dispositivoId: this.form.dispositivoId,
-        createdAt: new Date().toISOString(),
-      };
-      this.accesos.set([...this.accesos(), nuevo]);
-      this.toast.success('Acceso creado');
+      executeSave();
     }
-    this.closeDialog();
   }
 
   confirmDelete(a: AccesoView): void {
-    if (confirm(`¿Eliminar el acceso de "${a.username}" al dispositivo "${a.dispositivoCodigo}"?`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del acceso del usuario "${a.username}" al dispositivo "${a.dispositivoCodigo}", ¿desea continuar?`, () => {
       this.accesos.set(this.accesos().filter(x => x.id !== a.id));
       this.toast.success('Acceso eliminado');
-    }
+    });
+  }
+
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      defaultFocus: 'none',
+      accept: () => accept(),
+    });
   }
 }

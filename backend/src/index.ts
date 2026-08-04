@@ -116,6 +116,7 @@ app.get('/api/stats', requireAuth, (_req, res) => {
     pendingRequests: pending.length,
     approvedRequests: db.requests.filter((r) => r.status === 'APPROVED').length,
     rejectedRequests: db.requests.filter((r) => r.status === 'REJECTED').length,
+    segregationLevels: db.nivelesSegregacion.length,
     usersByType: {
       ADMIN: db.users.filter((u) => u.type === 'ADMIN').length,
       CLIENTE_FINAL: db.users.filter((u) => u.type === 'CLIENTE_FINAL').length,

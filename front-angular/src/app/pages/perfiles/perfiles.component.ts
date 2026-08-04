@@ -7,6 +7,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -758,12 +759,18 @@ interface PerfilProgramaRow {
       border-color: var(--red-600, #c8102e);
       background-color: var(--red-50, #fef2f2);
     }
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
   `],
 })
 export class PerfilesComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private confirmationService = inject(ConfirmationService);
 
   // --- Data signals ---
   perfiles = signal<Perfil[]>([]);
@@ -1074,24 +1081,45 @@ export class PerfilesComponent implements OnInit {
     const programasValidos = this.perfProgramas.filter(pp => pp.prgCodigo.trim() !== '');
     if (!this.perfForm.codigo || !this.perfForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
     if (!programasValidos.length) { this.toast.error('Faltan datos', 'Debe agregar al menos un programa.'); return; }
-    try {
-      const body: any = { ...this.perfForm, programas: programasValidos };
-      if (this.editPerfId) { await this.api.updatePerfil(this.editPerfId, body).toPromise(); this.toast.success('Perfil actualizado'); }
-      else { await this.api.createPerfil(body).toPromise(); this.toast.success('Perfil creado'); }
-      this.events.emitDataChanged(); this.closePerfDialog(); this._loadPerf();
-    } catch (e: any) {
-      const msg = e?.error?.error || e?.message || 'Error inesperado.';
-      this.toast.error('Error', msg);
+
+    const executeSave = async () => {
+      try {
+        const body: any = { ...this.perfForm, programas: programasValidos };
+        if (this.editPerfId) { await this.api.updatePerfil(this.editPerfId, body).toPromise(); this.toast.success('Perfil actualizado'); }
+        else { await this.api.createPerfil(body).toPromise(); this.toast.success('Perfil creado'); }
+        this.events.emitDataChanged(); this.closePerfDialog(); this._loadPerf();
+      } catch (e: any) {
+        const msg = e?.error?.error || e?.message || 'Error inesperado.';
+        this.toast.error('Error', msg);
+      }
+    };
+
+    if (this.editPerfId) {
+      this.confirmAction(`Se va a proceder con la edición del perfil "${this.perfForm.nombre}", ¿desea continuar?`, executeSave);
+    } else {
+      await executeSave();
     }
   }
 
   confirmDeletePerf(p: Perfil): void {
-    if (confirm(`¿Eliminar el perfil "${p.nombre}"?`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del perfil "${p.nombre}", ¿desea continuar?`, () => {
       this.api.deletePerfil(p.id).subscribe({
         next: () => { this.toast.success('Perfil eliminado'); this.events.emitDataChanged(); this._loadPerf(); },
         error: (e) => { const msg = e?.error?.error || e?.message || 'Error inesperado.'; this.toast.error('Error', msg); },
       });
-    }
+    });
+  }
+
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      defaultFocus: 'none',
+      accept: () => accept(),
+    });
   }
 
   // ============ PERMISOS ============

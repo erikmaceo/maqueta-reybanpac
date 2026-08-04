@@ -16,6 +16,7 @@ import {
   IconClockComponent,
   IconShieldComponent,
   IconLdapComponent,
+  IconLayersComponent,
 } from '../../shared/components/icons';
 import type { Stats } from '../../shared/models/types';
 
@@ -36,6 +37,7 @@ import type { Stats } from '../../shared/models/types';
     IconClockComponent,
     IconShieldComponent,
     IconLdapComponent,
+    IconLayersComponent,
   ],
   template: `
     @if (!stats()) {
@@ -69,11 +71,11 @@ import type { Stats } from '../../shared/models/types';
           </div>
           <div class="card kpi">
             <div class="kpi-icon" style="background: var(--amber-50); color: var(--amber-700);">
-              <app-icon-authorizer />
+              <app-icon-layers />
             </div>
-            <div class="kpi-val">{{ pendingVal }}</div>
-            <div class="kpi-label">Solicitudes</div>
-            <div class="kpi-foot">{{ pendingFoot }}</div>
+            <div class="kpi-val">{{ segregationLevelsCount() }}</div>
+            <div class="kpi-label">Niveles de Segregación</div>
+            <div class="kpi-foot">Jerarquías configuradas</div>
           </div>
         </div>
 
@@ -216,20 +218,10 @@ export class DashboardComponent implements OnInit {
   events = inject(EventsService);
 
   stats = signal<Stats | null>(null);
-  myPending = signal<number | null>(null);
+  segregationLevelsCount = signal<number>(0);
 
   get isAdmin(): boolean {
     return this.auth.isAdmin();
-  }
-
-  get pendingVal(): number {
-    return this.isAdmin
-      ? (this.stats()?.pendingRequests ?? 0)
-      : (this.myPending() ?? 0);
-  }
-
-  get pendingFoot(): string {
-    return this.isAdmin ? 'Requieren autorización' : 'Le corresponde autorizar';
   }
 
   get maxRoles(): number {
@@ -254,18 +246,9 @@ export class DashboardComponent implements OnInit {
       error: () => {},
     });
 
-    if (!this.isAdmin && this.auth.user()) {
-      Promise.all([
-        this.api.listRequests('PENDING').toPromise(),
-        this.api.listRoles().toPromise(),
-      ]).then(([reqs, roles]) => {
-        if (!reqs || !roles) return;
-        const count = reqs.filter((req: any) => {
-          const role = roles.find((r: any) => r.id === req.roleId);
-          return role?.authorizerUserId === this.auth.user()?.id;
-        }).length;
-        this.myPending.set(count);
-      });
-    }
+    this.api.listNivelesSegregacion().subscribe({
+      next: (niveles) => this.segregationLevelsCount.set(niveles.length),
+      error: () => {},
+    });
   }
 }

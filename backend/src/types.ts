@@ -301,6 +301,7 @@ export interface Stats {
   pendingRequests: number;
   approvedRequests: number;
   rejectedRequests: number;
+  segregationLevels: number;
   usersByType: { ADMIN: number; CLIENTE_FINAL: number };
   rolesPerSystem: { systemId: string; code: string; name: string; color: string; roles: number }[];
   recentAudit: AuditEntry[];

@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 
 import { TableModule } from 'primeng/table';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -83,6 +84,13 @@ interface UserForm {
     IconClockComponent,
     UserAccessComponent,
   ],
+  styles: [`
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
+  `],
   template: `
     <div class="page-head">
       <div>
@@ -397,6 +405,7 @@ export class UsersComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private confirmationService = inject(ConfirmationService);
 
   users = signal<User[]>([]);
   roles = signal<Role[]>([]);
@@ -611,15 +620,20 @@ export class UsersComponent implements OnInit {
     if (this.userForm.password) {
       payload.password = this.userForm.password;
     }
-    try {
-      await this.api.updateUser(this.editUser.id, payload).toPromise();
-      this.toast.success('Usuario actualizado');
-      this.events.emitDataChanged();
-      this.closeEditDialog();
-      this.loadData();
-    } catch (e: any) {
-      this.toast.error('Error', e.message);
-    }
+
+    const executeUpdate = async () => {
+      try {
+        await this.api.updateUser(this.editUser!.id, payload).toPromise();
+        this.toast.success('Usuario actualizado');
+        this.events.emitDataChanged();
+        this.closeEditDialog();
+        this.loadData();
+      } catch (e: any) {
+        this.toast.error('Error', e.message);
+      }
+    };
+
+    this.confirmAction(`Se va a proceder con la edición del usuario "${this.userForm.firstName} ${this.userForm.lastName}", ¿desea continuar?`, executeUpdate);
   }
 
   async saveRoles(): Promise<void> {
@@ -636,9 +650,9 @@ export class UsersComponent implements OnInit {
   }
 
   confirmDelete(u: User): void {
-    if (confirm(`¿Eliminar a ${u.firstName} ${u.lastName}?`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del usuario "${u.firstName} ${u.lastName}", ¿desea continuar?`, () => {
       this.remove(u);
-    }
+    });
   }
 
   async remove(u: User): Promise<void> {
@@ -650,5 +664,17 @@ export class UsersComponent implements OnInit {
     } catch (e: any) {
       this.toast.error('Error', e.message);
     }
+  }
+
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      defaultFocus: 'none',
+      accept: () => accept(),
+    });
   }
 }

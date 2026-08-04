@@ -8,6 +8,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
@@ -104,6 +105,9 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
                   <div class="cell-actions">
                     <button class="btn btn-ghost btn-sm btn-icon" title="Editar acceso" (click)="openDialog(u)">
                       <app-icon-edit [width]="15" [height]="15" />
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-icon" title="Eliminar acceso" (click)="confirmDeleteAccess(u)">
+                      <app-icon-trash [width]="15" [height]="15" />
                     </button>
                   </div>
                 </td>
@@ -574,7 +578,9 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       </ng-template>
     </p-dialog>
 
-    <p-confirmDialog></p-confirmDialog>
+    @if (!embedded()) {
+      <p-confirmDialog></p-confirmDialog>
+    }
   `,
   styles: [`
     .center { text-align: center; }
@@ -620,12 +626,18 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
     .perfil-autocomplete input {
       width: 100%;
     }
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
   `],
 })
 export class UserAccessComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private confirmationService = inject(ConfirmationService);
 
   users = signal<User[]>([]);
   niveles = signal<NivelSegregacion[]>([]);
@@ -1208,6 +1220,32 @@ export class UserAccessComponent implements OnInit {
         this.toast.error('Error', e?.error?.error || 'Error inesperado.');
       }
     }
+  }
+
+  confirmDeleteAccess(u: User): void {
+    const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.username;
+    this.confirmAction(`Se va a proceder con la eliminación del acceso del usuario "${name}", ¿desea continuar?`, () => {
+      this.api.updateUserAccess(u.id, { nodoIds: [], perfilCodigos: [] }).subscribe({
+        next: () => {
+          this.toast.success('Acceso eliminado');
+          this.events.emitDataChanged();
+          this.loadData();
+        },
+        error: (e: any) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
+      });
+    });
+  }
+
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      defaultFocus: 'none',
+      accept: () => accept(),
+    });
   }
 
   exportData(): void {

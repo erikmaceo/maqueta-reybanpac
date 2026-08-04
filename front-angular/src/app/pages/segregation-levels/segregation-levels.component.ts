@@ -1238,6 +1238,7 @@ export class SegregationLevelsComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí',
       rejectLabel: 'No',
+      defaultFocus: 'none',
       accept: () => accept(),
     });
   }

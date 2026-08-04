@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
@@ -50,6 +51,13 @@ const MOCK_CIUDADES: Ciudad[] = [
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent,
   ],
+  styles: [`
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
+  `],
   template: `
     <div class="page-head">
       <div>
@@ -513,6 +521,7 @@ export class ParametersConfigurationComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private confirmationService = inject(ConfirmationService);
 
   private useMockData = true;
 
@@ -664,26 +673,35 @@ export class ParametersConfigurationComponent implements OnInit {
   closePaisDialog(): void { this.showPaisDlg = false; this.editPaisId = null; }
   savePais(): void {
     if (!this.paisForm.codigo || !this.paisForm.descripcion) { this.toast.error('Faltan datos', 'Código y descripción son obligatorios.'); return; }
-    if (this.editPaisId) {
-      const idx = this.paises().findIndex(p => p.id === this.editPaisId);
-      if (idx >= 0) {
-        const updated = [...this.paises()];
-        updated[idx] = { ...this.paisForm, id: this.editPaisId, createdAt: updated[idx].createdAt };
-        this.paises.set(updated);
-        this.toast.success('País actualizado');
+
+    const executeSave = () => {
+      if (this.editPaisId) {
+        const idx = this.paises().findIndex(p => p.id === this.editPaisId);
+        if (idx >= 0) {
+          const updated = [...this.paises()];
+          updated[idx] = { ...this.paisForm, id: this.editPaisId, createdAt: updated[idx].createdAt };
+          this.paises.set(updated);
+          this.toast.success('País actualizado');
+        }
+      } else {
+        const newPais: Pais = { ...this.paisForm, id: Date.now().toString(), createdAt: new Date().toISOString() };
+        this.paises.set([...this.paises(), newPais]);
+        this.toast.success('País creado');
       }
+      this.closePaisDialog();
+    };
+
+    if (this.editPaisId) {
+      this.confirmAction(`Se va a proceder con la edición del país "${this.paisForm.descripcion}", ¿desea continuar?`, executeSave);
     } else {
-      const newPais: Pais = { ...this.paisForm, id: Date.now().toString(), createdAt: new Date().toISOString() };
-      this.paises.set([...this.paises(), newPais]);
-      this.toast.success('País creado');
+      executeSave();
     }
-    this.closePaisDialog();
   }
   confirmDeletePais(p: Pais): void {
-    if (confirm(`¿Eliminar el país "${p.descripcion}"?`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del país "${p.descripcion}", ¿desea continuar?`, () => {
       this.paises.set(this.paises().filter(x => x.id !== p.id));
       this.toast.success('País eliminado');
-    }
+    });
   }
 
   // ============ PROVINCIAS ============
@@ -704,26 +722,35 @@ export class ParametersConfigurationComponent implements OnInit {
   saveProv(): void {
     if (!this.provForm.codigo || !this.provForm.descripcion || !this.provForm.paisId) { this.toast.error('Faltan datos', 'Código, descripción y país son obligatorios.'); return; }
     const pais = this.paises().find(p => p.id === this.provForm.paisId);
-    if (this.editProvId) {
-      const idx = this.provincias().findIndex(p => p.id === this.editProvId);
-      if (idx >= 0) {
-        const updated = [...this.provincias()];
-        updated[idx] = { ...this.provForm, id: this.editProvId, paisDescripcion: pais?.descripcion || '', createdAt: updated[idx].createdAt };
-        this.provincias.set(updated);
-        this.toast.success('Provincia actualizada');
+
+    const executeSave = () => {
+      if (this.editProvId) {
+        const idx = this.provincias().findIndex(p => p.id === this.editProvId);
+        if (idx >= 0) {
+          const updated = [...this.provincias()];
+          updated[idx] = { ...this.provForm, id: this.editProvId, paisDescripcion: pais?.descripcion || '', createdAt: updated[idx].createdAt };
+          this.provincias.set(updated);
+          this.toast.success('Provincia actualizada');
+        }
+      } else {
+        const newProv: Provincia = { ...this.provForm, id: Date.now().toString(), paisDescripcion: pais?.descripcion || '', createdAt: new Date().toISOString() };
+        this.provincias.set([...this.provincias(), newProv]);
+        this.toast.success('Provincia creada');
       }
+      this.closeProvDialog();
+    };
+
+    if (this.editProvId) {
+      this.confirmAction(`Se va a proceder con la edición de la provincia "${this.provForm.descripcion}", ¿desea continuar?`, executeSave);
     } else {
-      const newProv: Provincia = { ...this.provForm, id: Date.now().toString(), paisDescripcion: pais?.descripcion || '', createdAt: new Date().toISOString() };
-      this.provincias.set([...this.provincias(), newProv]);
-      this.toast.success('Provincia creada');
+      executeSave();
     }
-    this.closeProvDialog();
   }
   confirmDeleteProv(pr: Provincia): void {
-    if (confirm(`¿Eliminar la provincia "${pr.descripcion}"?`)) {
+    this.confirmAction(`Se va a proceder con la eliminación de la provincia "${pr.descripcion}", ¿desea continuar?`, () => {
       this.provincias.set(this.provincias().filter(x => x.id !== pr.id));
       this.toast.success('Provincia eliminada');
-    }
+    });
   }
 
   // ============ CIUDADES ============
@@ -755,26 +782,35 @@ export class ParametersConfigurationComponent implements OnInit {
     if (!form.codigo || !form.descripcion || !form.provinciaId) { this.toast.error('Faltan datos', 'Código, descripción y provincia son obligatorios.'); return; }
     const prov = this.provincias().find(p => p.id === form.provinciaId);
     const pais = this.paises().find(p => p.id === form.paisId);
-    if (this.editCiuId) {
-      const idx = this.ciudades().findIndex(c => c.id === this.editCiuId);
-      if (idx >= 0) {
-        const updated = [...this.ciudades()];
-        updated[idx] = { ...form, id: this.editCiuId, provinciaDescripcion: prov?.descripcion || '', paisDescripcion: pais?.descripcion || '', createdAt: updated[idx].createdAt };
-        this.ciudades.set(updated);
-        this.toast.success('Ciudad actualizada');
+
+    const executeSave = () => {
+      if (this.editCiuId) {
+        const idx = this.ciudades().findIndex(c => c.id === this.editCiuId);
+        if (idx >= 0) {
+          const updated = [...this.ciudades()];
+          updated[idx] = { ...form, id: this.editCiuId, provinciaDescripcion: prov?.descripcion || '', paisDescripcion: pais?.descripcion || '', createdAt: updated[idx].createdAt };
+          this.ciudades.set(updated);
+          this.toast.success('Ciudad actualizada');
+        }
+      } else {
+        const newCiu: Ciudad = { ...form, id: Date.now().toString(), provinciaDescripcion: prov?.descripcion || '', paisDescripcion: pais?.descripcion || '', createdAt: new Date().toISOString() };
+        this.ciudades.set([...this.ciudades(), newCiu]);
+        this.toast.success('Ciudad creada');
       }
+      this.closeCiuDialog();
+    };
+
+    if (this.editCiuId) {
+      this.confirmAction(`Se va a proceder con la edición de la ciudad "${form.descripcion}", ¿desea continuar?`, executeSave);
     } else {
-      const newCiu: Ciudad = { ...form, id: Date.now().toString(), provinciaDescripcion: prov?.descripcion || '', paisDescripcion: pais?.descripcion || '', createdAt: new Date().toISOString() };
-      this.ciudades.set([...this.ciudades(), newCiu]);
-      this.toast.success('Ciudad creada');
+      executeSave();
     }
-    this.closeCiuDialog();
   }
   confirmDeleteCiu(c: Ciudad): void {
-    if (confirm(`¿Eliminar la ciudad "${c.descripcion}"?`)) {
+    this.confirmAction(`Se va a proceder con la eliminación de la ciudad "${c.descripcion}", ¿desea continuar?`, () => {
       this.ciudades.set(this.ciudades().filter(x => x.id !== c.id));
       this.toast.success('Ciudad eliminada');
-    }
+    });
   }
 
   // ============ DISPOSITIVOS MÓVILES ============
@@ -795,24 +831,44 @@ export class ParametersConfigurationComponent implements OnInit {
   saveDisp(): void {
     if (!this.dispForm.codigo) { this.toast.error('Faltan datos', 'El código es obligatorio.'); return; }
     const body = { codigo: this.dispForm.codigo, estado: this.dispForm.estado };
+
+    const executeSave = () => {
+      if (this.editDispId) {
+        this.api.updateDispositivoMovil(this.editDispId, body).subscribe({
+          next: () => { this.toast.success('Dispositivo móvil actualizado'); this.events.emitDataChanged(); this.closeDispDialog(); this.loadDispositivos(); },
+          error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
+        });
+      } else {
+        this.api.createDispositivoMovil(body).subscribe({
+          next: () => { this.toast.success('Dispositivo móvil creado'); this.events.emitDataChanged(); this.closeDispDialog(); this.loadDispositivos(); },
+          error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
+        });
+      }
+    };
+
     if (this.editDispId) {
-      this.api.updateDispositivoMovil(this.editDispId, body).subscribe({
-        next: () => { this.toast.success('Dispositivo móvil actualizado'); this.events.emitDataChanged(); this.closeDispDialog(); this.loadDispositivos(); },
-        error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
-      });
+      this.confirmAction(`Se va a proceder con la edición del dispositivo móvil "${this.dispForm.codigo}", ¿desea continuar?`, executeSave);
     } else {
-      this.api.createDispositivoMovil(body).subscribe({
-        next: () => { this.toast.success('Dispositivo móvil creado'); this.events.emitDataChanged(); this.closeDispDialog(); this.loadDispositivos(); },
-        error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
-      });
+      executeSave();
     }
   }
   confirmDeleteDisp(d: DispositivoMovil): void {
-    if (confirm(`¿Eliminar el dispositivo móvil "${d.codigo}"?`)) {
+    this.confirmAction(`Se va a proceder con la eliminación del dispositivo móvil "${d.codigo}", ¿desea continuar?`, () => {
       this.api.deleteDispositivoMovil(d.id).subscribe({
         next: () => { this.toast.success('Dispositivo móvil eliminado'); this.events.emitDataChanged(); this.loadDispositivos(); },
         error: (e) => { this.toast.error('Error', e?.error?.error || 'Error inesperado.'); },
       });
-    }
+    });
+  }
+
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      accept: () => accept(),
+    });
   }
 }

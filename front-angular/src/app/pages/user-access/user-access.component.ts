@@ -308,10 +308,10 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
     <p-dialog
       [(visible)]="showUserSearchDlg"
       header="Buscar usuario"
-      [modal]="true" [style]="{ width: '900px' }" [closable]="true"
+      [modal]="true" [style]="{ width: '1400px' }" [closable]="true"
       (onHide)="closeUserSearchDialog()"
     >
-      <div class="filter-row">
+      <div class="filter-row user-search-filter-row">
         <div class="field">
           <label>Usuario</label>
           <input type="text" class="select" placeholder="Usuario"
@@ -631,6 +631,9 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       color: #ef4444 !important;
       margin-right: 1rem !important;
     }
+    .user-search-filter-row {
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+    }
   `],
 })
 export class UserAccessComponent implements OnInit {
@@ -664,7 +667,7 @@ export class UserAccessComponent implements OnInit {
   userSearchEmpresa = signal('');
   userSearchDepartamento = signal('');
   userSearchPage = signal(1);
-  userSearchPageSize = signal(10);
+  userSearchPageSize = signal(5);
   userSearchDisplayText = signal('');
 
   // --- Diálogo búsqueda de perfiles (multi-selección) ---

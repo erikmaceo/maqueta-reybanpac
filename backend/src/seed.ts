@@ -132,6 +132,37 @@ const mkUser = (u: Partial<User> & Pick<User, 'id' | 'username' | 'firstName' | 
   ...u,
 });
 
+const nombres = ['Juan', 'María', 'Carlos', 'Ana', 'Luis', 'Pedro', 'Sofía', 'Diego', 'Laura', 'Andrés', 'Valentina', 'Jorge', 'Camila', 'Fernando', 'Daniela', 'Gabriel', 'Lucía', 'Miguel', 'Paula', 'Ricardo'];
+const apellidos = ['Pérez', 'Gómez', 'Rodríguez', 'López', 'Martínez', 'García', 'Sánchez', 'Torres', 'Ramírez', 'Flores', 'Vargas', 'Castro', 'Morales', 'Jiménez', 'Herrera', 'Díaz', 'Moreno', 'Muñoz', 'Ortega', 'Delgado'];
+const departamentos = ['Finanzas', 'Contabilidad', 'Logística', 'Ventas', 'Marketing', 'RRHH', 'Operaciones', 'Desarrollo', 'Soporte', 'Calidad', 'Producción', 'Compras', 'Legal', 'TI'];
+const cargos = ['Analista', 'Coordinador', 'Especialista', 'Gerente', 'Supervisor', 'Asistente', 'Consultor', 'Jefe', 'Técnico', 'Ejecutivo'];
+
+function generateLdapUsers(count: number): User[] {
+  const generated: User[] = [];
+  for (let i = 0; i < count; i++) {
+    const firstName = nombres[i % nombres.length];
+    const lastName = apellidos[(i + Math.floor(i / nombres.length)) % apellidos.length];
+    const idx = String(i + 1).padStart(3, '0');
+    const username = `${firstName.toLowerCase()[0]}${lastName.toLowerCase()}${idx}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const department = departamentos[i % departamentos.length];
+    const cargo = cargos[i % cargos.length];
+    generated.push(mkUser({
+      id: `u_ldap_${idx}`,
+      username,
+      firstName,
+      lastName,
+      cargo: `${cargo} ${department}`,
+      department,
+      type: 'CLIENTE_FINAL',
+      source: 'LDAP',
+      roleIds: [],
+      nodoIds: i % 2 === 0 ? ['nod_emp_1'] : ['nod_emp_2'],
+      perfilCodigos: [],
+    }));
+  }
+  return generated;
+}
+
 export const users: User[] = [
   mkUser({
     id: 'u_admin',
@@ -205,6 +236,7 @@ export const users: User[] = [
     nodoIds: ['nod_emp_2'],
     perfilCodigos: ['PERF-FI-VIS'],
   }),
+  ...generateLdapUsers(100),
 ];
 
 // --- Roles -----------------------------------------------------------------

@@ -42,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
   { path: '/soluciones', label: 'Ordenar Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true },
   { path: '/auditoria', label: 'Auditoría', icon: IconAuditComponent, group: 'Operación', adminOnly: true },
+  { path: '/nuevo-acceso', label: 'Nuevo acceso', icon: IconAccessComponent, group: 'Operación', adminOnly: true },
 ];
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
@@ -58,6 +59,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/directorio': { title: 'Directorio LDAP', sub: 'Usuarios cliente final integrados desde el directorio corporativo' },
   '/autorizador': { title: 'Módulo autorizador', sub: 'Aprobación y rechazo de solicitudes de acceso' },
   '/accesos': { title: 'Accesos efectivos', sub: 'Matriz de accesos vigentes por usuario y sistema' },
+  '/nuevo-acceso': { title: 'Nuevo acceso', sub: 'Asignar un nuevo acceso a usuario, perfil y aplicación' },
   '/auditoria': { title: 'Auditoría', sub: 'Trazabilidad de todas las acciones de la consola' },
   '/soluciones': { title: 'Ordenar Soluciones', sub: 'Navegación por aplicación y su jerarquía de seguridades' },
 };

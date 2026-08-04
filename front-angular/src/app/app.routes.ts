@@ -81,6 +81,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'nuevo-acceso',
+        loadComponent: () => import('./pages/access-create/access-create.component').then(m => m.AccessCreateComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'auditoria',
         loadComponent: () => import('./pages/audit/audit.component').then(m => m.AuditComponent),
         canActivate: [adminGuard],

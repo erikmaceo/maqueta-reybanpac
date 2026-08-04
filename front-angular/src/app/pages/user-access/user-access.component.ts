@@ -1,6 +1,7 @@
-import { Component, inject, OnInit, signal, computed, input } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as XLSX from 'xlsx';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
@@ -53,7 +54,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
           <button class="btn btn-ghost" (click)="exportData()">
             <app-icon-download [width]="14" [height]="14" /> Exportar
           </button>
-          <button class="btn btn-primary" (click)="openNewDialog()">
+          <button class="btn btn-primary" (click)="router.navigate(['/nuevo-acceso'])">
             <app-icon-plus [width]="14" [height]="14" /> Nuevo Acceso
           </button>
           <button class="btn btn-primary" (click)="openBulkDialog()">
@@ -141,21 +142,10 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
     <!-- ============ DIÁLOGO EDITAR ACCESO ============ -->
     <p-dialog
       [(visible)]="showDlg"
-      [header]="isNew ? 'Nuevo acceso' : 'Acceso de ' + (editUser?.firstName || '') + ' ' + (editUser?.lastName || '')"
+      [header]="'Acceso de ' + (editUser?.firstName || '') + ' ' + (editUser?.lastName || '')"
       [modal]="true" [style]="{ width: '520px' }" [closable]="true"
       (onHide)="closeDialog()"
     >
-      @if (isNew) {
-        <div class="field">
-          <label>Usuario <span class="required">*</span></label>
-          <div class="search-field">
-            <input class="select" type="text" [ngModel]="userSearchDisplayText()" readonly placeholder="Seleccione un usuario..." />
-            <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openUserSearchDialog()" title="Buscar usuario">
-              <app-icon-search [width]="16" [height]="16" />
-            </button>
-          </div>
-        </div>
-      }
       <div class="field">
         <label>Nodos de Segregación</label>
         <div style="display:flex;flex-direction:column;gap:12px;">
@@ -300,92 +290,10 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       </div>
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeDialog()">Cancelar</button>
-        <button class="btn btn-primary" (click)="save()">{{ isNew ? 'Crear' : 'Guardar' }}</button>
+        <button class="btn btn-primary" (click)="save()">Guardar</button>
       </ng-template>
     </p-dialog>
 
-    <!-- ============ DIÁLOGO BÚSQUEDA USUARIO ============ -->
-    <p-dialog
-      [(visible)]="showUserSearchDlg"
-      header="Buscar usuario"
-      [modal]="true" [style]="{ width: '1400px' }" [closable]="true"
-      (onHide)="closeUserSearchDialog()"
-    >
-      <div class="filter-row user-search-filter-row">
-        <div class="field">
-          <label>Usuario</label>
-          <input type="text" class="select" placeholder="Usuario"
-            [ngModel]="userSearchCodigo()" (ngModelChange)="userSearchCodigo.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre"
-            [ngModel]="userSearchNombre()" (ngModelChange)="userSearchNombre.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Apellido</label>
-          <input type="text" class="select" placeholder="Apellido"
-            [ngModel]="userSearchApellido()" (ngModelChange)="userSearchApellido.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Correo</label>
-          <input type="text" class="select" placeholder="Correo"
-            [ngModel]="userSearchCorreo()" (ngModelChange)="userSearchCorreo.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Empresa</label>
-          <input type="text" class="select" placeholder="Empresa"
-            [ngModel]="userSearchEmpresa()" (ngModelChange)="userSearchEmpresa.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Departamento</label>
-          <input type="text" class="select" placeholder="Departamento"
-            [ngModel]="userSearchDepartamento()" (ngModelChange)="userSearchDepartamento.set($event); userSearchPage.set(1)" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearUserFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Correo</th>
-              <th>Empresa</th>
-              <th>Departamento</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (u of paginatedUsersForSearch(); track u.id) {
-              <tr>
-                <td class="mono">{{ u.username }}</td>
-                <td><div class="cell-strong">{{ u.firstName }}</div></td>
-                <td><div class="cell-strong">{{ u.lastName }}</div></td>
-                <td>{{ u.email }}</td>
-                <td>{{ u.company }}</td>
-                <td>{{ u.department }}</td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectUserFromDialog(u)">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="7" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === 1" (click)="changeUserSearchPage(-1)">Anterior</button>
-        <span>Página {{ userSearchPage() }} de {{ userSearchTotalPages() }} ({{ filteredUsersForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === userSearchTotalPages()" (click)="changeUserSearchPage(1)">Siguiente</button>
-      </div>
-    </p-dialog>
 
     <!-- ============ DIÁLOGO BÚSQUEDA PERFILES (MULTI-SELECCIÓN) ============ -->
     <p-dialog
@@ -631,9 +539,6 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
       color: #ef4444 !important;
       margin-right: 1rem !important;
     }
-    .user-search-filter-row {
-      grid-template-columns: repeat(6, minmax(140px, 1fr));
-    }
   `],
 })
 export class UserAccessComponent implements OnInit {
@@ -641,6 +546,7 @@ export class UserAccessComponent implements OnInit {
   private toast = inject(ToastService);
   private events = inject(EventsService);
   private confirmationService = inject(ConfirmationService);
+  router = inject(Router);
 
   users = signal<User[]>([]);
   niveles = signal<NivelSegregacion[]>([]);
@@ -653,22 +559,8 @@ export class UserAccessComponent implements OnInit {
   error = signal<string | null>(null);
 
   showDlg = false;
-  isNew = false;
   editUser: User | null = null;
-  selectedUserId = '';
   editForm = signal({ nodoIds: [] as string[], perfilCodigos: [] as string[] });
-
-  // --- Diálogo búsqueda de usuario ---
-  showUserSearchDlg = false;
-  userSearchCodigo = signal('');
-  userSearchNombre = signal('');
-  userSearchApellido = signal('');
-  userSearchCorreo = signal('');
-  userSearchEmpresa = signal('');
-  userSearchDepartamento = signal('');
-  userSearchPage = signal(1);
-  userSearchPageSize = signal(5);
-  userSearchDisplayText = signal('');
 
   // --- Diálogo búsqueda de perfiles (multi-selección) ---
   showPerfilSearchDlg = false;
@@ -790,30 +682,6 @@ export class UserAccessComponent implements OnInit {
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())));
 
   userMap = computed(() => new Map(this.users().map(u => [u.id, u])));
-
-  filteredUsersForSearch = computed(() => {
-    const qCodigo = this.userSearchCodigo().toLowerCase().trim();
-    const qNombre = this.userSearchNombre().toLowerCase().trim();
-    const qApellido = this.userSearchApellido().toLowerCase().trim();
-    const qCorreo = this.userSearchCorreo().toLowerCase().trim();
-    const qEmpresa = this.userSearchEmpresa().toLowerCase().trim();
-    const qDepartamento = this.userSearchDepartamento().toLowerCase().trim();
-    return this.users().filter(u =>
-      (!qCodigo || u.username.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || u.firstName.toLowerCase().includes(qNombre)) &&
-      (!qApellido || u.lastName.toLowerCase().includes(qApellido)) &&
-      (!qCorreo || u.email.toLowerCase().includes(qCorreo)) &&
-      (!qEmpresa || u.company.toLowerCase().includes(qEmpresa)) &&
-      (!qDepartamento || u.department.toLowerCase().includes(qDepartamento))
-    );
-  });
-
-  paginatedUsersForSearch = computed(() => {
-    const start = (this.userSearchPage() - 1) * this.userSearchPageSize();
-    return this.filteredUsersForSearch().slice(start, start + this.userSearchPageSize());
-  });
-
-  userSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsersForSearch().length / this.userSearchPageSize())));
 
   filteredPerfilesForSearch = computed(() => {
     const qCodigo = this.perfilSearchCodigo().toLowerCase().trim();
@@ -997,61 +865,12 @@ export class UserAccessComponent implements OnInit {
   }
 
   openDialog(u: User): void {
-    this.isNew = false;
     this.editUser = u;
     this.editForm.set({ nodoIds: [...(u.nodoIds || [])], perfilCodigos: [...(u.perfilCodigos || [])] });
     this.showDlg = true;
   }
 
-  openNewDialog(): void {
-    this.isNew = true;
-    this.editUser = null;
-    this.selectedUserId = '';
-    this.userSearchDisplayText.set('');
-    this.editForm.set({ nodoIds: [], perfilCodigos: [] });
-    this.showDlg = true;
-  }
-
-  closeDialog(): void { this.showDlg = false; this.editUser = null; this.isNew = false; this.selectedUserId = ''; this.userSearchDisplayText.set(''); }
-
-  openUserSearchDialog(): void {
-    this.userSearchCodigo.set('');
-    this.userSearchNombre.set('');
-    this.userSearchApellido.set('');
-    this.userSearchCorreo.set('');
-    this.userSearchEmpresa.set('');
-    this.userSearchDepartamento.set('');
-    this.userSearchPage.set(1);
-    this.showUserSearchDlg = true;
-  }
-
-  closeUserSearchDialog(): void {
-    this.showUserSearchDlg = false;
-  }
-
-  clearUserFilters(): void {
-    this.userSearchCodigo.set('');
-    this.userSearchNombre.set('');
-    this.userSearchApellido.set('');
-    this.userSearchCorreo.set('');
-    this.userSearchEmpresa.set('');
-    this.userSearchDepartamento.set('');
-    this.userSearchPage.set(1);
-  }
-
-  changeUserSearchPage(delta: number): void {
-    this.userSearchPage.set(Math.min(Math.max(this.userSearchPage() + delta, 1), this.userSearchTotalPages()));
-  }
-
-  selectUser(u: User): void {
-    this.selectedUserId = u.id;
-    this.userSearchDisplayText.set(`${u.username} · ${u.firstName} ${u.lastName}`);
-  }
-
-  selectUserFromDialog(u: User): void {
-    this.selectUser(u);
-    this.closeUserSearchDialog();
-  }
+  closeDialog(): void { this.showDlg = false; this.editUser = null; }
 
   openPerfilSearchDialog(): void {
     this.perfilSearchCodigo.set('');
@@ -1200,28 +1019,15 @@ export class UserAccessComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    if (this.isNew) {
-      if (!this.selectedUserId) { this.toast.error('Faltan datos', 'Debe seleccionar un usuario.'); return; }
-      try {
-        await this.api.updateUserAccess(this.selectedUserId, this.editForm()).toPromise();
-        this.toast.success('Acceso creado');
-        this.events.emitDataChanged();
-        this.closeDialog();
-        this.loadData();
-      } catch (e: any) {
-        this.toast.error('Error', e?.error?.error || 'Error inesperado.');
-      }
-    } else {
-      if (!this.editUser) return;
-      try {
-        await this.api.updateUserAccess(this.editUser.id, this.editForm()).toPromise();
-        this.toast.success('Acceso actualizado');
-        this.events.emitDataChanged();
-        this.closeDialog();
-        this.loadData();
-      } catch (e: any) {
-        this.toast.error('Error', e?.error?.error || 'Error inesperado.');
-      }
+    if (!this.editUser) return;
+    try {
+      await this.api.updateUserAccess(this.editUser.id, this.editForm()).toPromise();
+      this.toast.success('Acceso actualizado');
+      this.events.emitDataChanged();
+      this.closeDialog();
+      this.loadData();
+    } catch (e: any) {
+      this.toast.error('Error', e?.error?.error || 'Error inesperado.');
     }
   }
 

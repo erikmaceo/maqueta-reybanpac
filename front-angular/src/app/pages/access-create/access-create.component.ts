@@ -603,7 +603,7 @@ export class AccessCreateComponent implements OnInit {
   perfilSearchCodigo = signal('');
   perfilSearchNombre = signal('');
   perfilSearchPage = signal(1);
-  perfilSearchPageSize = signal(10);
+  perfilSearchPageSize = signal(5);
   tempSelectedPerfilCodigos = signal<string[]>([]);
 
   showNodoSearchDlg = false;
@@ -612,7 +612,7 @@ export class AccessCreateComponent implements OnInit {
   nodoSearchCodigo = signal('');
   nodoSearchNombre = signal('');
   nodoSearchPage = signal(1);
-  nodoSearchPageSize = signal(10);
+  nodoSearchPageSize = signal(5);
   tempSelectedNodoIds = signal<string[]>([]);
 
   empresaAutoQuery = signal('');
@@ -1053,3 +1053,4 @@ export class AccessCreateComponent implements OnInit {
     this.router.navigate(['/usuarios']);
   }
 }
+

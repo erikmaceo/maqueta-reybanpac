@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -982,7 +982,7 @@ export class SecurityComponent implements OnInit {
   appliedAppSearchNombre = signal('');
   appliedAppSearchEstado = signal('');
   appSearchPage = signal(1);
-  appSearchPageSize = signal(10);
+  appSearchPageSize = signal(5);
   modAppSearchText = signal('');
 
   // --- Diálogo búsqueda de nodo padre (para aplicación) ---
@@ -992,7 +992,7 @@ export class SecurityComponent implements OnInit {
   appliedAppNodoSearchCodigo = signal('');
   appliedAppNodoSearchNombre = signal('');
   appNodoSearchPage = signal(1);
-  appNodoSearchPageSize = signal(10);
+  appNodoSearchPageSize = signal(5);
   appNodoSearchText = signal('');
 
   // --- Diálogo búsqueda de aplicación (para programa) ---
@@ -1004,7 +1004,7 @@ export class SecurityComponent implements OnInit {
   appliedPrgAppSearchNombre = signal('');
   appliedPrgAppSearchEstado = signal('');
   prgAppSearchPage = signal(1);
-  prgAppSearchPageSize = signal(10);
+  prgAppSearchPageSize = signal(5);
   prgAppSearchText = signal('');
 
   // --- Diálogo búsqueda de módulo (para programa) ---
@@ -1014,7 +1014,7 @@ export class SecurityComponent implements OnInit {
   appliedPrgModSearchCodigo = signal('');
   appliedPrgModSearchNombre = signal('');
   prgModSearchPage = signal(1);
-  prgModSearchPageSize = signal(10);
+  prgModSearchPageSize = signal(5);
   prgModSearchText = signal('');
 
   // --- Filtros de búsqueda ---
@@ -1023,7 +1023,7 @@ export class SecurityComponent implements OnInit {
   searchPrg = signal('');
 
   // --- Paginación ---
-  pageSize = signal(10);
+  pageSize = signal(5);
   pageApp = signal(0);
   pageMod = signal(0);
   pagePrg = signal(0);

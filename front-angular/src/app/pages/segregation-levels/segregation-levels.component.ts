@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -754,9 +754,9 @@ export class SegregationLevelsComponent implements OnInit {
   searchAtributo = signal('');
 
   nivelPage = signal(1);
-  nivelPageSize = signal(10);
+  nivelPageSize = signal(5);
   atributoPage = signal(1);
-  atributoPageSize = signal(10);
+  atributoPageSize = signal(5);
 
   // --- Dynamic level tabs state ---
   nivelTabSearch = signal<Record<string, string>>({});
@@ -1637,3 +1637,4 @@ export class SegregationLevelsComponent implements OnInit {
     }
   }
 }
+

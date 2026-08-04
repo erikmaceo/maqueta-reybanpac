@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -847,23 +847,23 @@ export class PerfilesComponent implements OnInit {
   perfAppSearchNombre = signal('');
   perfAppSearchEstado = signal('');
   perfAppSearchPage = signal(1);
-  perfAppSearchPageSize = signal(10);
+  perfAppSearchPageSize = signal(5);
 
   showPerfModSearchDlg = false;
   perfModSearchCodigo = signal('');
   perfModSearchNombre = signal('');
   perfModSearchPage = signal(1);
-  perfModSearchPageSize = signal(10);
+  perfModSearchPageSize = signal(5);
 
   showPerfPrgSearchDlg = false;
   perfPrgSearchCodigo = signal('');
   perfPrgSearchNombre = signal('');
   perfPrgSearchPage = signal(1);
-  perfPrgSearchPageSize = signal(10);
+  perfPrgSearchPageSize = signal(5);
 
   // --- Filter & pagination ---
   searchPerf = signal('');
-  pageSize = signal(10);
+  pageSize = signal(5);
   pagePerf = signal(0);
 
   filteredPerfs = computed(() => {
@@ -1563,3 +1563,4 @@ export class PerfilesComponent implements OnInit {
     }
   }
 }
+

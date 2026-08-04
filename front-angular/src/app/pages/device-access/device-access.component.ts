@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -338,15 +338,15 @@ export class DeviceAccessComponent implements OnInit {
   userFilterCorreo = signal('');
   userFilterDepartamento = signal('');
   userSearchPage = signal(1);
-  userSearchPageSize = signal(10);
+  userSearchPageSize = signal(5);
 
   dispFilterCodigo = signal('');
   dispFilterEstado = signal('');
   dispSearchPage = signal(1);
-  dispSearchPageSize = signal(10);
+  dispSearchPageSize = signal(5);
 
   page = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(5);
 
   userMap = computed(() => new Map(this.usuarios().map(u => [u.id, u])));
   dispositivoMap = computed(() => new Map(this.dispositivos().map(d => [d.id, d])));
@@ -615,3 +615,4 @@ export class DeviceAccessComponent implements OnInit {
     });
   }
 }
+

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -429,7 +429,7 @@ export class SolucionesComponent implements OnInit {
   loadingCtrls = signal(false);
 
   page = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(5);
   paginatedApps = computed(() => {
     const start = this.page() * this.pageSize();
     return this.apps().slice(start, start + this.pageSize());
@@ -617,3 +617,4 @@ export class SolucionesComponent implements OnInit {
     });
   }
 }
+

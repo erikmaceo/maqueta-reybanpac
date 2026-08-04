@@ -567,7 +567,7 @@ export class UserAccessComponent implements OnInit {
   perfilSearchCodigo = signal('');
   perfilSearchNombre = signal('');
   perfilSearchPage = signal(1);
-  perfilSearchPageSize = signal(10);
+  perfilSearchPageSize = signal(5);
   tempSelectedPerfilCodigos = signal<string[]>([]);
 
   // --- Diálogo búsqueda de nodos de segregación (multi-selección por nivel) ---
@@ -586,11 +586,11 @@ export class UserAccessComponent implements OnInit {
   nodoSearchCodigo = signal('');
   nodoSearchNombre = signal('');
   nodoSearchPage = signal(1);
-  nodoSearchPageSize = signal(10);
+  nodoSearchPageSize = signal(5);
   tempSelectedNodoIds = signal<string[]>([]);
 
   search = signal('');
-  pageSize = signal(10);
+  pageSize = signal(5);
   page = signal(0);
 
   empresaAutoQuery = signal('');
@@ -1290,3 +1290,4 @@ export class UserAccessComponent implements OnInit {
     }
   }
 }
+

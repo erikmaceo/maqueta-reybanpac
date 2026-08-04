@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -414,7 +414,7 @@ export class UsersComponent implements OnInit {
   tab = signal<Tab>('USUARIOS');
   q = signal('');
   page = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(5);
 
   // LDAP cache
   ldapUsersCache = signal<LdapPerson[]>([]);
@@ -678,3 +678,4 @@ export class UsersComponent implements OnInit {
     });
   }
 }
+

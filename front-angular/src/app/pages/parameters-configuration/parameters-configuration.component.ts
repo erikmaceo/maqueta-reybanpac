@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
@@ -545,7 +545,7 @@ export class ParametersConfigurationComponent implements OnInit {
   searchCiu = signal('');
   searchDisp = signal('');
 
-  pageSize = signal(10);
+  pageSize = signal(5);
   pagePais = signal(0);
   pageProv = signal(0);
   pageCiu = signal(0);
@@ -873,3 +873,4 @@ export class ParametersConfigurationComponent implements OnInit {
     });
   }
 }
+

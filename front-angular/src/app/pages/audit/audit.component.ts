@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
@@ -164,7 +164,7 @@ export class AuditComponent implements OnInit {
   desde = signal('');
   hasta = signal('');
   page = signal(1);
-  pageSize = signal(10);
+  pageSize = signal(5);
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
   pageNumbers = computed(() => {
@@ -314,3 +314,4 @@ export class AuditComponent implements OnInit {
     });
   }
 }
+

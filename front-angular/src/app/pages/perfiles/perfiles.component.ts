@@ -367,7 +367,7 @@ interface PerfilProgramaRow {
     <p-dialog
       [(visible)]="showPerfAppSearchDlg"
       header="Buscar aplicación"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
+      [modal]="true" [style]="{ width: '1000px' }" [closable]="true"
       (onHide)="closePerfAppSearchDialog()"
     >
       <div class="filter-row">
@@ -395,7 +395,7 @@ interface PerfilProgramaRow {
         <button class="btn btn-ghost" (click)="clearPerfAppFilters()">Limpiar</button>
       </div>
 
-      <div class="card table-wrap">
+      <div class="card table-wrap dialog-table-fixed">
         <table class="data">
           <thead>
             <tr>
@@ -429,9 +429,20 @@ interface PerfilProgramaRow {
       </div>
 
       <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="perfAppSearchPage() === 1" (click)="changePerfAppSearchPage(-1)">Anterior</button>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="perfAppSearchPage() === 1" (click)="changePerfAppSearchPage(-1)">Anterior</button>
+        </div>
         <span>Página {{ perfAppSearchPage() }} de {{ perfAppSearchTotalPages() }} ({{ filteredAppsForPerfSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="perfAppSearchPage() === perfAppSearchTotalPages()" (click)="changePerfAppSearchPage(1)">Siguiente</button>
+        <div class="page-size-selector">
+          <label class="small muted">Registros por página</label>
+          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfAppSearchPageSize()" (ngModelChange)="changePerfAppSearchPageSize($event)">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" [disabled]="perfAppSearchPage() === perfAppSearchTotalPages()" (click)="changePerfAppSearchPage(1)">Siguiente</button>
+        </div>
       </div>
     </p-dialog>
 
@@ -439,7 +450,7 @@ interface PerfilProgramaRow {
     <p-dialog
       [(visible)]="showPerfModSearchDlg"
       header="Buscar módulo"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
+      [modal]="true" [style]="{ width: '1000px' }" [closable]="true"
       (onHide)="closePerfModSearchDialog()"
     >
       <div class="filter-row">
@@ -458,7 +469,7 @@ interface PerfilProgramaRow {
         <button class="btn btn-ghost" (click)="clearPerfModFilters()">Limpiar</button>
       </div>
 
-      <div class="card table-wrap">
+      <div class="card table-wrap dialog-table-fixed">
         <table class="data">
           <thead>
             <tr>
@@ -486,9 +497,20 @@ interface PerfilProgramaRow {
       </div>
 
       <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="perfModSearchPage() === 1" (click)="changePerfModSearchPage(-1)">Anterior</button>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="perfModSearchPage() === 1" (click)="changePerfModSearchPage(-1)">Anterior</button>
+        </div>
         <span>Página {{ perfModSearchPage() }} de {{ perfModSearchTotalPages() }} ({{ filteredModsForPerfSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="perfModSearchPage() === perfModSearchTotalPages()" (click)="changePerfModSearchPage(1)">Siguiente</button>
+        <div class="page-size-selector">
+          <label class="small muted">Registros por página</label>
+          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfModSearchPageSize()" (ngModelChange)="changePerfModSearchPageSize($event)">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" [disabled]="perfModSearchPage() === perfModSearchTotalPages()" (click)="changePerfModSearchPage(1)">Siguiente</button>
+        </div>
       </div>
     </p-dialog>
 
@@ -496,7 +518,7 @@ interface PerfilProgramaRow {
     <p-dialog
       [(visible)]="showPerfPrgSearchDlg"
       header="Buscar programa"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
+      [modal]="true" [style]="{ width: '1000px' }" [closable]="true"
       (onHide)="closePerfPrgSearchDialog()"
     >
       <div class="filter-row">
@@ -515,7 +537,7 @@ interface PerfilProgramaRow {
         <button class="btn btn-ghost" (click)="clearPerfPrgFilters()">Limpiar</button>
       </div>
 
-      <div class="card table-wrap">
+      <div class="card table-wrap dialog-table-fixed">
         <table class="data">
           <thead>
             <tr>
@@ -543,9 +565,20 @@ interface PerfilProgramaRow {
       </div>
 
       <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="perfPrgSearchPage() === 1" (click)="changePerfPrgSearchPage(-1)">Anterior</button>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="perfPrgSearchPage() === 1" (click)="changePerfPrgSearchPage(-1)">Anterior</button>
+        </div>
         <span>Página {{ perfPrgSearchPage() }} de {{ perfPrgSearchTotalPages() }} ({{ filteredPrgsForPerfSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="perfPrgSearchPage() === perfPrgSearchTotalPages()" (click)="changePerfPrgSearchPage(1)">Siguiente</button>
+        <div class="page-size-selector">
+          <label class="small muted">Registros por página</label>
+          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfPrgSearchPageSize()" (ngModelChange)="changePerfPrgSearchPageSize($event)">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" [disabled]="perfPrgSearchPage() === perfPrgSearchTotalPages()" (click)="changePerfPrgSearchPage(1)">Siguiente</button>
+        </div>
       </div>
     </p-dialog>
 
@@ -763,6 +796,11 @@ interface PerfilProgramaRow {
       font-size: 2.25rem !important;
       color: #ef4444 !important;
       margin-right: 1rem !important;
+    }
+    .dialog-table-fixed {
+      height: 310px;
+      overflow-y: auto;
+      overflow-x: auto;
     }
   `],
 })
@@ -1329,6 +1367,21 @@ export class PerfilesComponent implements OnInit {
   changePageSize(size: number): void {
     this.pageSize.set(size);
     this.pagePerf.set(0);
+  }
+
+  changePerfAppSearchPageSize(size: number): void {
+    this.perfAppSearchPageSize.set(size);
+    this.perfAppSearchPage.set(1);
+  }
+
+  changePerfModSearchPageSize(size: number): void {
+    this.perfModSearchPageSize.set(size);
+    this.perfModSearchPage.set(1);
+  }
+
+  changePerfPrgSearchPageSize(size: number): void {
+    this.perfPrgSearchPageSize.set(size);
+    this.perfPrgSearchPage.set(1);
   }
 
   // ============ EXPORT ============

@@ -259,8 +259,8 @@ interface NodoView extends NodoSegregacion {
                   <input type="text" [placeholder]="'Buscar ' + nivel.nombre.toLowerCase() + '...'"
                     [ngModel]="nivelTabSearch()[nivel.id] || ''" (ngModelChange)="onNivelTabSearchChange(nivel.id, $event)" />
                 </div>
-                <button class="btn btn-primary" (click)="openNodoDialog()" [disabled]="niveles().length === 0">
-                  <app-icon-plus [width]="14" [height]="14" /> Nuevo Nodo
+                <button class="btn btn-primary" (click)="openNodoDialog(undefined, nivel.id)">
+                  <app-icon-plus [width]="14" [height]="14" /> {{ nivel.nombre }}
                 </button>
               </div>
               @if (niveles().length === 0) {
@@ -469,7 +469,7 @@ interface NodoView extends NodoSegregacion {
     <!-- ============ DIÁLOGO NODO ============ -->
     <p-dialog
       [(visible)]="showNodoDlg"
-      [header]="editNodoId ? 'Editar Nodo' : 'Nuevo Nodo'"
+      [header]="nodoDialogHeader()"
       [modal]="true" [style]="{ width: '560px' }" [closable]="true"
       (onHide)="closeNodoDialog()"
     >
@@ -480,7 +480,7 @@ interface NodoView extends NodoSegregacion {
         </div>
         <div class="field">
           <label>Nivel</label>
-          <select class="select" [(ngModel)]="nodoForm.nivelId" (ngModelChange)="onNodoNivelChange()">
+          <select class="select" [(ngModel)]="nodoForm.nivelId" (ngModelChange)="onNodoNivelChange()" [disabled]="nodoNivelLocked()">
             <option value="">— Seleccione —</option>
             @for (n of nivelesOrdenados(); track n.id) {
               <option [value]="n.id">{{ n.orden }} · {{ n.nombre }}</option>
@@ -772,6 +772,7 @@ export class SegregationLevelsComponent implements OnInit {
   nodoForm: any = {};
   nivelFormId = signal('');
   nodoFormSubmitted = signal(false);
+  nodoNivelLocked = signal(false);
 
   showAtributoDlg = false;
   editAtributoId: string | null = null;
@@ -797,6 +798,19 @@ export class SegregationLevelsComponent implements OnInit {
   nivelSeleccionadoOrden = computed(() => {
     const nivel = this.nivelMap().get(this.nivelFormId());
     return nivel?.orden ?? 0;
+  });
+
+  nodoDialogHeader = computed(() => {
+    if (this.editNodoId) {
+      const nodo = this.nodoMap().get(this.editNodoId);
+      const nivel = nodo ? this.nivelMap().get(nodo.nivelId) : undefined;
+      return `Editar ${nivel?.nombre || 'Nodo'}`;
+    }
+    if (this.nodoNivelLocked()) {
+      const nivel = this.nivelMap().get(this.nodoForm.nivelId || '');
+      return `Nuevo ${nivel?.nombre || 'Nodo'}`;
+    }
+    return 'Nuevo Nodo';
   });
 
   posiblesPadres = computed(() => {
@@ -1254,7 +1268,7 @@ export class SegregationLevelsComponent implements OnInit {
 
   blankNodo() { return { codigo: '', nombre: '', nivelId: '', padreId: null as string | null, estado: 'ACTIVO' as Estado, atributos: {} as Record<string, string> }; }
 
-  openNodoDialog(n?: NodoView): void {
+  openNodoDialog(n?: NodoView, nivelId?: string): void {
     if (n) {
       const attrValues: Record<string, string> = {};
       for (const [atributoId, valor] of Object.entries(n.atributosRaw)) {
@@ -1264,16 +1278,24 @@ export class SegregationLevelsComponent implements OnInit {
       this.nodoForm = { ...n, atributos: attrValues };
       this.editNodoId = n.id;
       this.nivelFormId.set(n.nivelId);
+      this.nodoNivelLocked.set(false);
     } else {
       this.nodoForm = this.blankNodo();
       this.editNodoId = null;
-      this.nivelFormId.set('');
+      if (nivelId) {
+        this.nodoForm.nivelId = nivelId;
+        this.nivelFormId.set(nivelId);
+        this.nodoNivelLocked.set(true);
+      } else {
+        this.nivelFormId.set('');
+        this.nodoNivelLocked.set(false);
+      }
     }
     this.nodoFormSubmitted.set(false);
     this.showNodoDlg = true;
   }
 
-  closeNodoDialog(): void { this.showNodoDlg = false; this.editNodoId = null; this.nivelFormId.set(''); this.nodoFormSubmitted.set(false); }
+  closeNodoDialog(): void { this.showNodoDlg = false; this.editNodoId = null; this.nivelFormId.set(''); this.nodoFormSubmitted.set(false); this.nodoNivelLocked.set(false); }
 
   onNodoNivelChange(): void {
     this.nivelFormId.set(this.nodoForm.nivelId || '');

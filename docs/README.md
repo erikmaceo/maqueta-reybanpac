@@ -9,6 +9,7 @@ Esta carpeta contiene la documentación del proyecto CAM (Central Access Manager
 | [**CHANGES.md**](./CHANGES.md) | Registro cronológico de todos los cambios realizados en el proyecto. Se actualiza con cada nueva modificación. |
 | [**ARCHITECTURE.md**](./ARCHITECTURE.md) | Arquitectura del sistema: componentes, modelo de datos, flujos principales y diagrama. |
 | [**DEV-GUIDE.md**](./DEV-GUIDE.md) | Guía de desarrollo: comandos, convenciones de código, endpoints, solución de problemas. |
+| [**AUTH-AUTHZ-GUIDE.md**](./AUTH-AUTHZ-GUIDE.md) | Mejores prácticas, tecnologías recomendadas y hoja de ruta para autenticación y autorización del backend. |
 
 ## Cómo mantener esta documentación
 

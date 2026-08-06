@@ -306,3 +306,34 @@ export interface Stats {
   rolesPerSystem: { systemId: string; code: string; name: string; color: string; roles: number }[];
   recentAudit: AuditEntry[];
 }
+
+// --- Gateway (API para consumo de configuración por terceros) -------------
+export type GatewayScope =
+  | 'seguridades:read'
+  | 'segregacion:read'
+  | 'usuarios:read'
+  | 'accesos:read'
+  | 'accesos:validate'
+  | 'admin:gateway';
+
+export interface GatewayClient {
+  id: string;
+  name: string;
+  clientId: string;
+  clientSecretHash: string;
+  scopes: GatewayScope[];
+  allowedIps: string[];
+  rateLimit: number; // requests per hour
+  isActive: boolean;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface GatewayTokenPayload {
+  sub: string; // client id
+  clientId: string;
+  scopes: GatewayScope[];
+  iat: number;
+  exp: number;
+  jti: string;
+}

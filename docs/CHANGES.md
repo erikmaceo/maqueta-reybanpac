@@ -4,6 +4,74 @@
 
  ---
 
+ ## 2026-08-05 — Implementación del API Gateway (Opción A)
+
+ ### Resumen
+
+ Se implementó el API Gateway dentro del backend actual para exponer de forma segura la configuración de autorización y segregación a aplicaciones terceras. El gateway usa OAuth2 Client Credentials con tokens JWT, rate limiting por cliente, IP allowlist y scopes de acceso.
+
+ ### Cambios realizados
+
+ #### 1. Modelo de datos
+ - Nuevos tipos en `backend/src/types.ts`: `GatewayClient`, `GatewayScope`, `GatewayTokenPayload`.
+ - Almacenamiento en memoria `gatewayClients` en `backend/src/store.ts` con semilla desde variable `GATEWAY_CLIENTS` y cliente demo de desarrollo.
+
+ #### 2. Seguridad y autenticación
+ - `backend/src/gateway/auth.ts`: endpoint `POST /api/v1/gateway/oauth/token` y middleware `requireGatewayAuth` / `requireGatewayScope`.
+ - Tokens JWT con RS256 (configurable vía `GATEWAY_JWT_PRIVATE_KEY` / `GATEWAY_JWT_PUBLIC_KEY`) o HS256 fallback (`GATEWAY_JWT_FALLBACK_SECRET`).
+ - Client secrets almacenados como hash bcrypt.
+ - `backend/src/gateway/rate-limit.ts`: rate limiting por `client_id` (1000 req/hr por defecto).
+ - IP allowlist por cliente.
+
+ #### 3. Endpoints del gateway
+ - Lectura: `/aplicaciones`, `/modulos`, `/programas`, `/perfiles`, `/perfiles/:codigo`, `/controles`.
+ - Segregación: `/niveles-segregacion`, `/nodos-segregacion`, `/nodos-segregacion/arbol`, `/nodos-segregacion/:id`.
+ - Usuarios y accesos: `/usuarios`, `/usuarios/:username`, `/usuarios/:username/nodos`, `/usuarios/:username/perfiles`, `/usuarios/:username/roles`.
+ - Validaciones: `POST /validate/perfil`, `POST /validate/programa`, `POST /validate/rol`.
+ - Admin: `/admin/clients` (CRUD y rotación de secret).
+ - Health: `/health`.
+ - Documentación Swagger: `/docs`.
+
+ #### 4. Integración y operación
+ - Montaje en `backend/src/index.ts` bajo `/api/v1/gateway` y `/api/v1/gateway/admin`.
+ - `helmet` habilitado en todo el backend.
+ - `backend/scripts/create-gateway-client.ts`: CLI para generar clientes y valor base64 para `GATEWAY_CLIENTS`.
+ - `docker-compose.yaml`: variables de entorno `GATEWAY_JWT_FALLBACK_SECRET` y `GATEWAY_CLIENTS`.
+
+ #### 5. Documentación
+ - `docs/API-GATEWAY-PLAN.md`: actualizado a estado implementado, con uso rápido y próximos pasos.
+ - `docs/API-GATEWAY-DISCOVERY.md`: nuevo documento detallado para consumidores del API Gateway.
+ - `docs/README.md`: resumen actualizado.
+ - `docs/CHANGES.md`: entrada actual.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/types.ts` | Tipos `GatewayClient`, `GatewayScope`, `GatewayTokenPayload` |
+ | `backend/src/store.ts` | `gatewayClients`, `seedGatewayClients()` |
+ | `backend/src/index.ts` | Montaje de routers gateway y `helmet` |
+ | `backend/src/gateway/auth.ts` | OAuth2 token + middleware JWT |
+ | `backend/src/gateway/rate-limit.ts` | Rate limiting por cliente |
+ | `backend/src/gateway/routes.ts` | Endpoints públicos del gateway |
+ | `backend/src/gateway/validation.ts` | Lógica de validación runtime |
+ | `backend/src/gateway/admin.ts` | Endpoints de administración |
+ | `backend/src/gateway/swagger.ts` | Especificación OpenAPI |
+ | `backend/scripts/create-gateway-client.ts` | CLI para crear clientes |
+ | `backend/package.json` | Dependencias `bcrypt`, `express-rate-limit`, `helmet`, `jsonwebtoken`, `swagger-jsdoc`, `swagger-ui-express`, `zod` |
+ | `docker-compose.yaml` | Variables de entorno del gateway |
+ | `docs/API-GATEWAY-PLAN.md` | Plan actualizado a implementado |
+ | `docs/API-GATEWAY-DISCOVERY.md` | Guía de descubrimiento para consumidores |
+ | `docs/README.md` | Índice actualizado |
+ | `docs/CHANGES.md` | Este registro |
+
+ ### Notas técnicas
+ - El cliente demo (`demo-client` / `demo-secret-do-not-use-in-production`) solo está disponible si no se configura `GATEWAY_CLIENTS`.
+ - En producción se recomienda RS256 con claves PEM y rotación periódica de secrets.
+ - Pantalla de administración de clientes en Angular: pendiente.
+
+ ---
+
  ## 2026-07-13 — Atributos dinámicos por Nivel de Segregación
 
  ### Resumen

@@ -24,6 +24,7 @@ import type {
   Provincia,
   Ciudad,
   DispositivoMovil,
+  GatewayClient,
 } from './types.js';
 import {
   systems as seedSystems,
@@ -47,6 +48,7 @@ import {
   ciudades as seedCiudades,
   dispositivosMoviles as seedDispositivosMoviles,
 } from './seed.js';
+import bcrypt from 'bcrypt';
 
 interface DB {
   systems: SystemApp[];
@@ -69,10 +71,15 @@ interface DB {
   provincias: Provincia[];
   ciudades: Ciudad[];
   dispositivosMoviles: DispositivoMovil[];
+  gatewayClients: GatewayClient[];
 }
 
 // Clonado profundo para no mutar los arrays de seed (permite "reset").
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
+
+let counter = 1000;
+export const newId = (prefix: string) => `${prefix}_${++counter}`;
+export const nowIso = () => new Date().toISOString();
 
 export const db: DB = {
   systems: clone(seedSystems),
@@ -95,6 +102,7 @@ export const db: DB = {
   provincias: clone(seedProvincias),
   ciudades: clone(seedCiudades),
   dispositivosMoviles: clone(seedDispositivosMoviles),
+  gatewayClients: seedGatewayClients(),
 };
 
 export function resetDb() {
@@ -118,11 +126,70 @@ export function resetDb() {
   db.provincias = clone(seedProvincias);
   db.ciudades = clone(seedCiudades);
   db.dispositivosMoviles = clone(seedDispositivosMoviles);
+  db.gatewayClients = seedGatewayClients();
 }
 
-let counter = 1000;
-export const newId = (prefix: string) => `${prefix}_${++counter}`;
-export const nowIso = () => new Date().toISOString();
+export const GATEWAY_SCOPES = [
+  'seguridades:read',
+  'segregacion:read',
+  'usuarios:read',
+  'accesos:read',
+  'accesos:validate',
+  'admin:gateway',
+] as const;
+
+function parseGatewayClientsFromEnv(): GatewayClient[] {
+  const env = process.env.GATEWAY_CLIENTS || '';
+  if (!env) return [];
+  try {
+    const parsed = JSON.parse(Buffer.from(env, 'base64').toString('utf-8'));
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((c: any) => c.clientId && c.clientSecretHash)
+      .map((c: any) => ({
+        id: c.id || newId('gw_client'),
+        name: c.name || 'Cliente externo',
+        clientId: c.clientId,
+        clientSecretHash: c.clientSecretHash,
+        scopes: Array.isArray(c.scopes) ? c.scopes.filter((s: string) => GATEWAY_SCOPES.includes(s as any)) : [],
+        allowedIps: Array.isArray(c.allowedIps) ? c.allowedIps : [],
+        rateLimit: Number(c.rateLimit) || 1000,
+        isActive: c.isActive !== false,
+        createdAt: c.createdAt || nowIso(),
+        lastUsedAt: c.lastUsedAt || null,
+      })) as GatewayClient[];
+  } catch {
+    return [];
+  }
+}
+
+export function seedGatewayClients(): GatewayClient[] {
+  const fromEnv = parseGatewayClientsFromEnv();
+  if (fromEnv.length > 0) return fromEnv;
+
+  // Cliente de demostración para desarrollo. No usar en producción.
+  const demoSecret = 'demo-secret-do-not-use-in-production';
+  return [
+    {
+      id: newId('gw_client'),
+      name: 'Demo Client',
+      clientId: 'demo-client',
+      clientSecretHash: bcrypt.hashSync(demoSecret, 12),
+      scopes: [
+        'seguridades:read',
+        'segregacion:read',
+        'usuarios:read',
+        'accesos:read',
+        'accesos:validate',
+      ],
+      allowedIps: [],
+      rateLimit: 1000,
+      isActive: true,
+      createdAt: nowIso(),
+      lastUsedAt: null,
+    },
+  ];
+}
 
 export function logAudit(
   actor: string,

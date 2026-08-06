@@ -42,6 +42,10 @@ services:
       LDAP_BIND_DN: "cn=admin,dc=reybanpac,dc=com"
       LDAP_BIND_PW: "admin123"
       LDAP_SEARCH_BASE: "ou=people,dc=reybanpac,dc=com"
+      # Gateway: en producción usar RS256 con claves PEM y clients inyectados por secret manager.
+      GATEWAY_JWT_FALLBACK_SECRET: "${GATEWAY_JWT_FALLBACK_SECRET:-change-me-in-production}"
+      # GATEWAY_CLIENTS: base64 de array de clientes (generar con scripts/create-gateway-client.ts).
+      GATEWAY_CLIENTS: "${GATEWAY_CLIENTS:-}"
     ports:
       - "4000:4000"
     depends_on:

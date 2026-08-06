@@ -10,6 +10,10 @@ Esta carpeta contiene la documentación del proyecto CAM (Central Access Manager
 | [**ARCHITECTURE.md**](./ARCHITECTURE.md) | Arquitectura del sistema: componentes, modelo de datos, flujos principales y diagrama. |
 | [**DEV-GUIDE.md**](./DEV-GUIDE.md) | Guía de desarrollo: comandos, convenciones de código, endpoints, solución de problemas. |
 | [**AUTH-AUTHZ-GUIDE.md**](./AUTH-AUTHZ-GUIDE.md) | Mejores prácticas, tecnologías recomendadas y hoja de ruta para autenticación y autorización del backend. |
+| [**BACKEND-API-ROUTES.md**](./BACKEND-API-ROUTES.md) | Inventario completo de APIs y rutas del backend organizado por grupo funcional. |
+| [**DATABASE-MODEL.md**](./DATABASE-MODEL.md) | Modelo lógico/relacional de base de datos con diccionario de entidades, diagrama ER y DDL SQL. |
+| [**API-GATEWAY-PLAN.md**](./API-GATEWAY-PLAN.md) | API Gateway implementado para exponer configuración a aplicaciones terceras mediante OAuth2 Client Credentials. |
+| [**API-GATEWAY-DISCOVERY.md**](./API-GATEWAY-DISCOVERY.md) | Guía detallada para consumidores: endpoints, parámetros, ejemplos de request/response y errores del API Gateway. |
 
 ## Cómo mantener esta documentación
 

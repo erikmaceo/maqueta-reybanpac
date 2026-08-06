@@ -5,11 +5,12 @@ import * as XLSX from 'xlsx';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
-import { TableSkeletonComponent, EmptyStateComponent, SearchBoxComponent } from '../../shared/components/ui';
-import { IconAuditComponent, IconRefreshComponent, IconClockComponent, IconDownloadComponent } from '../../shared/components/icons';
+import { TableSkeletonComponent } from '../../shared/components/ui';
+import { IconAuditComponent, IconClockComponent, IconDownloadComponent } from '../../shared/components/icons';
 import type { AuditEntry } from '../../shared/models/types';
 
 @Component({
@@ -21,11 +22,13 @@ import type { AuditEntry } from '../../shared/models/types';
     DialogModule,
     ButtonModule,
     ConfirmDialogModule,
+    Tabs,
+    TabList,
+    Tab,
+    TabPanels,
+    TabPanel,
     TableSkeletonComponent,
-    EmptyStateComponent,
-    SearchBoxComponent,
     IconAuditComponent,
-    IconRefreshComponent,
     IconClockComponent,
     IconDownloadComponent,
   ],
@@ -37,114 +40,135 @@ import type { AuditEntry } from '../../shared/models/types';
       </div>
     </div>
 
-    <div class="card mb-4" style="padding: 28px;">
-      <div class="row gap-4 wrap" style="align-items: flex-end;">
-        <div class="field" style="margin:0;">
-          <label class="small muted">Desde</label>
-          <input type="date" class="select" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
-        </div>
-        <div class="field" style="margin:0;">
-          <label class="small muted">Hasta</label>
-          <input type="date" class="select" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
-        </div>
-        <div class="field" style="margin:0;">
-          <label class="small muted">Actor</label>
-          <input type="text" class="select" placeholder="Usuario..." [ngModel]="actor()" (ngModelChange)="actor.set($event)" />
-        </div>
-        <div class="field" style="margin:0;">
-          <label class="small muted">Acción</label>
-          <input type="text" class="select" placeholder="Ej: CREATE_USER..." [ngModel]="action()" (ngModelChange)="action.set($event)" />
-        </div>
-        <div class="field" style="margin:0;">
-          <label class="small muted">Entidad</label>
-          <input type="text" class="select" placeholder="Ej: user..." [ngModel]="entityType()" (ngModelChange)="entityType.set($event)" />
-        </div>
-        <div class="row gap-2" style="margin-left: auto;">
-          <button class="btn btn-primary" (click)="applyFilters()">
-            Buscar
-          </button>
-          <button class="btn btn-ghost" (click)="clearFilters()">
-            Limpiar
-          </button>
-          <button class="btn btn-ghost" (click)="exportAudit()">
-            <app-icon-download [width]="16" [height]="16" /> Exportar
-          </button>
-        </div>
-      </div>
-    </div>
+    <p-tabs value="logs">
+      <p-tablist>
+        <p-tab value="logs"><i class="pi pi-list mr-2"></i>Consulta de logs</p-tab>
+        <p-tab value="bulk"><i class="pi pi-upload mr-2"></i>Historial de cargas masivas</p-tab>
+      </p-tablist>
+      <p-tabpanels>
+        <!-- ============ CONSULTA DE LOGS ============ -->
+        <p-tabpanel value="logs">
+          <div class="card mb-4" style="padding: 28px;">
+            <div class="row gap-4 wrap" style="align-items: flex-end;">
+              <div class="field" style="margin:0;">
+                <label class="small muted">Desde</label>
+                <input type="date" class="select" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+              </div>
+              <div class="field" style="margin:0;">
+                <label class="small muted">Hasta</label>
+                <input type="date" class="select" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+              </div>
+              <div class="field" style="margin:0;">
+                <label class="small muted">Actor</label>
+                <input type="text" class="select" placeholder="Usuario..." [ngModel]="actor()" (ngModelChange)="actor.set($event)" />
+              </div>
+              <div class="field" style="margin:0;">
+                <label class="small muted">Acción</label>
+                <input type="text" class="select" placeholder="Ej: CREATE_USER..." [ngModel]="action()" (ngModelChange)="action.set($event)" />
+              </div>
+              <div class="field" style="margin:0;">
+                <label class="small muted">Entidad</label>
+                <input type="text" class="select" placeholder="Ej: user..." [ngModel]="entityType()" (ngModelChange)="entityType.set($event)" />
+              </div>
+              <div class="row gap-2" style="margin-left: auto;">
+                <button class="btn btn-primary" (click)="applyFilters()">
+                  Buscar
+                </button>
+                <button class="btn btn-ghost" (click)="clearFilters()">
+                  Limpiar
+                </button>
+                <button class="btn btn-ghost" (click)="exportAudit()">
+                  <app-icon-download [width]="16" [height]="16" /> Exportar
+                </button>
+              </div>
+            </div>
+          </div>
 
-    @if (loading()) {
-      <app-table-skeleton [rows]="8" [cols]="6" />
-    } @else if (entries().length === 0) {
-      <div class="card">
-        <div class="empty">
-          <div class="empty-icon"><app-icon-audit /></div>
-          <h4>Sin actividad registrada</h4>
-          <p class="muted small">Las acciones de la consola aparecerán aquí.</p>
-        </div>
-      </div>
-    } @else {
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Id</th>
-              <th>Fecha</th>
-              <th>Actor</th>
-              <th>Acción</th>
-              <th>Entidad</th>
-              <th>Detalle</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (entry of entries(); track entry.id) {
-              <tr>
-                <td class="mono small">{{ formatId(entry.id) }}</td>
-                <td>
-                  <div class="row gap-2">
-                    <app-icon-clock [width]="14" [height]="14" style="color: var(--text-3);" />
-                    <div>
-                      <div class="small">{{ formatDateTime(entry.timestamp) }}</div>
-                      <div class="tiny dim">{{ events.relativeTime(entry.timestamp) }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td><b>{{ entry.actor }}</b></td>
-                <td>
-                  <span class="badge" [class]="getActionBadgeClass(entry.action)">
-                    {{ entry.action }}
-                  </span>
-                </td>
-                <td>
-                  <span class="mono tiny">{{ entry.entityType }}</span>
-                  @if (entry.entityId) {
-                    <span class="muted tiny"> · {{ entry.entityId }}</span>
+          @if (loading()) {
+            <app-table-skeleton [rows]="8" [cols]="6" />
+          } @else if (entries().length === 0) {
+            <div class="card">
+              <div class="empty">
+                <div class="empty-icon"><app-icon-audit /></div>
+                <h4>Sin actividad registrada</h4>
+                <p class="muted small">Las acciones de la consola aparecerán aquí.</p>
+              </div>
+            </div>
+          } @else {
+            <div class="card table-wrap">
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th>Id</th>
+                    <th>Fecha</th>
+                    <th>Actor</th>
+                    <th>Acción</th>
+                    <th>Entidad</th>
+                    <th>Detalle</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of entries(); track entry.id) {
+                    <tr>
+                      <td class="mono small">{{ formatId(entry.id) }}</td>
+                      <td>
+                        <div class="row gap-2">
+                          <app-icon-clock [width]="14" [height]="14" style="color: var(--text-3);" />
+                          <div>
+                            <div class="small">{{ formatDateTime(entry.timestamp) }}</div>
+                            <div class="tiny dim">{{ events.relativeTime(entry.timestamp) }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td><b>{{ entry.actor }}</b></td>
+                      <td>
+                        <span class="badge" [class]="getActionBadgeClass(entry.action)">
+                          {{ entry.action }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="mono tiny">{{ entry.entityType }}</span>
+                        @if (entry.entityId) {
+                          <span class="muted tiny"> · {{ entry.entityId }}</span>
+                        }
+                      </td>
+                      <td class="muted small">{{ entry.detail }}</td>
+                    </tr>
                   }
-                </td>
-                <td class="muted small">{{ entry.detail }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+                </tbody>
+              </table>
+            </div>
 
-      <div class="pagination">
-        <div class="page-controls">
-          <button class="btn btn-ghost btn-sm" [disabled]="page() === 1" (click)="changePage(-1)">Anterior</button>
-        </div>
-        <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} registros)</span>
-        <div class="page-size-selector">
-          <label class="small muted">Registros por página</label>
-          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
-            <option [value]="5">5</option>
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages()" (click)="changePage(1)">Siguiente</button>
-        </div>
-      </div>
-    }
+            <div class="pagination">
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="page() === 1" (click)="changePage(-1)">Anterior</button>
+              </div>
+              <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} registros)</span>
+              <div class="page-size-selector">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" [disabled]="page() === totalPages()" (click)="changePage(1)">Siguiente</button>
+              </div>
+            </div>
+          }
+        </p-tabpanel>
+
+        <!-- ============ HISTORIAL DE CARGAS MASIVAS ============ -->
+        <p-tabpanel value="bulk">
+          <div class="card muted center" style="padding: 48px;">
+            <div class="empty-icon"><i class="pi pi-upload" style="font-size: 2rem; color: var(--text-3);"></i></div>
+            <h4 style="margin-top: 16px;">Historial de cargas masivas</h4>
+            <p class="muted small">Esta sección mostrará el registro de todas las cargas masivas realizadas en la consola.</p>
+            <p class="muted small">Funcionalidad en desarrollo.</p>
+          </div>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
 
     <p-confirmDialog></p-confirmDialog>
   `,

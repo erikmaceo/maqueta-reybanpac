@@ -4,18 +4,32 @@
 
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
 import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
+import gatewayRoutes from './gateway/routes.js';
+import gatewayAdminRoutes from './gateway/admin.js';
+import { gatewaySpec } from './gateway/swagger.js';
 import type { Role, User, AccessRequest, Grant, Stats, Aplicacion, Modulo, Programa, Perfil, PerfilPrograma, TipoPrograma, Control, NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad, DispositivoMovil } from './types.js';
 
 const app = express();
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
 const PORT = Number(process.env.PORT || 4000);
+
+// ===========================================================================
+// API Gateway (external clients)
+// ===========================================================================
+// Swagger docs primero para evitar que el router gateway aplique auth.
+app.use('/api/v1/gateway/docs', swaggerUi.serve, swaggerUi.setup(gatewaySpec));
+app.use('/api/v1/gateway', gatewayRoutes);
+app.use('/api/v1/gateway/admin', gatewayAdminRoutes);
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 8 * 60 * 60 * 1000); // 8 h
 
 /** Quita claves undefined para no pisar campos con vacío en updates parciales. */

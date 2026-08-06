@@ -4,6 +4,49 @@
 
  ---
 
+ ## 2026-08-06 — Nuevos endpoints de jerarquía y auditoría en API Gateway
+
+ ### Resumen
+
+ Se agregaron endpoints al API Gateway para exponer la jerarquía completa de una aplicación, el orden establecido desde "Ordenar Soluciones" y permitir que aplicaciones terceras envíen logs de auditoría visibles en la consola CAM.
+
+ ### Cambios realizados
+
+ #### 1. Backend
+ - Nuevo endpoint `GET /api/v1/gateway/aplicaciones/:codigo/completo` en `backend/src/gateway/routes.ts`.
+   - Requiere scope `seguridades:read`.
+   - Respuesta anidada: aplicación → módulos → programas → controles.
+   - Solo incluye entidades con estado `ACTIVO`.
+ - Nuevo endpoint `GET /api/v1/gateway/aplicaciones/:codigo/orden`.
+   - Devuelve la misma jerarquía ordenada por el campo `orden` de cada entidad.
+   - Si no tiene `orden`, ordena por `createdAt`.
+   - Refleja el orden persistido por el botón "Actualizar Orden" de "Ordenar Soluciones".
+ - Nuevo endpoint `POST /api/v1/gateway/audit/logs`.
+   - Requiere scope `auditoria:write`.
+   - Acepta un log o un array de logs.
+   - Persiste los logs en `db.audit` usando `logAudit`, por lo que son visibles en el módulo Auditoría de la SPA.
+   - Prefija el `entityType` con `external:` para diferenciar logs de terceros.
+ - Nuevo scope `auditoria:write` en `backend/src/types.ts` y `backend/src/store.ts`.
+ - Cliente demo actualizado con scope `auditoria:write`.
+ - `GatewayRequest` en `backend/src/gateway/auth.ts` ahora expone `gatewayClientId` y `gatewayScopes` de forma tipada.
+
+ #### 2. Documentación
+ - Actualizado `docs/API-GATEWAY-DISCOVERY.md` con los nuevos endpoints, parámetros, ejemplos de respuesta y reenumeración de secciones.
+ - Regenerado `C:\Users\admin\API_Gateway_Discovery.docx`.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/gateway/routes.ts` | Endpoints `/aplicaciones/:codigo/completo`, `/aplicaciones/:codigo/orden` y `/audit/logs` |
+ | `backend/src/gateway/auth.ts` | Campos tipados `gatewayClientId` y `gatewayScopes` en `GatewayRequest` |
+ | `backend/src/types.ts` | Nuevo scope `auditoria:write` |
+ | `backend/src/store.ts` | `auditoria:write` en `GATEWAY_SCOPES` y cliente demo |
+ | `docs/API-GATEWAY-DISCOVERY.md` | Documentación de los nuevos endpoints |
+ | `docs/CHANGES.md` | Este registro |
+
+ ---
+
  ## 2026-08-05 — Implementación del API Gateway (Opción A)
 
  ### Resumen
@@ -24,10 +67,11 @@
  - IP allowlist por cliente.
 
  #### 3. Endpoints del gateway
- - Lectura: `/aplicaciones`, `/modulos`, `/programas`, `/perfiles`, `/perfiles/:codigo`, `/controles`.
+ - Lectura: `/aplicaciones`, `/aplicaciones/:codigo`, `/aplicaciones/:codigo/completo`, `/aplicaciones/:codigo/orden`, `/modulos`, `/programas`, `/perfiles`, `/perfiles/:codigo`, `/controles`.
  - Segregación: `/niveles-segregacion`, `/nodos-segregacion`, `/nodos-segregacion/arbol`, `/nodos-segregacion/:id`.
  - Usuarios y accesos: `/usuarios`, `/usuarios/:username`, `/usuarios/:username/nodos`, `/usuarios/:username/perfiles`, `/usuarios/:username/roles`.
  - Validaciones: `POST /validate/perfil`, `POST /validate/programa`, `POST /validate/rol`.
+ - Auditoría: `POST /audit/logs`.
  - Admin: `/admin/clients` (CRUD y rotación de secret).
  - Health: `/health`.
  - Documentación Swagger: `/docs`.

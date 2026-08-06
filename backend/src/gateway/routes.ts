@@ -4,7 +4,7 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { db } from '../store.js';
+import { db, logAudit, nowIso } from '../store.js';
 import { requireGatewayAuth, requireGatewayScope, authenticateClient, gatewayTokenTtl, type GatewayRequest } from './auth.js';
 import { createGatewayRateLimiter, createTokenRateLimiter } from './rate-limit.js';
 import { validatePerfilForUser, validateProgramaForUser, validateRolForUser } from './validation.js';
@@ -76,6 +76,62 @@ router.use(gatewayRateLimiter);
 router.get('/aplicaciones', requireGatewayScope('seguridades:read'), (req: GatewayRequest, res) => {
   const list = db.aplicaciones.filter((a) => a.estado === 'ACTIVO');
   res.json(list.map((a) => ({ id: a.id, codigo: a.codigo, nombre: a.nombre, descripcion: a.descripcion, nodoIds: a.nodoIds })));
+});
+
+// Obtiene una aplicación con toda su jerarquía: módulos, programas y controles.
+// Debe ir antes de /aplicaciones/:codigo para que Express no lo trate como parámetro.
+router.get('/aplicaciones/:codigo/completo', requireGatewayScope('seguridades:read'), (req: GatewayRequest, res) => {
+  const app = db.aplicaciones.find((a) => a.codigo.toLowerCase() === req.params.codigo.toLowerCase());
+  if (!app) return res.status(404).json({ error: 'Aplicación no encontrada.' });
+
+  const modulos = db.modulos
+    .filter((m) => m.appCodigo.toLowerCase() === app.codigo.toLowerCase() && m.estado === 'ACTIVO')
+    .map((m) => {
+      const programas = db.programas
+        .filter((p) => p.modCodigo.toLowerCase() === m.codigo.toLowerCase() && p.estado === 'ACTIVO')
+        .map((p) => {
+          const controles = db.controles.filter(
+            (c) => c.prgCodigo.toLowerCase() === p.codigo.toLowerCase() && c.estado === 'ACTIVO',
+          );
+          return { ...p, controles };
+        });
+      return { ...m, programas };
+    });
+
+  res.json({ ...app, modulos });
+});
+
+// Ordena items por el campo `orden`; si no tiene orden, usa createdAt.
+function ordenarPorOrden<T extends { orden?: number; createdAt: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    if (a.orden !== undefined && b.orden !== undefined) return a.orden - b.orden;
+    if (a.orden !== undefined) return -1;
+    if (b.orden !== undefined) return 1;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+// Obtiene una aplicación con toda su jerarquía ordenada según el orden establecido
+// en la funcionalidad "Ordenar Soluciones".
+router.get('/aplicaciones/:codigo/orden', requireGatewayScope('seguridades:read'), (req: GatewayRequest, res) => {
+  const app = db.aplicaciones.find((a) => a.codigo.toLowerCase() === req.params.codigo.toLowerCase());
+  if (!app) return res.status(404).json({ error: 'Aplicación no encontrada.' });
+
+  const modulos = ordenarPorOrden(
+    db.modulos.filter((m) => m.appCodigo.toLowerCase() === app.codigo.toLowerCase() && m.estado === 'ACTIVO'),
+  ).map((m) => {
+    const programas = ordenarPorOrden(
+      db.programas.filter((p) => p.modCodigo.toLowerCase() === m.codigo.toLowerCase() && p.estado === 'ACTIVO'),
+    ).map((p) => {
+      const controles = ordenarPorOrden(
+        db.controles.filter((c) => c.prgCodigo.toLowerCase() === p.codigo.toLowerCase() && c.estado === 'ACTIVO'),
+      );
+      return { ...p, controles };
+    });
+    return { ...m, programas };
+  });
+
+  res.json({ ...app, modulos });
 });
 
 router.get('/aplicaciones/:codigo', requireGatewayScope('seguridades:read'), (req: GatewayRequest, res) => {
@@ -255,6 +311,43 @@ router.post('/validate/rol', requireGatewayScope('accesos:validate'), (req: Gate
   if (!parsed.success) return res.status(400).json({ error: 'Datos inválidos.', details: parsed.error.flatten() });
   const { username, rolId } = parsed.data;
   res.json(validateRolForUser(username, rolId));
+});
+
+// ---------------------------------------------------------------------------
+// Auditoría (logs enviados por aplicaciones terceras)
+// ---------------------------------------------------------------------------
+const auditLogSchema = z.object({
+  actor: z.string().min(1).max(200),
+  action: z.string().min(1).max(100),
+  entityType: z.string().min(1).max(100),
+  entityId: z.string().max(100).optional(),
+  detail: z.string().min(1).max(2000),
+  timestamp: z.string().datetime().optional(),
+});
+
+const auditLogsBodySchema = z.union([
+  auditLogSchema,
+  z.array(auditLogSchema).min(1).max(100),
+]);
+
+router.post('/audit/logs', requireGatewayScope('auditoria:write'), (req: GatewayRequest, res) => {
+  const parsed = auditLogsBodySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Datos inválidos.', details: parsed.error.flatten() });
+
+  const logs = Array.isArray(parsed.data) ? parsed.data : [parsed.data];
+  const clientId = req.gatewayClientId || 'gateway-client';
+
+  for (const log of logs) {
+    logAudit(
+      log.actor,
+      log.action,
+      `external:${log.entityType}`,
+      log.entityId || null,
+      `[${clientId}] ${log.detail}`,
+    );
+  }
+
+  res.status(201).json({ ok: true, count: logs.length });
 });
 
 export default router;

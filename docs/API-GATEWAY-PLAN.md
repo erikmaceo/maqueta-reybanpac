@@ -68,6 +68,7 @@ Los clientes externos no usan `/api/auth/login` de la consola. El gateway tendr�
   - `usuarios:read`
   - `accesos:read`
   - `accesos:validate`
+  - `auditoria:write` (enviar logs de auditoría)
   - `admin:gateway` (gestión de clientes)
 
 ### 3.4. Rate limiting
@@ -108,6 +109,8 @@ Los clientes externos no usan `/api/auth/login` de la consola. El gateway tendr�
 |--------|------|-------------|-------|
 | GET | `/api/v1/gateway/aplicaciones` | Lista aplicaciones activas | `seguridades:read` |
 | GET | `/api/v1/gateway/aplicaciones/:codigo` | Detalle de aplicación | `seguridades:read` |
+| GET | `/api/v1/gateway/aplicaciones/:codigo/completo` | Jerarquía completa de la aplicación | `seguridades:read` |
+| GET | `/api/v1/gateway/aplicaciones/:codigo/orden` | Jerarquía ordenada por `orden` | `seguridades:read` |
 | GET | `/api/v1/gateway/modulos` | Lista módulos | `seguridades:read` |
 | GET | `/api/v1/gateway/programas` | Lista programas | `seguridades:read` |
 | GET | `/api/v1/gateway/perfiles` | Lista perfiles | `seguridades:read` |
@@ -141,7 +144,13 @@ Los clientes externos no usan `/api/auth/login` de la consola. El gateway tendr�
 | POST | `/api/v1/gateway/validate/programa` | Valida si un usuario puede ejecutar un programa | `accesos:validate` |
 | POST | `/api/v1/gateway/validate/rol` | Valida si un usuario tiene un rol asignado | `accesos:validate` |
 
-### 4.6. Health / metadata
+### 4.6. Auditoría
+
+| Método | Ruta | Descripción | Scope |
+|--------|------|-------------|-------|
+| POST | `/api/v1/gateway/audit/logs` | Enviar logs de auditoría desde aplicaciones terceras | `auditoria:write` |
+
+### 4.7. Health / metadata
 
 | Método | Ruta | Descripción | Auth |
 |--------|------|-------------|------|

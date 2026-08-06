@@ -314,6 +314,7 @@ export type GatewayScope =
   | 'usuarios:read'
   | 'accesos:read'
   | 'accesos:validate'
+  | 'auditoria:write'
   | 'admin:gateway';
 
 export interface GatewayClient {

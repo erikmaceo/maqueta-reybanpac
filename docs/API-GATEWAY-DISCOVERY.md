@@ -73,6 +73,7 @@ Authorization: Bearer <access_token>
 | `usuarios:read` | Leer información de usuarios |
 | `accesos:read` | Leer nodos, perfiles y roles asignados a un usuario |
 | `accesos:validate` | Validar acceso a perfiles, programas y roles |
+| `auditoria:write` | Enviar logs de auditoría desde aplicaciones terceras |
 | `admin:gateway` | Crear, listar, rotar y revocar clientes del gateway |
 
 ---
@@ -170,7 +171,146 @@ Authorization: Bearer <token>
 }
 ```
 
-### 4.3. Listar módulos
+### 4.3. Obtener aplicación completa (jerarquía completa)
+
+```http
+GET /api/v1/gateway/aplicaciones/:codigo/completo
+Authorization: Bearer <token>
+```
+
+Devuelve una aplicación con todos sus módulos, y cada módulo con sus programas, y cada programa con sus controles asociados.
+
+#### Parámetros de ruta
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `codigo` | string | Código de la aplicación (case-insensitive) |
+
+#### Respuesta exitosa (200)
+
+```json
+{
+  "id": "app_1",
+  "codigo": "APP-SAP",
+  "nombre": "SAP ERP",
+  "descripcion": "Sistema ERP corporativo",
+  "nodoIds": ["nod_emp_1"],
+  "estado": "ACTIVO",
+  "createdAt": "2026-04-28T00:54:40.340Z",
+  "modulos": [
+    {
+      "id": "mod_1",
+      "codigo": "MOD-FI",
+      "nombre": "Finanzas",
+      "appCodigo": "APP-SAP",
+      "estado": "ACTIVO",
+      "createdAt": "2026-04-29T00:54:40.340Z",
+      "programas": [
+        {
+          "id": "prg_1",
+          "codigo": "PRG-FI-DOCS",
+          "nombre": "Documentos contables",
+          "modCodigo": "MOD-FI",
+          "tipo": "TRANSACCIONAL",
+          "estado": "ACTIVO",
+          "createdAt": "2026-05-01T00:54:40.340Z",
+          "controles": [
+            {
+              "id": "ctrl_1",
+              "codigo": "CTRL-FI-DOCS-APROB",
+              "nombre": "Aprobación de documentos",
+              "prgCodigo": "PRG-FI-DOCS",
+              "estado": "ACTIVO"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Respuesta error (404)
+
+```json
+{
+  "error": "Aplicación no encontrada."
+}
+```
+
+### 4.4. Obtener orden establecido de una aplicación
+
+```http
+GET /api/v1/gateway/aplicaciones/:codigo/orden
+Authorization: Bearer <token>
+```
+
+Devuelve la misma jerarquía completa de la aplicación (aplicación → módulos → programas → controles), pero **ordenada según el campo `orden`** establecido desde la funcionalidad "Ordenar Soluciones" de la consola CAM.
+
+Si un elemento no tiene `orden` definido, se ordena por `createdAt`.
+
+#### Parámetros de ruta
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `codigo` | string | Código de la aplicación (case-insensitive) |
+
+#### Respuesta exitosa (200)
+
+```json
+{
+  "id": "app_1",
+  "codigo": "APP-SAP",
+  "nombre": "SAP ERP",
+  "descripcion": "Sistema ERP corporativo",
+  "nodoIds": ["nod_emp_1"],
+  "estado": "ACTIVO",
+  "createdAt": "2026-04-28T00:54:40.340Z",
+  "modulos": [
+    {
+      "id": "mod_1",
+      "codigo": "MOD-FI",
+      "nombre": "Finanzas",
+      "appCodigo": "APP-SAP",
+      "orden": 0,
+      "estado": "ACTIVO",
+      "createdAt": "2026-04-29T00:54:40.340Z",
+      "programas": [
+        {
+          "id": "prg_1",
+          "codigo": "PRG-FI-DOCS",
+          "nombre": "Documentos contables",
+          "modCodigo": "MOD-FI",
+          "orden": 0,
+          "tipo": "TRANSACCIONAL",
+          "estado": "ACTIVO",
+          "createdAt": "2026-05-01T00:54:40.340Z",
+          "controles": [
+            {
+              "id": "ctrl_1",
+              "codigo": "CTRL-FI-DOCS-APROB",
+              "nombre": "Aprobación de documentos",
+              "prgCodigo": "PRG-FI-DOCS",
+              "orden": 0,
+              "estado": "ACTIVO"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Respuesta error (404)
+
+```json
+{
+  "error": "Aplicación no encontrada."
+}
+```
+
+### 4.5. Listar módulos
 
 ```http
 GET /api/v1/gateway/modulos?appCodigo=APP-SAP
@@ -198,7 +338,7 @@ Authorization: Bearer <token>
 ]
 ```
 
-### 4.4. Listar programas
+### 4.6. Listar programas
 
 ```http
 GET /api/v1/gateway/programas?modCodigo=MOD-FI&appCodigo=APP-SAP
@@ -228,7 +368,7 @@ Authorization: Bearer <token>
 ]
 ```
 
-### 4.5. Listar perfiles
+### 4.7. Listar perfiles
 
 ```http
 GET /api/v1/gateway/perfiles?appCodigo=APP-SAP
@@ -267,7 +407,7 @@ Authorization: Bearer <token>
 ]
 ```
 
-### 4.6. Obtener perfil por código
+### 4.8. Obtener perfil por código
 
 ```http
 GET /api/v1/gateway/perfiles/:codigo
@@ -302,7 +442,7 @@ Authorization: Bearer <token>
 }
 ```
 
-### 4.7. Listar controles
+### 4.9. Listar controles
 
 ```http
 GET /api/v1/gateway/controles?prgCodigo=PRG-FI-DOCS
@@ -842,9 +982,90 @@ Sin contenido.
 
 ---
 
-## 10. Errores comunes
+## 10. Auditoría (`auditoria:write`)
 
-### 10.1. Autenticación
+Las aplicaciones terceras pueden enviar logs de auditoría para que sean visualizados en el módulo **Auditoría** de la consola CAM.
+
+### 10.1. Enviar logs de auditoría
+
+```http
+POST /api/v1/gateway/audit/logs
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+#### Request body
+
+Acepta un único log o un array de logs (máximo 100).
+
+| Campo | Tipo | Requerido | Descripción |
+|-------|------|-----------|-------------|
+| `actor` | string | Sí | Usuario o sistema que realizó la acción |
+| `action` | string | Sí | Código de la acción (ej. `ACCESS_GRANTED`, `PROGRAM_EXECUTED`) |
+| `entityType` | string | Sí | Tipo de entidad afectada (ej. `user`, `program`, `profile`) |
+| `entityId` | string | No | Identificador de la entidad afectada |
+| `detail` | string | Sí | Descripción detallada del evento |
+| `timestamp` | string | No | Fecha/hora en formato ISO 8601. Si se omite, usa la hora actual del servidor. |
+
+#### Ejemplo de request (único log)
+
+```json
+{
+  "actor": "external-app",
+  "action": "ACCESS_GRANTED",
+  "entityType": "user",
+  "entityId": "u_123",
+  "detail": "Usuario accedió al programa PRG-FI-DOCS",
+  "timestamp": "2026-08-06T12:00:00Z"
+}
+```
+
+#### Ejemplo de request (batch)
+
+```json
+[
+  {
+    "actor": "external-app",
+    "action": "PROGRAM_EXECUTED",
+    "entityType": "program",
+    "entityId": "PRG-FI-DOCS",
+    "detail": "Ejecución iniciada desde el portal externo"
+  },
+  {
+    "actor": "external-app",
+    "action": "ACCESS_DENIED",
+    "entityType": "user",
+    "entityId": "u_456",
+    "detail": "Usuario no tiene permiso para ejecutar el programa"
+  }
+]
+```
+
+#### Respuesta exitosa (201)
+
+```json
+{
+  "ok": true,
+  "count": 2
+}
+```
+
+#### Visualización en la consola CAM
+
+Los logs enviados aparecerán en el módulo **Auditoría** (`/auditoria`) con:
+
+- **Actor:** valor de `actor`
+- **Acción:** valor de `action`
+- **Entidad:** `external:{entityType}` (por ejemplo: `external:user`)
+- **Detalle:** incluye el `clientId` del gateway entre corchetes seguido del `detail`
+
+Esto permite diferenciar claramente los logs provenientes de aplicaciones terceras de los generados internamente por la consola CAM.
+
+---
+
+## 11. Errores comunes
+
+### 11.1. Autenticación
 
 #### 401 — Token inválido o ausente
 
@@ -864,7 +1085,7 @@ Sin contenido.
 }
 ```
 
-### 10.2. Autorización
+### 11.2. Autorización
 
 #### 403 — Scope insuficiente
 
@@ -875,7 +1096,7 @@ Sin contenido.
 }
 ```
 
-### 10.3. Rate limiting
+### 11.3. Rate limiting
 
 #### 429 — Too many requests
 
@@ -885,7 +1106,7 @@ Sin contenido.
 }
 ```
 
-### 10.4. Recursos
+### 11.4. Recursos
 
 #### 404 — Recurso no encontrado
 
@@ -895,7 +1116,7 @@ Sin contenido.
 }
 ```
 
-### 10.5. Validación de datos
+### 11.5. Validación de datos
 
 #### 400 — Datos inválidos
 
@@ -912,7 +1133,7 @@ Sin contenido.
 
 ---
 
-## 11. Rate limiting y headers
+## 12. Rate limiting y headers
 
 Cada cliente tiene un límite de **1000 requests/hora** por defecto. Los headers incluyen:
 
@@ -926,9 +1147,9 @@ El límite se aplica tanto al endpoint de token como a los endpoints protegidos.
 
 ---
 
-## 12. Ejemplo completo con curl
+## 13. Ejemplo completo con curl
 
-### 12.1. Obtener token
+### 13.1. Obtener token
 
 ```bash
 curl -X POST http://localhost:4000/api/v1/gateway/oauth/token \
@@ -940,14 +1161,14 @@ curl -X POST http://localhost:4000/api/v1/gateway/oauth/token \
   }'
 ```
 
-### 12.2. Listar perfiles
+### 13.2. Listar perfiles
 
 ```bash
 curl -X GET http://localhost:4000/api/v1/gateway/perfiles \
   -H "Authorization: Bearer <access_token>"
 ```
 
-### 12.3. Validar acceso a un programa
+### 13.3. Validar acceso a un programa
 
 ```bash
 curl -X POST http://localhost:4000/api/v1/gateway/validate/programa \
@@ -960,9 +1181,25 @@ curl -X POST http://localhost:4000/api/v1/gateway/validate/programa \
   }'
 ```
 
+### 13.4. Enviar logs de auditoría
+
+```bash
+curl -X POST http://localhost:4000/api/v1/gateway/audit/logs \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "actor": "external-app",
+    "action": "ACCESS_GRANTED",
+    "entityType": "user",
+    "entityId": "u_123",
+    "detail": "Usuario accedió al programa PRG-FI-DOCS",
+    "timestamp": "2026-08-06T12:00:00Z"
+  }'
+```
+
 ---
 
-## 13. Consideraciones de seguridad
+## 14. Consideraciones de seguridad
 
 - **TLS obligatorio** en producción.
 - **No exponer el `client_secret`** en repositorios ni logs.
@@ -973,7 +1210,7 @@ curl -X POST http://localhost:4000/api/v1/gateway/validate/programa \
 
 ---
 
-## 14. Crear un cliente productivo
+## 15. Crear un cliente productivo
 
 Se incluye un script CLI para generar clientes de forma segura:
 
@@ -986,7 +1223,7 @@ El script genera un `client_id`, `client_secret` y un valor base64 listo para as
 
 ---
 
-## 15. Referencias
+## 16. Referencias
 
 - **Plan de implementación:** `docs/API-GATEWAY-PLAN.md`
 - **Rutas del backend CAM:** `docs/BACKEND-API-ROUTES.md`

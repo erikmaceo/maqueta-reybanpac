@@ -135,6 +135,7 @@ export const GATEWAY_SCOPES = [
   'usuarios:read',
   'accesos:read',
   'accesos:validate',
+  'auditoria:write',
   'admin:gateway',
 ] as const;
 
@@ -181,6 +182,7 @@ export function seedGatewayClients(): GatewayClient[] {
         'usuarios:read',
         'accesos:read',
         'accesos:validate',
+        'auditoria:write',
       ],
       allowedIps: [],
       rateLimit: 1000,

@@ -11,6 +11,8 @@ import type { GatewayClient, GatewayScope, GatewayTokenPayload } from '../types.
 
 export interface GatewayRequest extends Request {
   gatewayClient?: GatewayClient;
+  gatewayClientId?: string;
+  gatewayScopes?: GatewayScope[];
 }
 
 const JWT_PRIVATE_KEY = process.env.GATEWAY_JWT_PRIVATE_KEY || '';
@@ -147,13 +149,14 @@ export function requireGatewayAuth(req: GatewayRequest, res: Response, next: Nex
 
   client.lastUsedAt = new Date().toISOString();
   req.gatewayClient = client;
-  (req as any).gatewayScopes = payload.scopes;
+  req.gatewayClientId = client.clientId;
+  req.gatewayScopes = payload.scopes;
   next();
 }
 
 export function requireGatewayScope(...required: GatewayScope[]) {
   return (req: GatewayRequest, res: Response, next: NextFunction): void => {
-    const scopes: GatewayScope[] = (req as any).gatewayScopes || [];
+    const scopes: GatewayScope[] = req.gatewayScopes || [];
     const hasAll = required.every((s) => scopes.includes(s));
     if (!hasAll) {
       res.status(403).json({ error: 'insufficient_scope', error_description: `Required scope(s): ${required.join(', ')}.` });

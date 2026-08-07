@@ -131,8 +131,13 @@ Usuarios administradores locales y clientes finales importados de LDAP.
 | `source` | `VARCHAR(8)` | `LOCAL` o `LDAP`. |
 | `status` | `VARCHAR(8)` | `ACTIVE` o `INACTIVE`. |
 | `password_hash` | `VARCHAR(255)` | Solo usuarios `LOCAL`; hashing recomendado. |
+| `nodo_ids` | `TEXT[]` | IDs de nodos de segregación asignados al usuario (acceso). |
+| `perfil_codigos` | `TEXT[]` | Códigos de perfiles asignados al usuario (acceso). |
+| `role_ids` | `TEXT[]` | IDs de roles asignados directamente al usuario. |
 | `last_login` | `TIMESTAMPTZ` | |
 | `created_at` | `TIMESTAMPTZ` | |
+
+> **Nota de implementación:** En el backend actual (`backend/src/index.ts`) los accesos de un usuario a **nodos de segregación** y **perfiles** no se almacenan en tablas N:M independientes, sino como arrays (`nodoIds`, `perfilCodigos`, `roleIds`) dentro del documento/entidad `users`. Esto se debe a que la persistencia actual es en memoria RAM. El modelo relacional equivalente propone campos array (`TEXT[]`) en la tabla `users`, o bien tablas `user_nodos` y `user_perfiles` si se migra a una base de datos relacional normalizada.
 
 #### `user_roles`
 Relación N:M entre usuarios y roles.
@@ -348,16 +353,20 @@ Valores de atributos para cada nodo.
 | `valor` | `TEXT` | |
 | `created_at` | `TIMESTAMPTZ` | |
 
-#### `user_nodos`
+#### `user_nodos` (alternativa relacional)
 Relación N:M entre usuarios y nodos de segregación (ámbito de acceso).
+
+> **Actualmente no existe como tabla independiente.** La implementación actual guarda los `nodo_ids` directamente en el campo array `users.nodo_ids`. Esta tabla es el equivalente normalizado para una futura migración a base de datos relacional.
 
 | Campo | Tipo | Notas |
 |-------|------|-------|
 | `user_id` | `VARCHAR(64)` | FK → `users(id)`. PK compuesta. |
 | `nodo_id` | `VARCHAR(64)` | FK → `nodos_segregacion(id)`. PK compuesta. |
 
-#### `user_perfiles`
+#### `user_perfiles` (alternativa relacional)
 Relación N:M entre usuarios y perfiles.
+
+> **Actualmente no existe como tabla independiente.** La implementación actual guarda los `perfil_codigos` directamente en el campo array `users.perfil_codigos`. Esta tabla es el equivalente normalizado para una futura migración a base de datos relacional.
 
 | Campo | Tipo | Notas |
 |-------|------|-------|
@@ -473,6 +482,9 @@ CREATE TABLE users (
     source VARCHAR(8) NOT NULL,
     status VARCHAR(8) NOT NULL DEFAULT 'ACTIVE',
     password_hash VARCHAR(255),
+    nodo_ids TEXT[] DEFAULT '{}',
+    perfil_codigos TEXT[] DEFAULT '{}',
+    role_ids TEXT[] DEFAULT '{}',
     last_login TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

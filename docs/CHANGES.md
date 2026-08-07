@@ -4,11 +4,11 @@
 
  ---
 
- ## 2026-08-06 — Nuevos endpoints de jerarquía y auditoría en API Gateway
+ ## 2026-08-06 — Nuevos endpoints de jerarquía y auditoría en API Gateway + Diagrama ER Mermaid + Corrección modelo de accesos
 
  ### Resumen
 
- Se agregaron endpoints al API Gateway para exponer la jerarquía completa de una aplicación, el orden establecido desde "Ordenar Soluciones" y permitir que aplicaciones terceras envíen logs de auditoría visibles en la consola CAM.
+ Se agregaron endpoints al API Gateway para exponer la jerarquía completa de una aplicación, el orden establecido desde "Ordenar Soluciones" y permitir que aplicaciones terceras envíen logs de auditoría visibles en la consola CAM. Se creó un diagrama ER en Mermaid con los atributos de todas las tablas. También se corrigió la documentación del modelo de datos para reflejar que los accesos de usuario a nodos y perfiles se guardan como arrays dentro de `users`.
 
  ### Cambios realizados
 
@@ -31,8 +31,18 @@
  - `GatewayRequest` en `backend/src/gateway/auth.ts` ahora expone `gatewayClientId` y `gatewayScopes` de forma tipada.
 
  #### 2. Documentación
+ - Nuevo archivo `docs/DATABASE-MODEL-DIAGRAM.md` con el diagrama ER completo en Mermaid incluyendo atributos de todas las tablas.
+ - Actualizado `docs/README.md` con referencia al nuevo diagrama.
  - Actualizado `docs/API-GATEWAY-DISCOVERY.md` con los nuevos endpoints, parámetros, ejemplos de respuesta y reenumeración de secciones.
  - Regenerado `C:\Users\admin\API_Gateway_Discovery.docx`.
+ - Corrección en `docs/DATABASE-MODEL.md`:
+   - Agregados campos `nodo_ids`, `perfil_codigos` y `role_ids` a la tabla `users`.
+   - Actualizado DDL SQL de `users` con los nuevos campos array.
+   - `user_nodos` y `user_perfiles` ahora se documentan como alternativas relacionales, no como tablas existentes en la implementación actual.
+ - Corrección en `docs/DATABASE-MODEL-DIAGRAM.md`:
+   - Agregados `nodo_ids`, `perfil_codigos` y `role_ids` a la entidad `USERS`.
+   - Agregada nota explicando que los accesos se guardan como arrays en `users`.
+ - Nuevo archivo `docs/API-GATEWAY-WSO2-ROUTES.md` con el mapeo completo de rutas del API Gateway para WSO2 API Manager asumiendo despliegue en Kubernetes.
 
  ### Archivos principales modificados
 
@@ -42,7 +52,11 @@
  | `backend/src/gateway/auth.ts` | Campos tipados `gatewayClientId` y `gatewayScopes` en `GatewayRequest` |
  | `backend/src/types.ts` | Nuevo scope `auditoria:write` |
  | `backend/src/store.ts` | `auditoria:write` en `GATEWAY_SCOPES` y cliente demo |
+ | `docs/DATABASE-MODEL.md` | Corrección del modelo de accesos de usuario |
+ | `docs/DATABASE-MODEL-DIAGRAM.md` | Diagrama ER Mermaid con atributos y nota de accesos |
+ | `docs/README.md` | Índice actualizado |
  | `docs/API-GATEWAY-DISCOVERY.md` | Documentación de los nuevos endpoints |
+ | `docs/API-GATEWAY-WSO2-ROUTES.md` | Mapeo de rutas para WSO2 API Manager |
  | `docs/CHANGES.md` | Este registro |
 
  ---

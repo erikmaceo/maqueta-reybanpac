@@ -12,8 +12,10 @@ Esta carpeta contiene la documentación del proyecto CAM (Central Access Manager
 | [**AUTH-AUTHZ-GUIDE.md**](./AUTH-AUTHZ-GUIDE.md) | Mejores prácticas, tecnologías recomendadas y hoja de ruta para autenticación y autorización del backend. |
 | [**BACKEND-API-ROUTES.md**](./BACKEND-API-ROUTES.md) | Inventario completo de APIs y rutas del backend organizado por grupo funcional. |
 | [**DATABASE-MODEL.md**](./DATABASE-MODEL.md) | Modelo lógico/relacional de base de datos con diccionario de entidades, diagrama ER y DDL SQL. |
+| [**DATABASE-MODEL-DIAGRAM.md**](./DATABASE-MODEL-DIAGRAM.md) | Diagrama ER completo en código Mermaid con atributos de todas las tablas para visualización web. |
 | [**API-GATEWAY-PLAN.md**](./API-GATEWAY-PLAN.md) | API Gateway implementado para exponer configuración a aplicaciones terceras mediante OAuth2 Client Credentials. |
 | [**API-GATEWAY-DISCOVERY.md**](./API-GATEWAY-DISCOVERY.md) | Guía detallada para consumidores: endpoints, parámetros, ejemplos de request/response y errores del API Gateway. |
+| [**API-GATEWAY-WSO2-ROUTES.md**](./API-GATEWAY-WSO2-ROUTES.md) | Mapeo de rutas del API Gateway para publicación en WSO2 API Manager con despliegue en Kubernetes. |
 
 ## Cómo mantener esta documentación
 

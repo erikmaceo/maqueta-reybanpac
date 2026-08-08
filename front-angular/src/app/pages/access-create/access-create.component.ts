@@ -201,7 +201,11 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     <p-dialog
       [(visible)]="showUserSearchDlg"
       header="Buscar usuario"
-      [modal]="true" [style]="{ width: '1400px' }" [closable]="true"
+      [modal]="true"
+      [style]="{ width: '1600px', maxWidth: '95vw' }"
+      [contentStyle]="{ maxHeight: '88vh', overflow: 'auto' }"
+      [closable]="true"
+      styleClass="search-dialog user-search-dialog"
       (onHide)="closeUserSearchDialog()"
     >
       <div class="filter-row user-search-filter-row">
@@ -230,11 +234,6 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
           <input type="text" class="select" placeholder="Empresa"
             [ngModel]="userSearchEmpresa()" (ngModelChange)="userSearchEmpresa.set($event); userSearchPage.set(1)" />
         </div>
-        <div class="field">
-          <label>Departamento</label>
-          <input type="text" class="select" placeholder="Departamento"
-            [ngModel]="userSearchDepartamento()" (ngModelChange)="userSearchDepartamento.set($event); userSearchPage.set(1)" />
-        </div>
       </div>
       <div class="filter-actions">
         <button class="btn btn-ghost" (click)="clearUserFilters()">Limpiar</button>
@@ -248,7 +247,6 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
               <th>Apellido</th>
               <th>Correo</th>
               <th>Empresa</th>
-              <th>Departamento</th>
               <th></th>
             </tr>
           </thead>
@@ -260,28 +258,42 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
                 <td><div class="cell-strong">{{ u.lastName }}</div></td>
                 <td>{{ u.email }}</td>
                 <td>{{ u.company }}</td>
-                <td>{{ u.department }}</td>
                 <td>
                   <button class="btn btn-primary btn-sm" (click)="selectUserFromDialog(u)">Seleccionar</button>
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="7" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
+              <tr><td colspan="6" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
             }
           </tbody>
         </table>
       </div>
 
       <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === 1" (click)="changeUserSearchPage(-1)">Anterior</button>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === 1" (click)="changeUserSearchPage(-1)">Anterior</button>
+        </div>
         <span>Página {{ userSearchPage() }} de {{ userSearchTotalPages() }} ({{ filteredUsersForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === userSearchTotalPages()" (click)="changeUserSearchPage(1)">Siguiente</button>
+        <div class="page-size-selector">
+          <label class="small muted">Registros por página</label>
+          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="userSearchPageSize()" (ngModelChange)="changeUserSearchPageSize($event)">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === userSearchTotalPages()" (click)="changeUserSearchPage(1)">Siguiente</button>
+        </div>
       </div>
     </p-dialog>
     <p-dialog
       [(visible)]="showPerfilSearchDlg"
       header="Buscar perfiles"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
+      [modal]="true"
+      [style]="{ width: '1100px', maxWidth: '95vw' }"
+      [contentStyle]="{ maxHeight: '88vh', overflow: 'auto' }"
+      [closable]="true"
+      styleClass="search-dialog perfil-search-dialog"
       (onHide)="cancelPerfilSearch()"
     >
       <div class="filter-row">
@@ -329,9 +341,20 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       </div>
 
       <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === 1" (click)="changePerfilSearchPage(-1)">Anterior</button>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === 1" (click)="changePerfilSearchPage(-1)">Anterior</button>
+        </div>
         <span>Página {{ perfilSearchPage() }} de {{ perfilSearchTotalPages() }} ({{ filteredPerfilesForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === perfilSearchTotalPages()" (click)="changePerfilSearchPage(1)">Siguiente</button>
+        <div class="page-size-selector">
+          <label class="small muted">Registros por página</label>
+          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfilSearchPageSize()" (ngModelChange)="changePerfilSearchPageSize($event)">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === perfilSearchTotalPages()" (click)="changePerfilSearchPage(1)">Siguiente</button>
+        </div>
       </div>
 
       <ng-template pTemplate="footer">
@@ -342,7 +365,11 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     <p-dialog
       [(visible)]="showNodoSearchDlg"
       [header]="'Buscar ' + nodoSearchNivelNombre()"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
+      [modal]="true"
+      [style]="{ width: '1100px', maxWidth: '95vw' }"
+      [contentStyle]="{ maxHeight: '88vh', overflow: 'auto' }"
+      [closable]="true"
+      styleClass="search-dialog nodo-search-dialog"
       (onHide)="cancelNodoSearch()"
     >
       <div class="filter-row">
@@ -408,9 +435,20 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       </div>
 
       <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === 1" (click)="changeNodoSearchPage(-1)">Anterior</button>
+        <div class="page-controls">
+          <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === 1" (click)="changeNodoSearchPage(-1)">Anterior</button>
+        </div>
         <span>Página {{ nodoSearchPage() }} de {{ nodoSearchTotalPages() }} ({{ filteredNodosForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === nodoSearchTotalPages()" (click)="changeNodoSearchPage(1)">Siguiente</button>
+        <div class="page-size-selector">
+          <label class="small muted">Registros por página</label>
+          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="nodoSearchPageSize()" (ngModelChange)="changeNodoSearchPageSize($event)">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === nodoSearchTotalPages()" (click)="changeNodoSearchPage(1)">Siguiente</button>
+        </div>
       </div>
 
       <ng-template pTemplate="footer">
@@ -568,7 +606,62 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       margin-top: 4px;
     }
     .user-search-filter-row {
-      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
+    }
+
+    /* Diálogos de búsqueda: más anchos, altura ajustada y controles con ancho fijo */
+    ::ng-deep .search-dialog {
+      display: flex;
+      flex-direction: column;
+    }
+    ::ng-deep .search-dialog .p-dialog-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-bottom: 16px;
+    }
+    ::ng-deep .search-dialog .card.table-wrap {
+      flex: 0 0 auto;
+      min-height: 300px;
+      height: auto;
+      overflow: visible;
+    }
+    ::ng-deep .search-dialog .filter-row {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: flex-start !important;
+      gap: 5px;
+    }
+    ::ng-deep .search-dialog .filter-row .field {
+      flex: 0 1 264px;
+      max-width: 312px;
+      min-width: 200px;
+    }
+    ::ng-deep .search-dialog .filter-row .field input,
+    ::ng-deep .search-dialog .filter-row .field select {
+      width: 100%;
+      max-width: 312px;
+    }
+    ::ng-deep .search-dialog .filter-actions {
+      justify-content: flex-end;
+    }
+    ::ng-deep .search-dialog .pagination {
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Asegurar que las tablas de los diálogos tengan el mismo estilo que la tabla de Usuarios,
+       incluyendo la línea inferior visible en la última fila. */
+    ::ng-deep .search-dialog table.data {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    ::ng-deep .search-dialog table.data th,
+    ::ng-deep .search-dialog table.data td {
+      border-bottom: 1px solid var(--border);
+    }
+    ::ng-deep .search-dialog table.data tr:last-child td {
+      border-bottom: 1px solid var(--border);
     }
   `],
 })
@@ -595,7 +688,6 @@ export class AccessCreateComponent implements OnInit {
   userSearchApellido = signal('');
   userSearchCorreo = signal('');
   userSearchEmpresa = signal('');
-  userSearchDepartamento = signal('');
   userSearchPage = signal(1);
   userSearchPageSize = signal(5);
 
@@ -689,14 +781,12 @@ export class AccessCreateComponent implements OnInit {
     const qApellido = this.userSearchApellido().toLowerCase().trim();
     const qCorreo = this.userSearchCorreo().toLowerCase().trim();
     const qEmpresa = this.userSearchEmpresa().toLowerCase().trim();
-    const qDepartamento = this.userSearchDepartamento().toLowerCase().trim();
     return this.users().filter(u =>
       (!qCodigo || u.username.toLowerCase().includes(qCodigo)) &&
       (!qNombre || u.firstName.toLowerCase().includes(qNombre)) &&
       (!qApellido || u.lastName.toLowerCase().includes(qApellido)) &&
       (!qCorreo || u.email.toLowerCase().includes(qCorreo)) &&
-      (!qEmpresa || u.company.toLowerCase().includes(qEmpresa)) &&
-      (!qDepartamento || u.department.toLowerCase().includes(qDepartamento))
+      (!qEmpresa || u.company.toLowerCase().includes(qEmpresa))
     );
   });
 
@@ -866,7 +956,6 @@ export class AccessCreateComponent implements OnInit {
     this.userSearchApellido.set('');
     this.userSearchCorreo.set('');
     this.userSearchEmpresa.set('');
-    this.userSearchDepartamento.set('');
     this.userSearchPage.set(1);
     this.showUserSearchDlg = true;
   }
@@ -881,12 +970,16 @@ export class AccessCreateComponent implements OnInit {
     this.userSearchApellido.set('');
     this.userSearchCorreo.set('');
     this.userSearchEmpresa.set('');
-    this.userSearchDepartamento.set('');
     this.userSearchPage.set(1);
   }
 
   changeUserSearchPage(delta: number): void {
     this.userSearchPage.set(Math.min(Math.max(this.userSearchPage() + delta, 1), this.userSearchTotalPages()));
+  }
+
+  changeUserSearchPageSize(value: any): void {
+    this.userSearchPageSize.set(Number(value));
+    this.userSearchPage.set(1);
   }
 
   selectUser(u: User): void {
@@ -920,6 +1013,11 @@ export class AccessCreateComponent implements OnInit {
 
   changePerfilSearchPage(delta: number): void {
     this.perfilSearchPage.set(Math.min(Math.max(this.perfilSearchPage() + delta, 1), this.perfilSearchTotalPages()));
+  }
+
+  changePerfilSearchPageSize(value: any): void {
+    this.perfilSearchPageSize.set(Number(value));
+    this.perfilSearchPage.set(1);
   }
 
   togglePerfilSelection(codigo: string): void {
@@ -964,6 +1062,11 @@ export class AccessCreateComponent implements OnInit {
 
   changeNodoSearchPage(delta: number): void {
     this.nodoSearchPage.set(Math.min(Math.max(this.nodoSearchPage() + delta, 1), this.nodoSearchTotalPages()));
+  }
+
+  changeNodoSearchPageSize(value: any): void {
+    this.nodoSearchPageSize.set(Number(value));
+    this.nodoSearchPage.set(1);
   }
 
   toggleNodoSelection(nodoId: string): void {
@@ -1043,7 +1146,7 @@ export class AccessCreateComponent implements OnInit {
       await this.api.updateUserAccess(this.selectedUserId, this.editForm()).toPromise();
       this.toast.success('Acceso creado');
       this.events.emitDataChanged();
-      this.router.navigate(['/accesos']);
+      this.router.navigate(['/usuarios'], { queryParams: { tab: 'ACCESOS' } });
     } catch (e: any) {
       this.toast.error('Error', e?.error?.error || 'Error inesperado.');
     }

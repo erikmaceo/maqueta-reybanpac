@@ -1,6 +1,7 @@
 ﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -406,6 +407,8 @@ export class UsersComponent implements OnInit {
   private toast = inject(ToastService);
   private events = inject(EventsService);
   private confirmationService = inject(ConfirmationService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   users = signal<User[]>([]);
   roles = signal<Role[]>([]);
@@ -448,6 +451,13 @@ export class UsersComponent implements OnInit {
   ngOnInit(): void {
     this.loadData();
     this.events.onDataChanged(() => this.loadData());
+
+    const tabParam = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
+    if (tabParam === 'ACCESOS') {
+      this.tab.set('ACCESOS');
+      // Limpiar el query param para que no persista al refrescar
+      this.router.navigate([], { relativeTo: this.route, queryParams: { tab: null }, queryParamsHandling: 'merge' });
+    }
   }
 
   loadData(): void {

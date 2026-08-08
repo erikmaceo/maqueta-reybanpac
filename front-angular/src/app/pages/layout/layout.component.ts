@@ -10,7 +10,7 @@ import { AvatarComponent } from '../../shared/components/ui';
 
 import {
   IconDashboardComponent, IconSystemsComponent, IconRolesComponent,
-  IconUsersComponent, IconAuthorizerComponent, IconAccessComponent,
+  IconUsersComponent, IconAuthorizerComponent,
   IconAuditComponent, IconLogoutComponent, IconLdapComponent,
   IconSecurityComponent, IconMatrixComponent, IconServerComponent,
   IconBuildingComponent, IconSettingsComponent, IconMobileComponent,
@@ -42,7 +42,6 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/directorio', label: 'Directorio LDAP', icon: IconLdapComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
   { path: '/soluciones', label: 'Ordenar Soluciones', icon: IconServerComponent, group: 'Soluciones', adminOnly: true },
   { path: '/auditoria', label: 'Auditoría', icon: IconAuditComponent, group: 'Operación', adminOnly: true },
-  { path: '/nuevo-acceso', label: 'Nuevo acceso', icon: IconAccessComponent, group: 'Operación', adminOnly: true },
 ];
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
@@ -78,7 +77,6 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
     IconRolesComponent,
     IconUsersComponent,
     IconAuthorizerComponent,
-    IconAccessComponent,
     IconAuditComponent,
     IconLogoutComponent,
     IconLdapComponent,

@@ -1797,6 +1797,65 @@ textarea.input {
   font-size: 0.875rem;
 }
 
+/* ==========================================================================
+   Ajustes para diálogos de búsqueda en "Nuevo Acceso"
+   ========================================================================== */
+.search-dialog .p-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.search-dialog .card.table-wrap {
+  flex: 0 0 auto;
+  min-height: 300px;
+  height: auto;
+  overflow: visible;
+}
+
+.search-dialog .filter-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
+}
+
+.search-dialog .filter-row .field {
+  flex: 0 1 264px;
+  max-width: 312px !important;
+  min-width: 200px !important;
+}
+
+.search-dialog .filter-row .field input,
+.search-dialog .filter-row .field select {
+  width: 100%;
+  max-width: 312px !important;
+}
+
+.search-dialog .filter-actions {
+  justify-content: flex-end;
+}
+
+.search-dialog .pagination {
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.search-dialog table.data {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.search-dialog table.data th,
+.search-dialog table.data td {
+  border-bottom: 1px solid var(--border);
+}
+
+.search-dialog table.data tr:last-child td {
+  border-bottom: 1px solid var(--border);
+}
+
 /* Search field with button */
 .search-field {
   position: relative;

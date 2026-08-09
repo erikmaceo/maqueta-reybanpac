@@ -1546,6 +1546,7 @@ export class SegregationLevelsComponent implements OnInit {
     const validation = validateBulkFileSize(file);
     if (!validation.valid) {
       this.toast.error('Archivo demasiado grande', validation.message || 'El archivo excede el tamaño permitido.');
+      this.registerBulkFormatError([{ row: 0, message: validation.message || 'El archivo excede el tamaño permitido.' }]);
       this.bulkFile = null;
       this.bulkFileName.set('');
       this.bulkErrors.set([]);
@@ -1557,6 +1558,10 @@ export class SegregationLevelsComponent implements OnInit {
     this.bulkFileName.set(file ? file.name : '');
     this.bulkErrors.set([]);
     this.bulkSuccess.set('');
+  }
+
+  private registerBulkFormatError(errors: { row: number; message: string }[]): void {
+    this.api.registerBulkUploadError('NODOS', errors).subscribe({ error: () => {} });
   }
 
   private parseBulkCell(cell: string | number | undefined): string {
@@ -1578,6 +1583,7 @@ export class SegregationLevelsComponent implements OnInit {
 
       if (rawRows.length < 2) {
         this.setBulkErrors([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        this.registerBulkFormatError([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1586,7 +1592,9 @@ export class SegregationLevelsComponent implements OnInit {
       const expected = ['NIVEL', 'CODIGO', 'NOMBRE', 'PADRE', 'ESTADO'];
       const missing = expected.filter(h => !headerRow.includes(h));
       if (missing.length > 0) {
-        this.setBulkErrors([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        const message = `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.`;
+        this.setBulkErrors([{ row: 1, message }]);
+        this.registerBulkFormatError([{ row: 1, message }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1608,6 +1616,7 @@ export class SegregationLevelsComponent implements OnInit {
 
       if (!rows.length) {
         this.setBulkErrors([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        this.registerBulkFormatError([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1655,6 +1664,7 @@ export class SegregationLevelsComponent implements OnInit {
       });
     } catch (e: any) {
       this.setBulkErrors([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      this.registerBulkFormatError([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
       this.bulkLoading.set(false);
     }
   }

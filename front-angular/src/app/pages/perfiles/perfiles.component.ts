@@ -1,6 +1,7 @@
 ﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as XLSX from 'xlsx';
 import { DialogModule } from 'primeng/dialog';
@@ -17,22 +18,8 @@ import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
   IconCheckComponent, IconCloseComponent, IconUploadComponent,
 } from '../../shared/components/icons';
-import type { Aplicacion, Modulo, Programa, Perfil, Control, TipoPrograma } from '../../shared/models/types';
+import type { Perfil, Programa, Control } from '../../shared/models/types';
 import { validateBulkFileSize } from '../../shared/utils/file-validation';
-
-type Estado = 'ACTIVO' | 'INACTIVO';
-
-interface PerfilProgramaRow {
-  appCodigo: string;
-  modCodigo: string;
-  prgCodigo: string;
-  nuevo: boolean;
-  modificar: boolean;
-  anular: boolean;
-  procesar: boolean;
-  imprimir: boolean;
-  consultar: boolean;
-}
 
 @Component({
   selector: 'app-perfiles',
@@ -45,13 +32,6 @@ interface PerfilProgramaRow {
     IconCheckComponent, IconCloseComponent, IconUploadComponent,
   ],
   template: `
-    <div class="page-head">
-      <div>
-        <h1>Perfiles</h1>
-        <p>Administración de perfiles de usuario por aplicación, módulo y programa.</p>
-      </div>
-    </div>
-
     @if (loadingPerf()) {
       <app-table-skeleton [rows]="5" [cols]="5" />
     } @else if (errorPerf()) {
@@ -180,7 +160,7 @@ interface PerfilProgramaRow {
           <button class="btn btn-ghost" (click)="exportPerfs()">
             <app-icon-download [width]="14" [height]="14" /> Exportar
           </button>
-          <button class="btn btn-primary" (click)="openPerfDialog()">
+          <button class="btn btn-primary" (click)="goToNuevoPerfil()">
             <app-icon-plus [width]="14" [height]="14" /> Nuevo Perfil
           </button>
           <button class="btn btn-primary" (click)="openPerfilBulkDialog()">
@@ -214,7 +194,7 @@ interface PerfilProgramaRow {
                 </td>
                 <td>
                   <div class="cell-actions">
-                    <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openPerfDialog(p)">
+                    <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="goToEditarPerfil(p)">
                       <app-icon-edit [width]="15" [height]="15" />
                     </button>
                     <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeletePerf(p)">
@@ -249,338 +229,6 @@ interface PerfilProgramaRow {
       }
     }
 
-    <!-- ============ DIÁLOGO PERFIL ============ -->
-    <p-dialog
-      [(visible)]="showPerfDlg"
-      [header]="editPerfId ? 'Editar Perfil' : 'Nuevo Perfil'"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
-      (onHide)="closePerfDialog()"
-    >
-      <div class="form-grid">
-        <div class="field">
-          <label>Código <span class="required">*</span></label>
-          <input class="input" [class.invalid]="perfTouched && !perfForm.codigo" [(ngModel)]="perfForm.codigo" placeholder="PERF-FI-VIS" />
-        </div>
-        <div class="field">
-          <label>Nombre <span class="required">*</span></label>
-          <input class="input" [class.invalid]="perfTouched && !perfForm.nombre" [(ngModel)]="perfForm.nombre" placeholder="FI Visualizador" />
-        </div>
-      </div>
-      <div class="field">
-        <label>Descripción</label>
-        <textarea class="input" [(ngModel)]="perfForm.descripcion" rows="2" maxlength="250"></textarea>
-        <div class="muted small" style="margin-top:2px;">{{ (perfForm.descripcion || '').length }}/250 caracteres máximos.</div>
-      </div>
-      <div class="field">
-        <label>Estado</label>
-        <select class="select" [(ngModel)]="perfForm.estado">
-          <option value="ACTIVO">Activo</option>
-          <option value="INACTIVO">Inactivo</option>
-        </select>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-      <div class="field">
-        <label>Programas del Perfil</label>
-        <div class="controles-list">
-          @for (pp of perfProgramas; track $index) {
-            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
-              <div style="display:flex;gap:8px;align-items:flex-end;">
-                <div style="display:flex;flex-direction:column;gap:2px;">
-                  <label class="small muted">Aplicación</label>
-                  <div class="search-field" style="width:200px;">
-                    <input class="select control-tipo" type="text" [ngModel]="perfAppSearchTexts()[$index]" readonly placeholder="Seleccionar..." style="width:100%;" />
-                    <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPerfAppSearchDialog($index)" title="Buscar aplicación">
-                      <app-icon-search [width]="14" [height]="14" />
-                    </button>
-                  </div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:2px;">
-                  <label class="small muted">Módulo</label>
-                  <div class="search-field" style="width:200px;">
-                    <input class="select control-tipo" type="text" [ngModel]="perfModSearchTexts()[$index]" readonly placeholder="Seleccionar..." style="width:100%;" [disabled]="!pp.appCodigo" />
-                    <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPerfModSearchDialog($index)" [disabled]="!pp.appCodigo" title="Buscar módulo">
-                      <app-icon-search [width]="14" [height]="14" />
-                    </button>
-                  </div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:2px;">
-                  <label class="small muted">Programa</label>
-                  <div class="search-field" style="width:200px;">
-                    <input class="select control-tipo" type="text" [ngModel]="perfPrgSearchTexts()[$index]" readonly placeholder="Seleccionar..." style="width:100%;" [disabled]="!pp.modCodigo" />
-                    <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPerfPrgSearchDialog($index)" [disabled]="!pp.modCodigo" title="Buscar programa">
-                      <app-icon-search [width]="14" [height]="14" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="table-wrap mt-2">
-                <table class="data" style="width:100%;">
-                  <thead>
-                    <tr>
-                      <th>Tipo Programa</th>
-                      <th>Nuevo</th>
-                      <th>Modificar</th>
-                      <th>Eliminar</th>
-                      <th>Imprimir</th>
-                      <th>Consultar</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        @if (pp.prgCodigo) {
-                          <span class="badge badge-amber">{{ getProgramaTipo(pp.prgCodigo) }}</span>
-                        } @else {
-                          <span class="muted small">—</span>
-                        }
-                      </td>
-                      <td><input type="checkbox" [(ngModel)]="pp.nuevo" style="width:16px;height:16px;cursor:pointer;" /></td>
-                      <td><input type="checkbox" [(ngModel)]="pp.modificar" style="width:16px;height:16px;cursor:pointer;" /></td>
-                      <td><input type="checkbox" [(ngModel)]="pp.anular" style="width:16px;height:16px;cursor:pointer;" /></td>
-                      <td><input type="checkbox" [(ngModel)]="pp.imprimir" style="width:16px;height:16px;cursor:pointer;" /></td>
-                      <td><input type="checkbox" [(ngModel)]="pp.consultar" style="width:16px;height:16px;cursor:pointer;" /></td>
-                      <td>
-                        <button class="btn btn-danger btn-sm btn-icon" title="Quitar" (click)="removePerfPrograma($index)">
-                          <app-icon-trash [width]="14" [height]="14" />
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <hr style="border:none;border-top:1px solid var(--border);margin:8px 0;" />
-            </div>
-          }
-        </div>
-        <button class="btn btn-ghost btn-sm mt-2" (click)="addPerfPrograma()">
-          <app-icon-plus [width]="14" [height]="14" /> Agregar Programa
-        </button>
-      </div>
-      <ng-template pTemplate="footer">
-        <button class="btn btn-ghost" (click)="closePerfDialog()">Cancelar</button>
-        <button class="btn btn-primary" (click)="savePerf()">{{ editPerfId ? 'Guardar' : 'Crear' }}</button>
-      </ng-template>
-    </p-dialog>
-
-    <!-- ============ DIÁLOGO BÚSQUEDA APLICACIÓN PARA PERFIL ============ -->
-    <p-dialog
-      [(visible)]="showPerfAppSearchDlg"
-      header="Buscar aplicación"
-      [modal]="true" [style]="{ width: '1000px' }" [closable]="true"
-      (onHide)="closePerfAppSearchDialog()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" placeholder="Código de aplicación"
-            [ngModel]="perfAppSearchCodigo()" (ngModelChange)="perfAppSearchCodigo.set($event); perfAppSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre de aplicación"
-            [ngModel]="perfAppSearchNombre()" (ngModelChange)="perfAppSearchNombre.set($event); perfAppSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Estado</label>
-          <select class="select"
-            [ngModel]="perfAppSearchEstado()" (ngModelChange)="perfAppSearchEstado.set($event); perfAppSearchPage.set(1)">
-            <option value="">Todos</option>
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearPerfAppFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap dialog-table-fixed">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (a of paginatedAppsForPerfSearch(); track a.id) {
-              <tr>
-                <td class="mono">{{ a.codigo }}</td>
-                <td><div class="cell-strong">{{ a.nombre }}</div></td>
-                <td>{{ a.descripcion }}</td>
-                <td>
-                  <span class="badge" [class.badge-green]="a.estado === 'ACTIVO'" [class.badge-gray]="a.estado !== 'ACTIVO'">
-                    {{ a.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPerfAppFromDialog(a)" [disabled]="a.estado !== 'ACTIVO'">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <div class="page-controls">
-          <button class="btn btn-ghost btn-sm" [disabled]="perfAppSearchPage() === 1" (click)="changePerfAppSearchPage(-1)">Anterior</button>
-        </div>
-        <span>Página {{ perfAppSearchPage() }} de {{ perfAppSearchTotalPages() }} ({{ filteredAppsForPerfSearch().length }} registros)</span>
-        <div class="page-size-selector">
-          <label class="small muted">Registros por página</label>
-          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfAppSearchPageSize()" (ngModelChange)="changePerfAppSearchPageSize($event)">
-            <option [value]="5">5</option>
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" [disabled]="perfAppSearchPage() === perfAppSearchTotalPages()" (click)="changePerfAppSearchPage(1)">Siguiente</button>
-        </div>
-      </div>
-    </p-dialog>
-
-    <!-- ============ DIÁLOGO BÚSQUEDA MÓDULO PARA PERFIL ============ -->
-    <p-dialog
-      [(visible)]="showPerfModSearchDlg"
-      header="Buscar módulo"
-      [modal]="true" [style]="{ width: '1000px' }" [closable]="true"
-      (onHide)="closePerfModSearchDialog()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" placeholder="Código de módulo"
-            [ngModel]="perfModSearchCodigo()" (ngModelChange)="perfModSearchCodigo.set($event); perfModSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre de módulo"
-            [ngModel]="perfModSearchNombre()" (ngModelChange)="perfModSearchNombre.set($event); perfModSearchPage.set(1)" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearPerfModFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap dialog-table-fixed">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Aplicación</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (m of paginatedModsForPerfSearch(); track m.id) {
-              <tr>
-                <td class="mono">{{ m.codigo }}</td>
-                <td><div class="cell-strong">{{ m.nombre }}</div></td>
-                <td><span class="badge badge-blue">{{ m.appCodigo }}</span></td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPerfModFromDialog(m)" [disabled]="m.estado !== 'ACTIVO'">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <div class="page-controls">
-          <button class="btn btn-ghost btn-sm" [disabled]="perfModSearchPage() === 1" (click)="changePerfModSearchPage(-1)">Anterior</button>
-        </div>
-        <span>Página {{ perfModSearchPage() }} de {{ perfModSearchTotalPages() }} ({{ filteredModsForPerfSearch().length }} registros)</span>
-        <div class="page-size-selector">
-          <label class="small muted">Registros por página</label>
-          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfModSearchPageSize()" (ngModelChange)="changePerfModSearchPageSize($event)">
-            <option [value]="5">5</option>
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" [disabled]="perfModSearchPage() === perfModSearchTotalPages()" (click)="changePerfModSearchPage(1)">Siguiente</button>
-        </div>
-      </div>
-    </p-dialog>
-
-    <!-- ============ DIÁLOGO BÚSQUEDA PROGRAMA PARA PERFIL ============ -->
-    <p-dialog
-      [(visible)]="showPerfPrgSearchDlg"
-      header="Buscar programa"
-      [modal]="true" [style]="{ width: '1000px' }" [closable]="true"
-      (onHide)="closePerfPrgSearchDialog()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" placeholder="Código de programa"
-            [ngModel]="perfPrgSearchCodigo()" (ngModelChange)="perfPrgSearchCodigo.set($event); perfPrgSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre de programa"
-            [ngModel]="perfPrgSearchNombre()" (ngModelChange)="perfPrgSearchNombre.set($event); perfPrgSearchPage.set(1)" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearPerfPrgFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap dialog-table-fixed">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Tipo</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of paginatedPrgsForPerfSearch(); track p.id) {
-              <tr>
-                <td class="mono">{{ p.codigo }}</td>
-                <td><div class="cell-strong">{{ p.nombre }}</div></td>
-                <td><span class="badge badge-amber">{{ p.tipo }}</span></td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPerfPrgFromDialog(p)" [disabled]="p.estado !== 'ACTIVO'">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <div class="page-controls">
-          <button class="btn btn-ghost btn-sm" [disabled]="perfPrgSearchPage() === 1" (click)="changePerfPrgSearchPage(-1)">Anterior</button>
-        </div>
-        <span>Página {{ perfPrgSearchPage() }} de {{ perfPrgSearchTotalPages() }} ({{ filteredPrgsForPerfSearch().length }} registros)</span>
-        <div class="page-size-selector">
-          <label class="small muted">Registros por página</label>
-          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfPrgSearchPageSize()" (ngModelChange)="changePerfPrgSearchPageSize($event)">
-            <option [value]="5">5</option>
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" [disabled]="perfPrgSearchPage() === perfPrgSearchTotalPages()" (click)="changePerfPrgSearchPage(1)">Siguiente</button>
-        </div>
-      </div>
-    </p-dialog>
 
     <!-- ============ DIÁLOGO PERMISOS POR PROGRAMA ============ -->
     <p-dialog
@@ -808,12 +456,11 @@ export class PerfilesComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private events = inject(EventsService);
+  private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
 
   // --- Data signals ---
   perfiles = signal<Perfil[]>([]);
-  aplicaciones = signal<Aplicacion[]>([]);
-  modulos = signal<Modulo[]>([]);
   programas = signal<Programa[]>([]);
   controlesMap = signal<Map<string, Control[]>>(new Map());
 
@@ -864,8 +511,6 @@ export class PerfilesComponent implements OnInit {
   errorPerf = signal<string | null>(null);
 
   // --- Dialogs ---
-  showPerfDlg = false; editPerfId: string | null = null; perfTouched = false;
-
   showPerfilBulkDlg = false;
   perfilBulkFile: File | null = null;
   perfilBulkFileName = signal('');
@@ -873,31 +518,6 @@ export class PerfilesComponent implements OnInit {
   perfilBulkErrorsSummary = signal('');
   perfilBulkSuccess = signal('');
   perfilBulkLoading = signal(false);
-
-  // --- Search dialog state for perfil ---
-  activePerfRowIdx = signal<number>(-1);
-  perfAppSearchTexts = signal<string[]>([]);
-  perfModSearchTexts = signal<string[]>([]);
-  perfPrgSearchTexts = signal<string[]>([]);
-
-  showPerfAppSearchDlg = false;
-  perfAppSearchCodigo = signal('');
-  perfAppSearchNombre = signal('');
-  perfAppSearchEstado = signal('');
-  perfAppSearchPage = signal(1);
-  perfAppSearchPageSize = signal(5);
-
-  showPerfModSearchDlg = false;
-  perfModSearchCodigo = signal('');
-  perfModSearchNombre = signal('');
-  perfModSearchPage = signal(1);
-  perfModSearchPageSize = signal(5);
-
-  showPerfPrgSearchDlg = false;
-  perfPrgSearchCodigo = signal('');
-  perfPrgSearchNombre = signal('');
-  perfPrgSearchPage = signal(1);
-  perfPrgSearchPageSize = signal(5);
 
   // --- Filter & pagination ---
   searchPerf = signal('');
@@ -927,69 +547,6 @@ export class PerfilesComponent implements OnInit {
 
   totalPagesPerf = computed(() => Math.max(1, Math.ceil(this.filteredPerfs().length / this.pageSize())));
 
-  aplicacionMap = computed(() => new Map(this.aplicaciones().map(a => [a.codigo, a])));
-
-  // --- Search computed for perfil dialogs ---
-  filteredAppsForPerfSearch = computed(() => {
-    const qCodigo = this.perfAppSearchCodigo().toLowerCase().trim();
-    const qNombre = this.perfAppSearchNombre().toLowerCase().trim();
-    const qEstado = this.perfAppSearchEstado().trim();
-    return this.aplicaciones().filter(a =>
-      (!qCodigo || a.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || a.nombre.toLowerCase().includes(qNombre)) &&
-      (!qEstado || a.estado === qEstado)
-    );
-  });
-
-  paginatedAppsForPerfSearch = computed(() => {
-    const start = (this.perfAppSearchPage() - 1) * this.perfAppSearchPageSize();
-    return this.filteredAppsForPerfSearch().slice(start, start + this.perfAppSearchPageSize());
-  });
-
-  perfAppSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredAppsForPerfSearch().length / this.perfAppSearchPageSize())));
-
-  filteredModsForPerfSearch = computed(() => {
-    const idx = this.activePerfRowIdx();
-    const appCod = idx >= 0 ? this.perfProgramas[idx]?.appCodigo || '' : '';
-    const qCodigo = this.perfModSearchCodigo().toLowerCase().trim();
-    const qNombre = this.perfModSearchNombre().toLowerCase().trim();
-    let mods = appCod ? this.modulos().filter(m => m.appCodigo === appCod) : this.modulos();
-    return mods.filter(m =>
-      (!qCodigo || m.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || m.nombre.toLowerCase().includes(qNombre))
-    );
-  });
-
-  paginatedModsForPerfSearch = computed(() => {
-    const start = (this.perfModSearchPage() - 1) * this.perfModSearchPageSize();
-    return this.filteredModsForPerfSearch().slice(start, start + this.perfModSearchPageSize());
-  });
-
-  perfModSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredModsForPerfSearch().length / this.perfModSearchPageSize())));
-
-  filteredPrgsForPerfSearch = computed(() => {
-    const idx = this.activePerfRowIdx();
-    const modCod = idx >= 0 ? this.perfProgramas[idx]?.modCodigo || '' : '';
-    const qCodigo = this.perfPrgSearchCodigo().toLowerCase().trim();
-    const qNombre = this.perfPrgSearchNombre().toLowerCase().trim();
-    let prgs = modCod ? this.programas().filter(p => p.modCodigo === modCod) : this.programas();
-    return prgs.filter(p =>
-      (!qCodigo || p.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || p.nombre.toLowerCase().includes(qNombre))
-    );
-  });
-
-  paginatedPrgsForPerfSearch = computed(() => {
-    const start = (this.perfPrgSearchPage() - 1) * this.perfPrgSearchPageSize();
-    return this.filteredPrgsForPerfSearch().slice(start, start + this.perfPrgSearchPageSize());
-  });
-
-  perfPrgSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredPrgsForPerfSearch().length / this.perfPrgSearchPageSize())));
-
-  // --- Form ---
-  perfForm: { codigo: string; nombre: string; descripcion: string; estado: Estado } = this.blankPerf();
-  perfProgramas: PerfilProgramaRow[] = [];
-
   // --- Perm dialog ---
   showPermDlg = false;
   editingPrgCodigo = '';
@@ -1002,13 +559,9 @@ export class PerfilesComponent implements OnInit {
 
   ngOnInit(): void {
     this._loadPerf();
-    this._loadAplicaciones();
-    this._loadModulos();
     this._loadProgramas();
     this.events.onDataChanged(() => {
       this._loadPerf();
-      this._loadAplicaciones();
-      this._loadModulos();
       this._loadProgramas();
     });
   }
@@ -1020,20 +573,6 @@ export class PerfilesComponent implements OnInit {
       next: (d) => this.perfiles.set(d),
       error: (e) => this.errorPerf.set(e?.error?.error || e?.message || 'Error al cargar perfiles.'),
       complete: () => this.loadingPerf.set(false),
-    });
-  }
-
-  private _loadAplicaciones(): void {
-    this.api.listAplicaciones().subscribe({
-      next: (d) => this.aplicaciones.set(d),
-      error: () => {},
-    });
-  }
-
-  private _loadModulos(): void {
-    this.api.listModulos().subscribe({
-      next: (d) => this.modulos.set(d),
-      error: () => {},
     });
   }
 
@@ -1064,79 +603,13 @@ export class PerfilesComponent implements OnInit {
     this.selectedPerfil.set(null);
   }
 
-  // ============ PERFIL CRUD ============
-  blankPerf() { return { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO' as Estado }; }
-
-  openPerfDialog(p?: Perfil): void {
-    if (p) {
-      this.perfForm = { codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, estado: p.estado };
-      this.editPerfId = p.id;
-      this.perfProgramas = p.programas.map(pp => {
-        const prg = this.programas().find(x => x.codigo === pp.prgCodigo);
-        const mod = prg ? this.modulos().find(m => m.codigo === prg.modCodigo) : undefined;
-        return { appCodigo: mod?.appCodigo || '', modCodigo: prg?.modCodigo || '', ...pp };
-      });
-    } else {
-      this.perfForm = this.blankPerf();
-      this.editPerfId = null;
-      this.perfProgramas = [];
-    }
-    this.refreshPerfSearchTexts();
-    this.perfTouched = false;
-    this.showPerfDlg = true;
+  // ============ PERFIL NAVIGATION ============
+  goToNuevoPerfil(): void {
+    this.router.navigate(['/perfiles/nuevo']);
   }
 
-  closePerfDialog(): void {
-    this.showPerfDlg = false;
-    this.editPerfId = null;
-    this.perfProgramas = [];
-    this.perfAppSearchTexts.set([]);
-    this.perfModSearchTexts.set([]);
-    this.perfPrgSearchTexts.set([]);
-    this.perfTouched = false;
-  }
-
-  addPerfPrograma(): void {
-    this.perfProgramas.push({ appCodigo: '', modCodigo: '', prgCodigo: '', nuevo: false, modificar: false, anular: false, procesar: false, imprimir: false, consultar: false });
-    this.perfAppSearchTexts.set([...this.perfAppSearchTexts(), '']);
-    this.perfModSearchTexts.set([...this.perfModSearchTexts(), '']);
-    this.perfPrgSearchTexts.set([...this.perfPrgSearchTexts(), '']);
-  }
-
-  removePerfPrograma(idx: number): void {
-    this.perfProgramas.splice(idx, 1);
-    this.perfAppSearchTexts.set(this.perfAppSearchTexts().filter((_, i) => i !== idx));
-    this.perfModSearchTexts.set(this.perfModSearchTexts().filter((_, i) => i !== idx));
-    this.perfPrgSearchTexts.set(this.perfPrgSearchTexts().filter((_, i) => i !== idx));
-  }
-
-  getProgramaTipo(codigo: string): string {
-    return this.programas().find(p => p.codigo === codigo)?.tipo || '';
-  }
-
-  async savePerf(): Promise<void> {
-    this.perfTouched = true;
-    const programasValidos = this.perfProgramas.filter(pp => pp.prgCodigo.trim() !== '');
-    if (!this.perfForm.codigo || !this.perfForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
-    if (!programasValidos.length) { this.toast.error('Faltan datos', 'Debe agregar al menos un programa.'); return; }
-
-    const executeSave = async () => {
-      try {
-        const body: any = { ...this.perfForm, programas: programasValidos };
-        if (this.editPerfId) { await this.api.updatePerfil(this.editPerfId, body).toPromise(); this.toast.success('Perfil actualizado'); }
-        else { await this.api.createPerfil(body).toPromise(); this.toast.success('Perfil creado'); }
-        this.events.emitDataChanged(); this.closePerfDialog(); this._loadPerf();
-      } catch (e: any) {
-        const msg = e?.error?.error || e?.message || 'Error inesperado.';
-        this.toast.error('Error', msg);
-      }
-    };
-
-    if (this.editPerfId) {
-      this.confirmAction(`Se va a proceder con la edición del perfil "${this.perfForm.nombre}", ¿desea continuar?`, executeSave);
-    } else {
-      await executeSave();
-    }
+  goToEditarPerfil(p: Perfil): void {
+    this.router.navigate(['/perfiles', p.id, 'editar']);
   }
 
   confirmDeletePerf(p: Perfil): void {
@@ -1201,162 +674,6 @@ export class PerfilesComponent implements OnInit {
     }
   }
 
-  // ============ SEARCH HELPERS ============
-
-  private refreshPerfSearchTexts(): void {
-    const appTexts: string[] = [];
-    const modTexts: string[] = [];
-    const prgTexts: string[] = [];
-    for (const pp of this.perfProgramas) {
-      const a = this.aplicacionMap().get(pp.appCodigo);
-      const m = this.modulos().find(x => x.codigo === pp.modCodigo);
-      const p = this.programas().find(x => x.codigo === pp.prgCodigo);
-      appTexts.push(a ? `${a.codigo} · ${a.nombre}` : '');
-      modTexts.push(m ? `${m.codigo} · ${m.nombre}` : '');
-      prgTexts.push(p ? `${p.codigo} · ${p.nombre}` : '');
-    }
-    this.perfAppSearchTexts.set(appTexts);
-    this.perfModSearchTexts.set(modTexts);
-    this.perfPrgSearchTexts.set(prgTexts);
-  }
-
-  private updatePerfAppText(idx: number, a?: Aplicacion): void {
-    const texts = this.perfAppSearchTexts().slice();
-    texts[idx] = a ? `${a.codigo} · ${a.nombre}` : '';
-    this.perfAppSearchTexts.set(texts);
-  }
-
-  private updatePerfModText(idx: number, m?: Modulo): void {
-    const texts = this.perfModSearchTexts().slice();
-    texts[idx] = m ? `${m.codigo} · ${m.nombre}` : '';
-    this.perfModSearchTexts.set(texts);
-  }
-
-  private updatePerfPrgText(idx: number, p?: Programa): void {
-    const texts = this.perfPrgSearchTexts().slice();
-    texts[idx] = p ? `${p.codigo} · ${p.nombre}` : '';
-    this.perfPrgSearchTexts.set(texts);
-  }
-
-  // ============ APP SEARCH DIALOG ============
-
-  openPerfAppSearchDialog(idx: number): void {
-    this.activePerfRowIdx.set(idx);
-    this.perfAppSearchCodigo.set('');
-    this.perfAppSearchNombre.set('');
-    this.perfAppSearchEstado.set('');
-    this.perfAppSearchPage.set(1);
-    this.showPerfAppSearchDlg = true;
-  }
-
-  closePerfAppSearchDialog(): void {
-    this.showPerfAppSearchDlg = false;
-    this.activePerfRowIdx.set(-1);
-  }
-
-  clearPerfAppFilters(): void {
-    this.perfAppSearchCodigo.set('');
-    this.perfAppSearchNombre.set('');
-    this.perfAppSearchEstado.set('');
-    this.perfAppSearchPage.set(1);
-  }
-
-  changePerfAppSearchPage(delta: number): void {
-    this.perfAppSearchPage.set(Math.min(Math.max(this.perfAppSearchPage() + delta, 1), this.perfAppSearchTotalPages()));
-  }
-
-  selectPerfApp(a: Aplicacion): void {
-    const idx = this.activePerfRowIdx();
-    if (idx < 0) return;
-    this.perfProgramas[idx].appCodigo = a.codigo;
-    this.perfProgramas[idx].modCodigo = '';
-    this.perfProgramas[idx].prgCodigo = '';
-    this.updatePerfAppText(idx, a);
-    this.updatePerfModText(idx);
-    this.updatePerfPrgText(idx);
-  }
-
-  selectPerfAppFromDialog(a: Aplicacion): void {
-    this.selectPerfApp(a);
-    this.closePerfAppSearchDialog();
-  }
-
-  // ============ MOD SEARCH DIALOG ============
-
-  openPerfModSearchDialog(idx: number): void {
-    this.activePerfRowIdx.set(idx);
-    this.perfModSearchCodigo.set('');
-    this.perfModSearchNombre.set('');
-    this.perfModSearchPage.set(1);
-    this.showPerfModSearchDlg = true;
-  }
-
-  closePerfModSearchDialog(): void {
-    this.showPerfModSearchDlg = false;
-    this.activePerfRowIdx.set(-1);
-  }
-
-  clearPerfModFilters(): void {
-    this.perfModSearchCodigo.set('');
-    this.perfModSearchNombre.set('');
-    this.perfModSearchPage.set(1);
-  }
-
-  changePerfModSearchPage(delta: number): void {
-    this.perfModSearchPage.set(Math.min(Math.max(this.perfModSearchPage() + delta, 1), this.perfModSearchTotalPages()));
-  }
-
-  selectPerfMod(m: Modulo): void {
-    const idx = this.activePerfRowIdx();
-    if (idx < 0) return;
-    this.perfProgramas[idx].modCodigo = m.codigo;
-    this.perfProgramas[idx].prgCodigo = '';
-    this.updatePerfModText(idx, m);
-    this.updatePerfPrgText(idx);
-  }
-
-  selectPerfModFromDialog(m: Modulo): void {
-    this.selectPerfMod(m);
-    this.closePerfModSearchDialog();
-  }
-
-  // ============ PRG SEARCH DIALOG ============
-
-  openPerfPrgSearchDialog(idx: number): void {
-    this.activePerfRowIdx.set(idx);
-    this.perfPrgSearchCodigo.set('');
-    this.perfPrgSearchNombre.set('');
-    this.perfPrgSearchPage.set(1);
-    this.showPerfPrgSearchDlg = true;
-  }
-
-  closePerfPrgSearchDialog(): void {
-    this.showPerfPrgSearchDlg = false;
-    this.activePerfRowIdx.set(-1);
-  }
-
-  clearPerfPrgFilters(): void {
-    this.perfPrgSearchCodigo.set('');
-    this.perfPrgSearchNombre.set('');
-    this.perfPrgSearchPage.set(1);
-  }
-
-  changePerfPrgSearchPage(delta: number): void {
-    this.perfPrgSearchPage.set(Math.min(Math.max(this.perfPrgSearchPage() + delta, 1), this.perfPrgSearchTotalPages()));
-  }
-
-  selectPerfPrg(p: Programa): void {
-    const idx = this.activePerfRowIdx();
-    if (idx < 0) return;
-    this.perfProgramas[idx].prgCodigo = p.codigo;
-    this.updatePerfPrgText(idx, p);
-  }
-
-  selectPerfPrgFromDialog(p: Programa): void {
-    this.selectPerfPrg(p);
-    this.closePerfPrgSearchDialog();
-  }
-
   // ============ PAGINATION ============
 
   setPage(page: number): void {
@@ -1367,21 +684,6 @@ export class PerfilesComponent implements OnInit {
   changePageSize(size: number): void {
     this.pageSize.set(size);
     this.pagePerf.set(0);
-  }
-
-  changePerfAppSearchPageSize(size: number): void {
-    this.perfAppSearchPageSize.set(size);
-    this.perfAppSearchPage.set(1);
-  }
-
-  changePerfModSearchPageSize(size: number): void {
-    this.perfModSearchPageSize.set(size);
-    this.perfModSearchPage.set(1);
-  }
-
-  changePerfPrgSearchPageSize(size: number): void {
-    this.perfPrgSearchPageSize.set(size);
-    this.perfPrgSearchPage.set(1);
   }
 
   // ============ EXPORT ============
@@ -1517,6 +819,10 @@ export class PerfilesComponent implements OnInit {
     this.perfilBulkSuccess.set('');
   }
 
+  private registerPerfilBulkFormatError(errors: { row: number; message: string }[]): void {
+    this.api.registerBulkUploadError('PERFILES', errors).subscribe({ error: () => {} });
+  }
+
   async processPerfilBulkFile(): Promise<void> {
     if (!this.perfilBulkFile) return;
     this.perfilBulkLoading.set(true);
@@ -1530,7 +836,9 @@ export class PerfilesComponent implements OnInit {
       const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
       if (rawRows.length < 2) {
-        this.setPerfilBulkErrors([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        const message = 'El archivo no contiene filas de datos.';
+        this.setPerfilBulkErrors([{ row: 0, message }]);
+        this.registerPerfilBulkFormatError([{ row: 0, message }]);
         this.perfilBulkLoading.set(false);
         return;
       }
@@ -1539,7 +847,9 @@ export class PerfilesComponent implements OnInit {
       const expected = ['PERFIL_CODIGO', 'PERFIL_NOMBRE', 'PERFIL_DESCRIPCION', 'PRG_CODIGO', 'NUEVO', 'MODIFICAR', 'ANULAR', 'IMPRIMIR', 'CONSULTAR', 'ESTADO'];
       const missing = expected.filter(h => !headerRow.includes(h));
       if (missing.length > 0) {
-        this.setPerfilBulkErrors([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        const message = `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.`;
+        this.setPerfilBulkErrors([{ row: 1, message }]);
+        this.registerPerfilBulkFormatError([{ row: 1, message }]);
         this.perfilBulkLoading.set(false);
         return;
       }
@@ -1565,7 +875,9 @@ export class PerfilesComponent implements OnInit {
       }
 
       if (!rows.length) {
-        this.setPerfilBulkErrors([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        const message = 'No se encontraron filas con datos válidos.';
+        this.setPerfilBulkErrors([{ row: 0, message }]);
+        this.registerPerfilBulkFormatError([{ row: 0, message }]);
         this.perfilBulkLoading.set(false);
         return;
       }
@@ -1611,7 +923,9 @@ export class PerfilesComponent implements OnInit {
         },
       });
     } catch (e: any) {
-      this.setPerfilBulkErrors([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      const message = 'No se pudo leer el archivo Excel. Verifique el formato.';
+      this.setPerfilBulkErrors([{ row: 0, message }]);
+      this.registerPerfilBulkFormatError([{ row: 0, message }]);
       this.perfilBulkLoading.set(false);
     }
   }

@@ -1,10 +1,12 @@
 ﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -18,15 +20,15 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
   standalone: true,
   imports: [
     CommonModule, FormsModule,
-    DialogModule, ButtonModule, InputTextModule,
+    DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconSearchComponent,
   ],
   template: `
     <div class="page-head">
       <div>
-        <h1>Nuevo acceso</h1>
-        <p>Asigne nodos de segregación y perfiles a un usuario.</p>
+        <h1>{{ editMode() ? 'Editar acceso' : 'Nuevo acceso' }}</h1>
+        <p>{{ editMode() ? 'Modifique los nodos de segregación y perfiles asignados al usuario.' : 'Asigne nodos de segregación y perfiles a un usuario.' }}</p>
       </div>
     </div>
 
@@ -40,10 +42,12 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
           <div class="field form-col">
             <label>Usuario <span class="required">*</span></label>
             <div class="search-field">
-              <input class="select" type="text" [ngModel]="userSearchDisplayText()" readonly placeholder="Seleccione un usuario..." />
-              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openUserSearchDialog()" title="Buscar usuario">
-                <app-icon-search [width]="16" [height]="16" />
-              </button>
+              <input class="select" type="text" [ngModel]="userSearchDisplayText()" readonly [placeholder]="editMode() ? 'Cargando usuario...' : 'Seleccione un usuario...'" />
+              @if (!editMode()) {
+                <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openUserSearchDialog()" title="Buscar usuario">
+                  <app-icon-search [width]="16" [height]="16" />
+                </button>
+              }
             </div>
           </div>
 
@@ -194,7 +198,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
 
         <div class="form-actions">
           <button class="btn btn-ghost" (click)="cancel()">Cancelar</button>
-          <button class="btn btn-primary" (click)="save()">Crear acceso</button>
+          <button class="btn btn-primary" (click)="save()">{{ editMode() ? 'Guardar cambios' : 'Crear acceso' }}</button>
         </div>
       </div>
     }
@@ -456,6 +460,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
         <button class="btn btn-primary" (click)="acceptNodoSearch()">Aceptar ({{ tempSelectedNodoIds().length }})</button>
       </ng-template>
     </p-dialog>
+    <p-confirmDialog></p-confirmDialog>
   `,
   styles: [`
     .center { text-align: center; }
@@ -663,6 +668,11 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     ::ng-deep .search-dialog table.data tr:last-child td {
       border-bottom: 1px solid var(--border);
     }
+    ::ng-deep .p-confirmdialog-icon {
+      font-size: 2.25rem !important;
+      color: #ef4444 !important;
+      margin-right: 1rem !important;
+    }
   `],
 })
 export class AccessCreateComponent implements OnInit {
@@ -670,6 +680,10 @@ export class AccessCreateComponent implements OnInit {
   private toast = inject(ToastService);
   private events = inject(EventsService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private confirmationService = inject(ConfirmationService);
+
+  editMode = signal(false);
 
   users = signal<User[]>([]);
   niveles = signal<NivelSegregacion[]>([]);
@@ -942,12 +956,34 @@ export class AccessCreateComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.api.listUserAccess().subscribe({
-      next: (data) => { this.users.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.users.set(data);
+        this.applyEditMode(data);
+        this.loading.set(false);
+      },
       error: () => { this.error.set('No se pudieron cargar los usuarios.'); this.loading.set(false); },
     });
     this.api.listNivelesSegregacion().subscribe({ next: (data) => this.niveles.set(data) });
     this.api.listNodosSegregacion().subscribe({ next: (data) => this.nodos.set(data) });
     this.api.listPerfiles().subscribe({ next: (data) => this.perfiles.set(data) });
+  }
+
+  private applyEditMode(users: User[]): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) return;
+    const user = users.find(u => u.id === id);
+    if (!user) {
+      this.toast.error('Error', 'No se encontró el usuario seleccionado.');
+      this.cancel();
+      return;
+    }
+    this.editMode.set(true);
+    this.selectedUserId = user.id;
+    this.userSearchDisplayText.set(`${user.username} · ${user.firstName} ${user.lastName}`);
+    this.editForm.set({
+      nodoIds: [...(user.nodoIds || [])],
+      perfilCodigos: [...(user.perfilCodigos || [])],
+    });
   }
 
   openUserSearchDialog(): void {
@@ -1142,18 +1178,40 @@ export class AccessCreateComponent implements OnInit {
       this.toast.error('Faltan datos', 'Debe seleccionar un usuario.');
       return;
     }
-    try {
-      await this.api.updateUserAccess(this.selectedUserId, this.editForm()).toPromise();
-      this.toast.success('Acceso creado');
-      this.events.emitDataChanged();
-      this.router.navigate(['/usuarios'], { queryParams: { tab: 'ACCESOS' } });
-    } catch (e: any) {
-      this.toast.error('Error', e?.error?.error || 'Error inesperado.');
+    const executeSave = async () => {
+      try {
+        await this.api.updateUserAccess(this.selectedUserId, this.editForm()).toPromise();
+        this.toast.success(this.editMode() ? 'Acceso actualizado' : 'Acceso creado');
+        this.events.emitDataChanged();
+        this.router.navigate(['/usuarios'], { queryParams: { tab: 'ACCESOS' } });
+      } catch (e: any) {
+        this.toast.error('Error', e?.error?.error || 'Error inesperado.');
+      }
+    };
+
+    if (this.editMode()) {
+      const user = this.users().find(u => u.id === this.selectedUserId);
+      const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : '';
+      this.confirmAction(`Se va a proceder con la edición del acceso del usuario "${name}", ¿desea continuar?`, executeSave);
+    } else {
+      await executeSave();
     }
   }
 
+  private confirmAction(message: string, accept: () => void): void {
+    this.confirmationService.confirm({
+      message,
+      header: 'Confirmación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí',
+      rejectLabel: 'No',
+      defaultFocus: 'none',
+      accept: () => accept(),
+    });
+  }
+
   cancel(): void {
-    this.router.navigate(['/usuarios']);
+    this.router.navigate(['/usuarios'], { queryParams: { tab: 'ACCESOS' } });
   }
 }
 

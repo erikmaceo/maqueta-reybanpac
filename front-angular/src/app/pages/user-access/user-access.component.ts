@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as XLSX from 'xlsx';
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -24,7 +23,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
   selector: 'app-user-access',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
+    CommonModule, FormsModule,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent, IconUploadComponent,
@@ -104,7 +103,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
                 </td>
                 <td>
                   <div class="cell-actions">
-                    <button class="btn btn-ghost btn-sm btn-icon" title="Editar acceso" (click)="openDialog(u)">
+                    <button class="btn btn-ghost btn-sm btn-icon" title="Editar acceso" (click)="router.navigate(['/editar-acceso', u.id])">
                       <app-icon-edit [width]="15" [height]="15" />
                     </button>
                     <button class="btn btn-danger btn-sm btn-icon" title="Eliminar acceso" (click)="confirmDeleteAccess(u)">
@@ -138,306 +137,6 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
         </div>
       }
     }
-
-    <!-- ============ DIÁLOGO EDITAR ACCESO ============ -->
-    <p-dialog
-      [(visible)]="showDlg"
-      [header]="'Acceso de ' + (editUser?.firstName || '') + ' ' + (editUser?.lastName || '')"
-      [modal]="true" [style]="{ width: '520px' }" [closable]="true"
-      (onHide)="closeDialog()"
-    >
-      <div class="field">
-        <label>Nodos de Segregación</label>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          @for (nivel of niveles(); track nivel.id; let i = $index) {
-            <div>
-              <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;gap:8px;">
-                @if (i === 0) {
-                  <div class="empresa-autocomplete" style="flex: 1;">
-                    <label class="small muted" style="display:block; margin-bottom: 4px;"><b>{{ nivel.nombre }}</b></label>
-                    <input
-                      type="text"
-                      class="select"
-                      placeholder="Buscar empresa..."
-                      [ngModel]="empresaAutoQuery()"
-                      (ngModelChange)="empresaAutoQuery.set($event); empresaAutoOpen.set(true)"
-                      (focus)="empresaAutoOpen.set(true)"
-                      (blur)="closeEmpresaAutocomplete()"
-                    />
-                    @if (empresaAutoOpen() && empresaSuggestions().length > 0) {
-                      <div class="empresa-autocomplete-list">
-                        @for (n of empresaSuggestions(); track n.id) {
-                          <div class="empresa-autocomplete-item" (mousedown)="selectEmpresa(n)">
-                            <span class="mono small">{{ n.codigo }}</span>
-                            <span class="small">{{ n.nombre }}</span>
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                } @else if (i === 1) {
-                  <div class="empresa-autocomplete" style="flex: 1;">
-                    <label class="small muted" style="display:block; margin-bottom: 4px;"><b>{{ nivel.nombre }}</b></label>
-                    <input
-                      type="text"
-                      class="select"
-                      placeholder="Buscar sucursal..."
-                      [ngModel]="sucursalAutoQuery()"
-                      (ngModelChange)="sucursalAutoQuery.set($event)"
-                      (focus)="onSucursalAutocompleteFocus(nivel.id)"
-                      (blur)="closeSucursalAutocomplete()"
-                      [disabled]="!puedeBuscarNivel(nivel.id)"
-                      [attr.title]="puedeBuscarNivel(nivel.id) ? '' : 'Seleccione primero una ' + getNivelNombre(getNivelPadreId(nivel.id)!)"
-                    />
-                    @if (sucursalAutoOpen() && sucursalSuggestions().length > 0 && puedeBuscarNivel(nivel.id)) {
-                      <div class="empresa-autocomplete-list">
-                        @for (n of sucursalSuggestions(); track n.id) {
-                          <div class="empresa-autocomplete-item" (mousedown)="selectSucursal(n)">
-                            <span class="mono small">{{ n.codigo }}</span>
-                            <span class="small">{{ n.nombre }}</span>
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                } @else if (i === 2) {
-                  <div class="empresa-autocomplete" style="flex: 1;">
-                    <label class="small muted" style="display:block; margin-bottom: 4px;"><b>{{ nivel.nombre }}</b></label>
-                    <input
-                      type="text"
-                      class="select"
-                      placeholder="Buscar punto de venta..."
-                      [ngModel]="puntoVentaAutoQuery()"
-                      (ngModelChange)="puntoVentaAutoQuery.set($event)"
-                      (focus)="onPuntoVentaAutocompleteFocus(nivel.id)"
-                      (blur)="closePuntoVentaAutocomplete()"
-                      [disabled]="!puedeBuscarNivel(nivel.id)"
-                      [attr.title]="puedeBuscarNivel(nivel.id) ? '' : 'Seleccione primero una ' + getNivelNombre(getNivelPadreId(nivel.id)!)"
-                    />
-                    @if (puntoVentaAutoOpen() && puntoVentaSuggestions().length > 0 && puedeBuscarNivel(nivel.id)) {
-                      <div class="empresa-autocomplete-list">
-                        @for (n of puntoVentaSuggestions(); track n.id) {
-                          <div class="empresa-autocomplete-item" (mousedown)="selectPuntoVenta(n)">
-                            <span class="mono small">{{ n.codigo }}</span>
-                            <span class="small">{{ n.nombre }}</span>
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <span class="small muted"><b>{{ nivel.nombre }}</b></span>
-                }
-                <button class="btn btn-ghost btn-sm" type="button" (click)="openNodoSearchDialog(nivel.id, nivel.nombre)" [disabled]="!puedeBuscarNivel(nivel.id)" [title]="puedeBuscarNivel(nivel.id) ? 'Buscar ' + nivel.nombre : 'Seleccione primero un ' + getNivelNombre(getNivelPadreId(nivel.id)!)" >
-                  <app-icon-search [width]="14" [height]="14" /> Buscar {{ nivel.nombre }}
-                </button>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface-2);">
-                @for (nodo of selectedNodosByNivelId(nivel.id); track nodo.id) {
-                  <label style="display:flex;align-items:center;gap:8px;cursor:default;opacity:0.85;">
-                    <input type="checkbox" checked disabled style="width:16px;height:16px;cursor:default;" />
-                    <span><b>{{ nodo.codigo }}</b> · {{ nodo.nombre }}</span>
-                  </label>
-                } @empty {
-                  <span class="muted small">Ningún nodo seleccionado.</span>
-                }
-              </div>
-            </div>
-          } @empty {
-            <span class="muted small">No hay niveles configurados.</span>
-          }
-        </div>
-      </div>
-      <div class="field">
-        <label>Perfiles</label>
-        <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:8px;">
-          <div class="perfil-autocomplete" style="position:relative;flex:1;min-width:200px;">
-            <input
-              type="text"
-              class="select"
-              placeholder="Buscar perfil..."
-              style="width:100%;"
-              [ngModel]="perfilAutoQuery()"
-              (ngModelChange)="perfilAutoQuery.set($event); perfilAutoOpen.set(true)"
-              (focus)="perfilAutoOpen.set(true)"
-              (blur)="closePerfilAutocomplete()"
-            />
-            @if (perfilAutoOpen() && perfilSuggestions().length > 0) {
-              <div class="perfil-autocomplete-list" style="position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-md);max-height:200px;overflow-y:auto;margin-top:4px;">
-                @for (p of perfilSuggestions(); track p.id) {
-                  <div class="empresa-autocomplete-item" (mousedown)="addPerfilFromAutocomplete(p)">
-                    <span class="mono small">{{ p.codigo }}</span>
-                    <span class="small">{{ p.nombre }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-          <button class="btn btn-ghost btn-sm" type="button" (click)="openPerfilSearchDialog()" title="Buscar perfiles">
-            <app-icon-search [width]="14" [height]="14" /> Buscar Perfiles
-          </button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface-2);">
-          @for (p of selectedPerfilesDetails(); track p.codigo) {
-            <label style="display:flex;align-items:center;gap:8px;cursor:default;opacity:0.85;">
-              <input type="checkbox" checked disabled style="width:16px;height:16px;cursor:default;" />
-              <span><b>{{ p.codigo }}</b> · {{ p.nombre }}</span>
-            </label>
-          } @empty {
-            <span class="muted small">No hay perfiles asignados.</span>
-          }
-        </div>
-      </div>
-      <ng-template pTemplate="footer">
-        <button class="btn btn-ghost" (click)="closeDialog()">Cancelar</button>
-        <button class="btn btn-primary" (click)="save()">Guardar</button>
-      </ng-template>
-    </p-dialog>
-
-
-    <!-- ============ DIÁLOGO BÚSQUEDA PERFILES (MULTI-SELECCIÓN) ============ -->
-    <p-dialog
-      [(visible)]="showPerfilSearchDlg"
-      header="Buscar perfiles"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
-      (onHide)="cancelPerfilSearch()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" placeholder="Código de perfil"
-            [ngModel]="perfilSearchCodigo()" (ngModelChange)="perfilSearchCodigo.set($event); perfilSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre de perfil"
-            [ngModel]="perfilSearchNombre()" (ngModelChange)="perfilSearchNombre.set($event); perfilSearchPage.set(1)" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearPerfilFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th style="width:40px;"></th>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Descripción</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of paginatedPerfilesForSearch(); track p.id) {
-              <tr>
-                <td class="center">
-                  <input type="checkbox" [checked]="tempSelectedPerfilCodigos().includes(p.codigo)"
-                    (change)="togglePerfilSelection(p.codigo)" style="width:16px;height:16px;cursor:pointer;" />
-                </td>
-                <td class="mono">{{ p.codigo }}</td>
-                <td><div class="cell-strong">{{ p.nombre }}</div></td>
-                <td>{{ p.descripcion }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === 1" (click)="changePerfilSearchPage(-1)">Anterior</button>
-        <span>Página {{ perfilSearchPage() }} de {{ perfilSearchTotalPages() }} ({{ filteredPerfilesForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === perfilSearchTotalPages()" (click)="changePerfilSearchPage(1)">Siguiente</button>
-      </div>
-
-      <ng-template pTemplate="footer">
-        <button class="btn btn-ghost" (click)="cancelPerfilSearch()">Cancelar</button>
-        <button class="btn btn-primary" (click)="acceptPerfilSearch()">Aceptar ({{ tempSelectedPerfilCodigos().length }})</button>
-      </ng-template>
-    </p-dialog>
-
-    <!-- ============ DIÁLOGO BÚSQUEDA NODOS (MULTI-SELECCIÓN POR NIVEL) ============ -->
-    <p-dialog
-      [(visible)]="showNodoSearchDlg"
-      [header]="'Buscar ' + nodoSearchNivelNombre()"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
-      (onHide)="cancelNodoSearch()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" placeholder="Código de nodo"
-            [ngModel]="nodoSearchCodigo()" (ngModelChange)="nodoSearchCodigo.set($event); nodoSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre de nodo"
-            [ngModel]="nodoSearchNombre()" (ngModelChange)="nodoSearchNombre.set($event); nodoSearchPage.set(1)" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearNodoFilters()">Limpiar</button>
-      </div>
-
-      @if (getSelectedParentIds(nodoSearchNivelId()).length > 0) {
-        <div class="muted small" style="margin-bottom: 8px;">
-          Mostrando {{ nodoSearchNivelNombre() }} del {{ getNivelNombre(getNivelPadreId(nodoSearchNivelId())!) }} seleccionado.
-        </div>
-      }
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th style="width:40px;"></th>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Padre</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (n of paginatedNodosForSearch(); track n.id) {
-              <tr>
-                <td class="center">
-                  <input type="checkbox" [checked]="tempSelectedNodoIds().includes(n.id)"
-                    (change)="toggleNodoSelection(n.id)" style="width:16px;height:16px;cursor:pointer;" />
-                </td>
-                <td class="mono">{{ n.codigo }}</td>
-                <td><div class="cell-strong">{{ n.nombre }}</div></td>
-                <td>
-                  @if (n.padreId) {
-                    {{ getNodoPadreLabel(n.padreId) }}
-                  } @else {
-                    <span class="muted">—</span>
-                  }
-                </td>
-                <td>
-                  <span class="badge" [class.badge-green]="n.estado === 'ACTIVO'" [class.badge-gray]="n.estado !== 'ACTIVO'">
-                    {{ n.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === 1" (click)="changeNodoSearchPage(-1)">Anterior</button>
-        <span>Página {{ nodoSearchPage() }} de {{ nodoSearchTotalPages() }} ({{ filteredNodosForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="nodoSearchPage() === nodoSearchTotalPages()" (click)="changeNodoSearchPage(1)">Siguiente</button>
-      </div>
-
-      <ng-template pTemplate="footer">
-        <button class="btn btn-ghost" (click)="cancelNodoSearch()">Cancelar</button>
-        <button class="btn btn-primary" (click)="acceptNodoSearch()">Aceptar ({{ tempSelectedNodoIds().length }})</button>
-      </ng-template>
-    </p-dialog>
 
     <!-- ============ DIÁLOGO CARGA MASIVA ============ -->
     <p-dialog
@@ -491,49 +190,6 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
     }
   `,
   styles: [`
-    .center { text-align: center; }
-    .empresa-autocomplete {
-      position: relative;
-      width: 100%;
-      min-width: 220px;
-    }
-    .empresa-autocomplete input {
-      width: 100%;
-    }
-    .empresa-autocomplete-list {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      box-shadow: var(--shadow-md);
-      max-height: 200px;
-      overflow-y: auto;
-      margin-top: 4px;
-    }
-    .empresa-autocomplete-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border);
-    }
-    .empresa-autocomplete-item:last-child {
-      border-bottom: none;
-    }
-    .empresa-autocomplete-item:hover {
-      background: var(--surface-2);
-    }
-    .perfil-autocomplete {
-      position: relative;
-    }
-    .perfil-autocomplete input {
-      width: 100%;
-    }
     ::ng-deep .p-confirmdialog-icon {
       font-size: 2.25rem !important;
       color: #ef4444 !important;
@@ -558,22 +214,6 @@ export class UserAccessComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  showDlg = false;
-  editUser: User | null = null;
-  editForm = signal({ nodoIds: [] as string[], perfilCodigos: [] as string[] });
-
-  // --- Diálogo búsqueda de perfiles (multi-selección) ---
-  showPerfilSearchDlg = false;
-  perfilSearchCodigo = signal('');
-  perfilSearchNombre = signal('');
-  perfilSearchPage = signal(1);
-  perfilSearchPageSize = signal(5);
-  tempSelectedPerfilCodigos = signal<string[]>([]);
-
-  // --- Diálogo búsqueda de nodos de segregación (multi-selección por nivel) ---
-  showNodoSearchDlg = false;
-  nodoSearchNivelId = signal('');
-
   // --- Diálogo carga masiva ---
   showBulkDlg = false;
   bulkFile: File | null = null;
@@ -582,85 +222,10 @@ export class UserAccessComponent implements OnInit {
   bulkErrors = signal<{ row: number; message: string }[]>([]);
   bulkErrorsSummary = signal('');
   bulkSuccess = signal('');
-  nodoSearchNivelNombre = signal('');
-  nodoSearchCodigo = signal('');
-  nodoSearchNombre = signal('');
-  nodoSearchPage = signal(1);
-  nodoSearchPageSize = signal(5);
-  tempSelectedNodoIds = signal<string[]>([]);
 
   search = signal('');
   pageSize = signal(5);
   page = signal(0);
-
-  empresaAutoQuery = signal('');
-  empresaAutoOpen = signal(false);
-  empresaAutoTimer: any = null;
-
-  sucursalAutoQuery = signal('');
-  sucursalAutoOpen = signal(false);
-  sucursalAutoTimer: any = null;
-
-  puntoVentaAutoQuery = signal('');
-  puntoVentaAutoOpen = signal(false);
-  puntoVentaAutoTimer: any = null;
-
-  perfilAutoQuery = signal('');
-  perfilAutoOpen = signal(false);
-  perfilAutoTimer: any = null;
-
-  primerNivel = computed(() => {
-    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
-    return sorted[0] || null;
-  });
-
-  segundoNivel = computed(() => {
-    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
-    return sorted[1] || null;
-  });
-
-  tercerNivel = computed(() => {
-    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
-    return sorted[2] || null;
-  });
-
-  empresaSuggestions = computed(() => {
-    const primer = this.primerNivel();
-    if (!primer) return [];
-    const q = this.empresaAutoQuery().toLowerCase().trim();
-    return this.nodos()
-      .filter(n => n.nivelId === primer.id && n.estado === 'ACTIVO' &&
-        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
-      .slice(0, 8);
-  });
-
-  sucursalSuggestions = computed(() => {
-    const segundo = this.segundoNivel();
-    if (!segundo) return [];
-    const q = this.sucursalAutoQuery().toLowerCase().trim();
-    return this.nodos()
-      .filter(n => n.nivelId === segundo.id && n.estado === 'ACTIVO' &&
-        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
-      .slice(0, 8);
-  });
-
-  puntoVentaSuggestions = computed(() => {
-    const tercer = this.tercerNivel();
-    if (!tercer) return [];
-    const q = this.puntoVentaAutoQuery().toLowerCase().trim();
-    return this.nodos()
-      .filter(n => n.nivelId === tercer.id && n.estado === 'ACTIVO' &&
-        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
-      .slice(0, 8);
-  });
-
-  perfilSuggestions = computed(() => {
-    const q = this.perfilAutoQuery().toLowerCase().trim();
-    return this.perfiles()
-      .filter(p => p.estado === 'ACTIVO' &&
-        (!q || p.codigo.toLowerCase().includes(q) || p.nombre.toLowerCase().includes(q)))
-      .slice(0, 8);
-  });
 
   filteredUsers = computed(() => {
     const q = this.search().toLowerCase().trim();
@@ -681,80 +246,6 @@ export class UserAccessComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())));
 
-  userMap = computed(() => new Map(this.users().map(u => [u.id, u])));
-
-  filteredPerfilesForSearch = computed(() => {
-    const qCodigo = this.perfilSearchCodigo().toLowerCase().trim();
-    const qNombre = this.perfilSearchNombre().toLowerCase().trim();
-    return this.perfiles().filter(p =>
-      (!qCodigo || p.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || p.nombre.toLowerCase().includes(qNombre))
-    );
-  });
-
-  paginatedPerfilesForSearch = computed(() => {
-    const start = (this.perfilSearchPage() - 1) * this.perfilSearchPageSize();
-    return this.filteredPerfilesForSearch().slice(start, start + this.perfilSearchPageSize());
-  });
-
-  perfilSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredPerfilesForSearch().length / this.perfilSearchPageSize())));
-
-  selectedPerfilesDetails = computed(() => {
-    return this.editForm().perfilCodigos
-      .map(codigo => this.perfiles().find(p => p.codigo === codigo))
-      .filter((p): p is Perfil => !!p);
-  });
-
-  // --- Computed para búsqueda de nodos por nivel ---
-  getNivelPadreId(nivelId: string): string | null {
-    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
-    const idx = sorted.findIndex(n => n.id === nivelId);
-    return idx > 0 ? sorted[idx - 1].id : null;
-  }
-
-  getSelectedParentIds(nivelId: string): string[] {
-    const parentNivelId = this.getNivelPadreId(nivelId);
-    if (!parentNivelId) return [];
-    return this.editForm().nodoIds
-      .map(id => this.nodos().find(n => n.id === id))
-      .filter((n): n is NodoSegregacion => !!n && n.nivelId === parentNivelId)
-      .map(n => n.id);
-  }
-
-  puedeBuscarNivel(nivelId: string): boolean {
-    const parentNivelId = this.getNivelPadreId(nivelId);
-    if (!parentNivelId) return true;
-    return this.getSelectedParentIds(nivelId).length > 0;
-  }
-
-  filteredNodosForSearch = computed(() => {
-    const nivelId = this.nodoSearchNivelId();
-    const parentNivelId = this.getNivelPadreId(nivelId);
-    const selectedParentIds = parentNivelId ? this.getSelectedParentIds(nivelId) : [];
-    const hasParentFilter = parentNivelId && selectedParentIds.length > 0;
-    const qCodigo = this.nodoSearchCodigo().toLowerCase().trim();
-    const qNombre = this.nodoSearchNombre().toLowerCase().trim();
-    return this.nodos().filter(n => {
-      if (n.nivelId !== nivelId || n.estado !== 'ACTIVO') return false;
-      if (hasParentFilter && n.padreId && !selectedParentIds.includes(n.padreId)) return false;
-      return (!qCodigo || n.codigo.toLowerCase().includes(qCodigo)) &&
-             (!qNombre || n.nombre.toLowerCase().includes(qNombre));
-    });
-  });
-
-  paginatedNodosForSearch = computed(() => {
-    const start = (this.nodoSearchPage() - 1) * this.nodoSearchPageSize();
-    return this.filteredNodosForSearch().slice(start, start + this.nodoSearchPageSize());
-  });
-
-  nodoSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredNodosForSearch().length / this.nodoSearchPageSize())));
-
-  selectedNodosByNivelId = (nivelId: string) => {
-    return this.editForm().nodoIds
-      .map(id => this.nodos().find(n => n.id === id))
-      .filter((n): n is NodoSegregacion => !!n && n.nivelId === nivelId);
-  };
-
   setPage(p: number): void {
     if (p < 0 || p >= this.totalPages()) return;
     this.page.set(p);
@@ -763,83 +254,6 @@ export class UserAccessComponent implements OnInit {
   changePageSize(value: any): void {
     this.pageSize.set(Number(value));
     this.page.set(0);
-  }
-
-  selectEmpresa(n: NodoSegregacion): void {
-    this.editForm.update(f => ({
-      ...f,
-      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
-    }));
-    this.empresaAutoQuery.set('');
-    this.empresaAutoOpen.set(false);
-    clearTimeout(this.empresaAutoTimer);
-  }
-
-  selectSucursal(n: NodoSegregacion): void {
-    this.editForm.update(f => ({
-      ...f,
-      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
-    }));
-    this.sucursalAutoQuery.set('');
-    this.sucursalAutoOpen.set(false);
-    clearTimeout(this.sucursalAutoTimer);
-  }
-
-  selectPuntoVenta(n: NodoSegregacion): void {
-    this.editForm.update(f => ({
-      ...f,
-      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
-    }));
-    this.puntoVentaAutoQuery.set('');
-    this.puntoVentaAutoOpen.set(false);
-    clearTimeout(this.puntoVentaAutoTimer);
-  }
-
-  onSucursalAutocompleteFocus(nivelId: string): void {
-    if (this.puedeBuscarNivel(nivelId)) {
-      this.sucursalAutoOpen.set(true);
-    }
-  }
-
-  onPuntoVentaAutocompleteFocus(nivelId: string): void {
-    if (this.puedeBuscarNivel(nivelId)) {
-      this.puntoVentaAutoOpen.set(true);
-    }
-  }
-
-  closeEmpresaAutocomplete(): void {
-    this.empresaAutoTimer = setTimeout(() => this.empresaAutoOpen.set(false), 150);
-  }
-
-  closeSucursalAutocomplete(): void {
-    this.sucursalAutoTimer = setTimeout(() => this.sucursalAutoOpen.set(false), 150);
-  }
-
-  closePuntoVentaAutocomplete(): void {
-    this.puntoVentaAutoTimer = setTimeout(() => this.puntoVentaAutoOpen.set(false), 150);
-  }
-
-  selectPerfil(p: Perfil): void {
-    if (!this.tempSelectedPerfilCodigos().includes(p.codigo)) {
-      this.tempSelectedPerfilCodigos.set([...this.tempSelectedPerfilCodigos(), p.codigo]);
-    }
-    this.perfilAutoQuery.set('');
-    this.perfilAutoOpen.set(false);
-    clearTimeout(this.perfilAutoTimer);
-  }
-
-  addPerfilFromAutocomplete(p: Perfil): void {
-    const current = this.editForm().perfilCodigos;
-    if (!current.includes(p.codigo)) {
-      this.editForm.update(f => ({ ...f, perfilCodigos: [...f.perfilCodigos, p.codigo] }));
-    }
-    this.perfilAutoQuery.set('');
-    this.perfilAutoOpen.set(false);
-    clearTimeout(this.perfilAutoTimer);
-  }
-
-  closePerfilAutocomplete(): void {
-    this.perfilAutoTimer = setTimeout(() => this.perfilAutoOpen.set(false), 150);
   }
 
   onSearchChange(value: string): void {
@@ -864,171 +278,11 @@ export class UserAccessComponent implements OnInit {
     this.api.listPerfiles().subscribe({ next: (data) => this.perfiles.set(data) });
   }
 
-  openDialog(u: User): void {
-    this.editUser = u;
-    this.editForm.set({ nodoIds: [...(u.nodoIds || [])], perfilCodigos: [...(u.perfilCodigos || [])] });
-    this.showDlg = true;
-  }
-
-  closeDialog(): void { this.showDlg = false; this.editUser = null; }
-
-  openPerfilSearchDialog(): void {
-    this.perfilSearchCodigo.set('');
-    this.perfilSearchNombre.set('');
-    this.perfilSearchPage.set(1);
-    this.tempSelectedPerfilCodigos.set([...this.editForm().perfilCodigos]);
-    this.showPerfilSearchDlg = true;
-  }
-
-  closePerfilSearchDialog(): void {
-    this.showPerfilSearchDlg = false;
-  }
-
-  cancelPerfilSearch(): void {
-    this.showPerfilSearchDlg = false;
-    this.tempSelectedPerfilCodigos.set([]);
-  }
-
-  clearPerfilFilters(): void {
-    this.perfilSearchCodigo.set('');
-    this.perfilSearchNombre.set('');
-    this.perfilSearchPage.set(1);
-  }
-
-  changePerfilSearchPage(delta: number): void {
-    this.perfilSearchPage.set(Math.min(Math.max(this.perfilSearchPage() + delta, 1), this.perfilSearchTotalPages()));
-  }
-
-  togglePerfilSelection(codigo: string): void {
-    const selected = this.tempSelectedPerfilCodigos();
-    if (selected.includes(codigo)) {
-      this.tempSelectedPerfilCodigos.set(selected.filter(c => c !== codigo));
-    } else {
-      this.tempSelectedPerfilCodigos.set([...selected, codigo]);
-    }
-  }
-
-  acceptPerfilSearch(): void {
-    this.editForm.set({ ...this.editForm(), perfilCodigos: [...this.tempSelectedPerfilCodigos()] });
-    this.tempSelectedPerfilCodigos.set([]);
-    this.showPerfilSearchDlg = false;
-  }
-
-  openNodoSearchDialog(nivelId: string, nivelNombre: string): void {
-    this.nodoSearchNivelId.set(nivelId);
-    this.nodoSearchNivelNombre.set(nivelNombre);
-    this.nodoSearchCodigo.set('');
-    this.nodoSearchNombre.set('');
-    this.nodoSearchPage.set(1);
-    this.tempSelectedNodoIds.set(this.editForm().nodoIds.filter(id => {
-      const n = this.nodos().find(x => x.id === id);
-      return n?.nivelId === nivelId;
-    }));
-    this.showNodoSearchDlg = true;
-  }
-
-  closeNodoSearchDialog(): void {
-    this.showNodoSearchDlg = false;
-    this.nodoSearchNivelId.set('');
-    this.nodoSearchNivelNombre.set('');
-  }
-
-  cancelNodoSearch(): void {
-    this.showNodoSearchDlg = false;
-    this.nodoSearchNivelId.set('');
-    this.nodoSearchNivelNombre.set('');
-    this.tempSelectedNodoIds.set([]);
-  }
-
-  clearNodoFilters(): void {
-    this.nodoSearchCodigo.set('');
-    this.nodoSearchNombre.set('');
-    this.nodoSearchPage.set(1);
-  }
-
-  changeNodoSearchPage(delta: number): void {
-    this.nodoSearchPage.set(Math.min(Math.max(this.nodoSearchPage() + delta, 1), this.nodoSearchTotalPages()));
-  }
-
-  toggleNodoSelection(nodoId: string): void {
-    const selected = this.tempSelectedNodoIds();
-    if (selected.includes(nodoId)) {
-      this.tempSelectedNodoIds.set(selected.filter(id => id !== nodoId));
-    } else {
-      this.tempSelectedNodoIds.set([...selected, nodoId]);
-    }
-  }
-
-  acceptNodoSearch(): void {
-    const form = this.editForm();
-    const nivelId = this.nodoSearchNivelId();
-    const newSelected = this.tempSelectedNodoIds();
-
-    const prevSelected = form.nodoIds.filter(id => this.nodos().find(n => n.id === id)?.nivelId === nivelId);
-    const deselected = prevSelected.filter(id => !newSelected.includes(id));
-
-    const idsToRemove = new Set<string>();
-    for (const id of deselected) {
-      idsToRemove.add(id);
-      for (const desc of this.descendientesDe(id)) {
-        idsToRemove.add(desc);
-      }
-    }
-
-    const otherNodes = form.nodoIds.filter(id => {
-      if (idsToRemove.has(id)) return false;
-      const n = this.nodos().find(x => x.id === id);
-      return n?.nivelId !== nivelId;
-    });
-
-    this.editForm.set({ ...form, nodoIds: [...otherNodes, ...newSelected] });
-    this.tempSelectedNodoIds.set([]);
-    this.showNodoSearchDlg = false;
-    this.nodoSearchNivelId.set('');
-    this.nodoSearchNivelNombre.set('');
-  }
-
-  getNivelNombre(nivelId: string): string {
-    return this.niveles().find(n => n.id === nivelId)?.nombre ?? '';
-  }
-
   getNodoLabel(nodoId: string): string {
     const nodo = this.nodos().find(n => n.id === nodoId);
     if (!nodo) return nodoId;
     const nivel = this.niveles().find(n => n.id === nodo.nivelId);
     return `${nodo.codigo} · ${nodo.nombre}${nivel ? ` (${nivel.nombre})` : ''}`;
-  }
-
-  descendientesDe(nodoId: string): string[] {
-    const result: string[] = [];
-    const stack = [nodoId];
-    while (stack.length) {
-      const actual = stack.pop()!;
-      const hijos = this.nodos().filter(n => n.padreId === actual);
-      for (const h of hijos) {
-        result.push(h.id);
-        stack.push(h.id);
-      }
-    }
-    return result;
-  }
-
-  getNodoPadreLabel(padreId: string): string {
-    const padre = this.nodos().find(n => n.id === padreId);
-    return padre ? `${padre.codigo} · ${padre.nombre}` : padreId;
-  }
-
-  async save(): Promise<void> {
-    if (!this.editUser) return;
-    try {
-      await this.api.updateUserAccess(this.editUser.id, this.editForm()).toPromise();
-      this.toast.success('Acceso actualizado');
-      this.events.emitDataChanged();
-      this.closeDialog();
-      this.loadData();
-    } catch (e: any) {
-      this.toast.error('Error', e?.error?.error || 'Error inesperado.');
-    }
   }
 
   confirmDeleteAccess(u: User): void {
@@ -1161,6 +415,7 @@ export class UserAccessComponent implements OnInit {
     const validation = validateBulkFileSize(file);
     if (!validation.valid) {
       this.toast.error('Archivo demasiado grande', validation.message || 'El archivo excede el tamaño permitido.');
+      this.registerBulkFormatError([{ row: 0, message: validation.message || 'El archivo excede el tamaño permitido.' }]);
       this.bulkFile = null;
       this.bulkFileName.set('');
       this.bulkErrors.set([]);
@@ -1172,6 +427,10 @@ export class UserAccessComponent implements OnInit {
     this.bulkFileName.set(file ? file.name : '');
     this.bulkErrors.set([]);
     this.bulkSuccess.set('');
+  }
+
+  private registerBulkFormatError(errors: { row: number; message: string }[]): void {
+    this.api.registerBulkUploadError('ACCESOS', errors).subscribe({ error: () => {} });
   }
 
   private parseBulkCell(cell: string | number | undefined): string[] {
@@ -1194,7 +453,9 @@ export class UserAccessComponent implements OnInit {
       const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
       if (rawRows.length < 2) {
-        this.setBulkErrors([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        const message = 'El archivo no contiene filas de datos.';
+        this.setBulkErrors([{ row: 0, message }]);
+        this.registerBulkFormatError([{ row: 0, message }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1207,7 +468,9 @@ export class UserAccessComponent implements OnInit {
 
       const missing = expectedHeaders.filter(h => !headerRow.includes(h));
       if (missing.length > 0) {
-        this.setBulkErrors([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        const message = `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.`;
+        this.setBulkErrors([{ row: 1, message }]);
+        this.registerBulkFormatError([{ row: 1, message }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1238,7 +501,9 @@ export class UserAccessComponent implements OnInit {
       }
 
       if (!rows.length) {
-        this.setBulkErrors([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        const message = 'No se encontraron filas con datos válidos.';
+        this.setBulkErrors([{ row: 0, message }]);
+        this.registerBulkFormatError([{ row: 0, message }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1285,7 +550,9 @@ export class UserAccessComponent implements OnInit {
         },
       });
     } catch (e: any) {
-      this.setBulkErrors([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      const message = 'No se pudo leer el archivo Excel. Verifique el formato.';
+      this.setBulkErrors([{ row: 0, message }]);
+      this.registerBulkFormatError([{ row: 0, message }]);
       this.bulkLoading.set(false);
     }
   }

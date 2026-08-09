@@ -232,6 +232,20 @@ export interface AuditEntry {
   detail: string;
 }
 
+export type BulkUploadTipo = 'NODOS' | 'APLICACIONES' | 'ACCESOS' | 'PERFILES';
+export type BulkUploadEstado = 'EXITOSA' | 'CON_ERRORES';
+
+export interface BulkUploadEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  tipo: BulkUploadTipo;
+  estado: BulkUploadEstado;
+  filas: number;
+  procesadas: number;
+  errores: { row: number; message: string }[];
+}
+
 export interface AuthUser extends Omit<User, 'password'> {}
 
 // --- Parámetros y Configuración -----------------------------------------------

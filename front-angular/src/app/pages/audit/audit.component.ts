@@ -11,7 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent } from '../../shared/components/ui';
 import { IconAuditComponent, IconClockComponent, IconDownloadComponent } from '../../shared/components/icons';
-import type { AuditEntry } from '../../shared/models/types';
+import type { AuditEntry, BulkUploadEntry } from '../../shared/models/types';
 
 @Component({
   selector: 'app-audit',
@@ -160,12 +160,66 @@ import type { AuditEntry } from '../../shared/models/types';
 
         <!-- ============ HISTORIAL DE CARGAS MASIVAS ============ -->
         <p-tabpanel value="bulk">
-          <div class="card muted center" style="padding: 48px;">
-            <div class="empty-icon"><i class="pi pi-upload" style="font-size: 2rem; color: var(--text-3);"></i></div>
-            <h4 style="margin-top: 16px;">Historial de cargas masivas</h4>
-            <p class="muted small">Esta sección mostrará el registro de todas las cargas masivas realizadas en la consola.</p>
-            <p class="muted small">Funcionalidad en desarrollo.</p>
-          </div>
+          @if (bulkLoading()) {
+            <app-table-skeleton [rows]="6" [cols]="6" />
+          } @else if (bulkUploads().length === 0) {
+            <div class="card">
+              <div class="empty">
+                <div class="empty-icon"><i class="pi pi-upload" style="font-size: 2rem; color: var(--text-3);"></i></div>
+                <h4>Sin cargas masivas registradas</h4>
+                <p class="muted small">Las cargas masivas realizadas desde Niveles de Segregación, Aplicaciones, Usuarios y Perfiles aparecerán aquí.</p>
+              </div>
+            </div>
+          } @else {
+            <div class="card table-wrap">
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Sección</th>
+                    <th>Usuario</th>
+                    <th>Filas</th>
+                    <th>Procesadas</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (bu of bulkUploads(); track bu.id) {
+                    <tr>
+                      <td>
+                        <span class="badge" [class]="bu.estado === 'EXITOSA' ? 'badge-green' : 'badge-red'">
+                          {{ bu.estado === 'EXITOSA' ? 'Exitosa' : 'Con errores' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="row gap-2">
+                          <app-icon-clock [width]="14" [height]="14" style="color: var(--text-3);" />
+                          <div>
+                            <div class="small">{{ formatDateTime(bu.timestamp) }}</div>
+                            <div class="tiny dim">{{ events.relativeTime(bu.timestamp) }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{{ tipoLabel(bu.tipo) }}</td>
+                      <td><b>{{ bu.actor }}</b></td>
+                      <td>{{ bu.filas }}</td>
+                      <td>{{ bu.procesadas }}</td>
+                      <td>
+                        @if (bu.estado === 'CON_ERRORES' && bu.errores.length > 0) {
+                          <button class="btn btn-ghost btn-sm" (click)="downloadBulkErrors(bu)">
+                            <app-icon-download [width]="14" [height]="14" /> Descargar reporte
+                          </button>
+                        } @else {
+                          <span class="muted small">—</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>
@@ -181,6 +235,8 @@ export class AuditComponent implements OnInit {
   entries = signal<AuditEntry[]>([]);
   totalItems = signal(0);
   loading = signal(false);
+  bulkUploads = signal<BulkUploadEntry[]>([]);
+  bulkLoading = signal(false);
   q = signal('');
   actor = signal('');
   action = signal('');
@@ -209,6 +265,7 @@ export class AuditComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+    this.loadBulkUploads();
   }
 
   loadData(): void {
@@ -232,6 +289,40 @@ export class AuditComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  loadBulkUploads(): void {
+    this.bulkLoading.set(true);
+    this.api.listBulkUploads().subscribe({
+      next: (data) => {
+        this.bulkUploads.set(data);
+        this.bulkLoading.set(false);
+      },
+      error: () => {
+        this.bulkLoading.set(false);
+      },
+    });
+  }
+
+  tipoLabel(tipo: BulkUploadEntry['tipo']): string {
+    const labels: Record<BulkUploadEntry['tipo'], string> = {
+      NODOS: 'Niveles de Segregación',
+      APLICACIONES: 'Aplicaciones',
+      ACCESOS: 'Usuarios · Accesos',
+      PERFILES: 'Perfiles',
+    };
+    return labels[tipo] || tipo;
+  }
+
+  downloadBulkErrors(bu: BulkUploadEntry): void {
+    const rows = bu.errores.map(e => ({
+      Fila: e.row,
+      Error: e.message,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Errores');
+    XLSX.writeFile(wb, `errores_carga_${bu.id}.xlsx`);
   }
 
   onSearch(value: string): void {

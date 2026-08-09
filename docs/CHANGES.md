@@ -4,6 +4,85 @@
 
  ---
 
+ ## 2026-08-09 — Diálogo "Editar acceso" convertido en pantalla navegable
+
+ ### Resumen
+
+ Se sustituyó el diálogo de edición del tab "Accesos por usuario" (apartado "Usuarios") por una pantalla a la que se navega, manteniendo coherencia con el alta que ya se hacía en pantalla. Ahora tanto crear como editar usan la misma página `AccessCreateComponent`; el diálogo de edición y toda su lógica se eliminaron del tab.
+
+ ### Cambios realizados
+
+ #### 1. Frontend
+ - **Pantalla de acceso reutilizada** (`front-angular/src/app/pages/access-create/access-create.component.ts`):
+   - Se agregó modo edición mediante la ruta `/editar-acceso/:id` (se inyectó `ActivatedRoute`).
+   - Al entrar en modo edición: se precarga el usuario, sus nodos de segregación y sus perfiles; el campo Usuario queda bloqueado (sin botón de búsqueda).
+   - Título "Editar acceso" y botón "Guardar cambios" en edición; "Nuevo acceso" y "Crear acceso" en alta.
+   - `save()` muestra "Acceso actualizado" vs "Acceso creado"; `cancel()` y `save()` navegan a `/usuarios` con `tab: ACCESOS`.
+- **Rutas** (`front-angular/src/app/app.routes.ts`):
+   - Nueva ruta `/editar-acceso/:id` → `AccessCreateComponent`.
+- **Layout** (`front-angular/src/app/pages/layout/layout.component.ts`):
+   - `PAGE_META` para `/editar-acceso/:id`.
+   - `updateMetaFromPath()` resuelve el título por prefijo para rutas con parámetro.
+- **Accesos por usuario** (`front-angular/src/app/pages/user-access/user-access.component.ts`):
+   - El botón "Editar" de la tabla navega a `/editar-acceso/:id` en lugar de abrir el diálogo.
+   - Se eliminó el diálogo de edición (`showDlg`) y los diálogos de búsqueda de perfiles y nodos, junto con toda su lógica (state, computeds, métodos, autocompletados, imports y estilos sin uso).
+
+ #### 2. Verificación
+ - `npm run build` en `front-angular` finaliza correctamente (sin warnings nuevos de `UserAccessComponent` ni `AccessCreateComponent`).
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `front-angular/src/app/pages/access-create/access-create.component.ts` | Modo edición: precarga, bloqueo de usuario, textos dinámicos y mensajes |
+ | `front-angular/src/app/pages/user-access/user-access.component.ts` | Navegación a editar; eliminación del diálogo de edición y su lógica |
+ | `front-angular/src/app/app.routes.ts` | Ruta `/editar-acceso/:id` |
+ | `front-angular/src/app/pages/layout/layout.component.ts` | Metadatos y título para la nueva ruta |
+ | `docs/CHANGES.md` | Este registro |
+
+ ---
+
+ ## 2026-08-09 — Diálogo "Nuevo Perfil" convertido en pantalla navegable
+
+ ### Resumen
+
+ Se sustituyó el diálogo de "Nuevo Perfil"/"Editar Perfil" (botón "Nuevo Perfil" y edición de la lista de Perfiles) por una pantalla a la que se navega. Todos los controles del diálogo se migraron a la nueva página, con mejor visibilidad de los campos y de los programas que se van agregando.
+
+ ### Cambios realizados
+
+ #### 1. Frontend
+ - **Nuevo componente**: `front-angular/src/app/pages/perfil-form/perfil-form.component.ts`.
+   - Página standalone con cabecera "Nuevo Perfil"/"Editar Perfil" y botón "Volver a Perfiles".
+   - Campos: Código, Nombre, Descripción, Estado.
+   - Sección "Programas del Perfil" con bloques por programa: selectores de Aplicación/Módulo/Programa (con diálogos de búsqueda), tabla de permisos (Nuevo, Modificar, Eliminar, Imprimir, Consultar) y botón para quitar.
+   - Botón "Agregar Programa", validaciones y guardado (crear/actualizar) con confirmación para edición.
+   - Navegación de retorno a `/perfiles` tras cancelar o guardar.
+- **Rutas** (`front-angular/src/app/app.routes.ts`):
+   - `/perfiles/nuevo` → componente `PerfilFormComponent` (crear).
+   - `/perfiles/:id/editar` → componente `PerfilFormComponent` (editar).
+- **Layout** (`front-angular/src/app/pages/layout/layout.component.ts`):
+   - `PAGE_META` para `/perfiles/nuevo` y `/perfiles/:id/editar`.
+   - `updateMetaFromPath()` resuelve el título por prefijo para rutas de perfil con parámetro.
+- **Perfiles** (`front-angular/src/app/pages/perfiles/perfiles.component.ts`):
+   - El botón "Nuevo Perfil" ahora navega a `/perfiles/nuevo`.
+   - El botón "Editar" de la lista navega a `/perfiles/:id/editar`.
+   - Se eliminó el diálogo de perfil y sus tres diálogos de búsqueda (aplicación, módulo, programa) junto con toda la lógica asociada (state, computeds, métodos, imports y signals de aplicaciones/módulos sin uso).
+
+ #### 2. Verificación
+ - `npm run build` en `front-angular` finaliza correctamente (sin warnings nuevos de `PerfilFormComponent`).
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `front-angular/src/app/pages/perfil-form/perfil-form.component.ts` | Nueva página de crear/editar perfil |
+ | `front-angular/src/app/pages/perfiles/perfiles.component.ts` | Navegación desde la lista; eliminación del diálogo y su lógica |
+ | `front-angular/src/app/app.routes.ts` | Rutas `/perfiles/nuevo` y `/perfiles/:id/editar` |
+ | `front-angular/src/app/pages/layout/layout.component.ts` | Metadatos y título para las nuevas rutas |
+ | `docs/CHANGES.md` | Este registro |
+
+ ---
+
  ## 2026-08-06 — Nuevos endpoints de jerarquía y auditoría en API Gateway + Diagrama ER Mermaid + Corrección modelo de accesos
 
  ### Resumen

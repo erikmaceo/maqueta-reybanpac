@@ -50,6 +50,16 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'perfiles/nuevo',
+        loadComponent: () => import('./pages/perfil-form/perfil-form.component').then(m => m.PerfilFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'perfiles/:id/editar',
+        loadComponent: () => import('./pages/perfil-form/perfil-form.component').then(m => m.PerfilFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'acceso-dispositivos',
         loadComponent: () => import('./pages/device-access/device-access.component').then(m => m.DeviceAccessComponent),
         canActivate: [adminGuard],
@@ -82,6 +92,11 @@ export const routes: Routes = [
       },
       {
         path: 'nuevo-acceso',
+        loadComponent: () => import('./pages/access-create/access-create.component').then(m => m.AccessCreateComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'editar-acceso/:id',
         loadComponent: () => import('./pages/access-create/access-create.component').then(m => m.AccessCreateComponent),
         canActivate: [adminGuard],
       },

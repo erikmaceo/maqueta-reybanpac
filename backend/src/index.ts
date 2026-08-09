@@ -9,7 +9,7 @@ import swaggerUi from 'swagger-ui-express';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { randomBytes } from 'node:crypto';
-import { db, newId, nowIso, logAudit, publicUser, resetDb } from './store.js';
+import { db, newId, nowIso, logAudit, logBulkUpload, publicUser, resetDb } from './store.js';
 import { fetchLdapPeople } from './ldap.js';
 import gatewayRoutes from './gateway/routes.js';
 import gatewayAdminRoutes from './gateway/admin.js';
@@ -515,6 +515,7 @@ app.post('/api/user-access/bulk', requireAuth, requireGlobalAdmin, (req, res) =>
     }
 
   if (errors.length) {
+    logBulkUpload({ actor: actorName(req), tipo: 'ACCESOS', filas: rows.length, procesadas: 0, errores: errors });
     return res.status(400).json({ ok: false, processed: 0, errors });
   }
 
@@ -522,9 +523,10 @@ app.post('/api/user-access/bulk', requireAuth, requireGlobalAdmin, (req, res) =>
     u.user.nodoIds = u.nodoIds;
     u.user.perfilCodigos = u.perfilCodigos;
     logAudit(actorName(req), 'UPDATE_USER_ACCESS', 'user', u.user.id,
-      `Acceso actualizado por carga masiva para "${u.user.username}": nodos=${u.nodoIds.length}, perfiles=${u.perfilCodigos.length}.`);
+      `Acceso actualizado por carga masiva para "${u.user.username}": nodos=${u.user.nodoIds.length}, perfiles=${u.user.perfilCodigos.length}.`);
   }
 
+  logBulkUpload({ actor: actorName(req), tipo: 'ACCESOS', filas: rows.length, procesadas: updates.length, errores: errors });
   res.json({ ok: true, processed: updates.length, errors: [] });
 });
 
@@ -748,6 +750,30 @@ app.get('/api/audit', requireAuth, (req, res) => {
   const start = (page - 1) * limit;
   const items = list.slice(start, start + limit);
   res.json({ items, total, page, limit });
+});
+
+app.get('/api/bulk-uploads', requireAuth, (_req, res) => {
+  res.json([...db.bulkUploads].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+});
+
+// Registra un intento de carga masiva rechazado por validación de formato en el frontend
+// (columnas faltantes, archivo sin datos, ilegible o demasiado grande).
+app.post('/api/bulk-uploads/registro', requireAuth, requireGlobalAdmin, (req, res) => {
+  const { tipo, errores } = req.body || {};
+  const tiposValidos = ['NODOS', 'APLICACIONES', 'ACCESOS', 'PERFILES'];
+  if (!tiposValidos.includes(tipo)) {
+    return res.status(400).json({ ok: false, error: 'El tipo de carga masiva no es válido.' });
+  }
+  const errs: { row: number; message: string }[] = Array.isArray(errores)
+    ? errores.map((e: any) => ({ row: Number(e?.row) || 0, message: String(e?.message || '') }))
+    : [];
+  if (errs.length === 0) {
+    return res.status(400).json({ ok: false, error: 'No se recibieron errores para registrar.' });
+  }
+  logBulkUpload({ actor: actorName(req), tipo, filas: 0, procesadas: 0, errores: errs });
+  logAudit(actorName(req), 'BULK_UPLOAD_REJECTED', 'bulk-upload', null,
+    `Carga masiva rechazada por formato (${tipo}): ${errs.length} error(es).`);
+  res.json({ ok: true });
 });
 
 // Utilidad de maqueta: reiniciar datos
@@ -1098,8 +1124,10 @@ app.post('/api/seg-aplicaciones/bulk', requireAuth, requireGlobalAdmin, (req, re
   }
 
   if (errors.length) {
+    logBulkUpload({ actor: actorName(req), tipo: 'APLICACIONES', filas: rows.length, procesadas: processed, errores: errors });
     return res.status(400).json({ ok: false, processed, created: { apps: createdApps, mods: createdMods, prgs: createdPrgs }, updated: { apps: updatedApps, mods: updatedMods, prgs: updatedPrgs }, errors });
   }
+  logBulkUpload({ actor: actorName(req), tipo: 'APLICACIONES', filas: rows.length, procesadas: processed, errores: errors });
   res.json({ ok: true, processed, created: { apps: createdApps, mods: createdMods, prgs: createdPrgs }, updated: { apps: updatedApps, mods: updatedMods, prgs: updatedPrgs }, errors: [] });
 });
 
@@ -1251,8 +1279,10 @@ app.post('/api/seg-perfiles/bulk', requireAuth, requireGlobalAdmin, (req, res) =
   }
 
   if (errors.length) {
+    logBulkUpload({ actor: actorName(req), tipo: 'PERFILES', filas: rows.length, procesadas: processedPerfiles, errores: errors });
     return res.status(400).json({ ok: false, processed: processedPerfiles, created: createdPerfiles, updated: updatedPerfiles, errors });
   }
+  logBulkUpload({ actor: actorName(req), tipo: 'PERFILES', filas: rows.length, procesadas: processedPerfiles, errores: errors });
   res.json({ ok: true, processed: processedPerfiles, created: createdPerfiles, updated: updatedPerfiles, errors: [] });
 });
 
@@ -1792,8 +1822,10 @@ app.post('/api/nodos-segregacion/bulk', requireAuth, requireGlobalAdmin, (req, r
   }
 
   if (errors.length) {
+    logBulkUpload({ actor: actorName(req), tipo: 'NODOS', filas: rows.length, procesadas: processed, errores: errors });
     return res.status(400).json({ ok: false, processed, created: createdIds.length, updated: updatedIds.length, errors });
   }
+  logBulkUpload({ actor: actorName(req), tipo: 'NODOS', filas: rows.length, procesadas: processed, errores: errors });
   res.json({ ok: true, processed, created: createdIds.length, updated: updatedIds.length, errors: [] });
 });
 

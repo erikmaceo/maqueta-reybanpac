@@ -1795,6 +1795,7 @@ export class SecurityComponent implements OnInit {
     const validation = validateBulkFileSize(file);
     if (!validation.valid) {
       this.toast.error('Archivo demasiado grande', validation.message || 'El archivo excede el tamaño permitido.');
+      this.registerBulkFormatError([{ row: 0, message: validation.message || 'El archivo excede el tamaño permitido.' }]);
       this.bulkFile = null;
       this.bulkFileName.set('');
       this.bulkErrors.set([]);
@@ -1806,6 +1807,10 @@ export class SecurityComponent implements OnInit {
     this.bulkFileName.set(file ? file.name : '');
     this.bulkErrors.set([]);
     this.bulkSuccess.set('');
+  }
+
+  private registerBulkFormatError(errors: { row: number; message: string }[]): void {
+    this.api.registerBulkUploadError('APLICACIONES', errors).subscribe({ error: () => {} });
   }
 
   private parseBulkCell(cell: string | number | undefined): string {
@@ -1826,7 +1831,9 @@ export class SecurityComponent implements OnInit {
       const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
       if (rawRows.length < 2) {
-        this.setBulkErrors([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+        const message = 'El archivo no contiene filas de datos.';
+        this.setBulkErrors([{ row: 0, message }]);
+        this.registerBulkFormatError([{ row: 0, message }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1835,7 +1842,9 @@ export class SecurityComponent implements OnInit {
       const expected = ['TIPO', 'CODIGO', 'NOMBRE', 'DESCRIPCION', 'APP_CODIGO', 'MOD_CODIGO', 'PRG_TIPO', 'ESTADO'];
       const missing = expected.filter(h => !headerRow.includes(h));
       if (missing.length > 0) {
-        this.setBulkErrors([{ row: 1, message: `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.` }]);
+        const message = `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.`;
+        this.setBulkErrors([{ row: 1, message }]);
+        this.registerBulkFormatError([{ row: 1, message }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1859,7 +1868,9 @@ export class SecurityComponent implements OnInit {
       }
 
       if (!rows.length) {
-        this.setBulkErrors([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+        const message = 'No se encontraron filas con datos válidos.';
+        this.setBulkErrors([{ row: 0, message }]);
+        this.registerBulkFormatError([{ row: 0, message }]);
         this.bulkLoading.set(false);
         return;
       }
@@ -1905,7 +1916,9 @@ export class SecurityComponent implements OnInit {
         },
       });
     } catch (e: any) {
-      this.setBulkErrors([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
+      const message = 'No se pudo leer el archivo Excel. Verifique el formato.';
+      this.setBulkErrors([{ row: 0, message }]);
+      this.registerBulkFormatError([{ row: 0, message }]);
       this.bulkLoading.set(false);
     }
   }

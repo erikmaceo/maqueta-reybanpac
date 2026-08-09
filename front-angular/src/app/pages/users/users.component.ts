@@ -93,13 +93,6 @@ interface UserForm {
     }
   `],
   template: `
-    <div class="page-head">
-      <div>
-        <h1>Usuarios</h1>
-        <p>Los administradores se crean localmente en la consola; los clientes finales se integran exclusivamente desde LDAP. A todos se les asignan roles.</p>
-      </div>
-    </div>
-
     <div class="tabs mb-4">
       <button [class.active]="tab() === 'USUARIOS'" (click)="tab.set('USUARIOS')">
         Usuarios

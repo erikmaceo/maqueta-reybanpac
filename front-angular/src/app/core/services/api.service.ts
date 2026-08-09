@@ -8,6 +8,7 @@ import type {
   Aplicacion, Modulo, Programa, Perfil, Control,
   NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor,
   Pais, Provincia, Ciudad, DispositivoMovil,
+  BulkUploadEntry, BulkUploadTipo,
 } from '../../shared/models/types';
 
 const TOKEN_KEY = 'cam.token';
@@ -192,6 +193,14 @@ export class ApiService {
     if (params?.limit !== undefined) query.set('limit', String(params.limit));
     const qs = query.toString();
     return this.request<{ items: AuditEntry[]; total: number; page: number; limit: number }>('GET', `/audit${qs ? '?' + qs : ''}`);
+  }
+
+  listBulkUploads(): Observable<BulkUploadEntry[]> {
+    return this.request<BulkUploadEntry[]>('GET', '/bulk-uploads');
+  }
+
+  registerBulkUploadError(tipo: BulkUploadTipo, errores: { row: number; message: string }[]): Observable<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>('POST', '/bulk-uploads/registro', { tipo, errores });
   }
 
   reset(): Observable<{ ok: boolean }> {

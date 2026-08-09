@@ -11,6 +11,7 @@ import type {
   AccessRequest,
   Grant,
   AuditEntry,
+  BulkUploadEntry,
   Aplicacion,
   Modulo,
   Programa,
@@ -58,6 +59,7 @@ interface DB {
   requests: AccessRequest[];
   grants: Grant[];
   audit: AuditEntry[];
+  bulkUploads: BulkUploadEntry[];
   aplicaciones: Aplicacion[];
   modulos: Modulo[];
   programas: Programa[];
@@ -89,6 +91,7 @@ export const db: DB = {
   requests: clone(seedRequests),
   grants: clone(seedGrants),
   audit: clone(seedAudit),
+  bulkUploads: [] as BulkUploadEntry[],
   aplicaciones: clone(seedAplicaciones),
   modulos: clone(seedModulos),
   programas: clone(seedProgramas),
@@ -113,6 +116,7 @@ export function resetDb() {
   db.requests = clone(seedRequests);
   db.grants = clone(seedGrants);
   db.audit = clone(seedAudit);
+  db.bulkUploads = [] as BulkUploadEntry[];
   db.aplicaciones = clone(seedAplicaciones);
   db.modulos = clone(seedModulos);
   db.programas = clone(seedProgramas);
@@ -208,6 +212,25 @@ export function logAudit(
     entityType,
     entityId,
     detail,
+  });
+}
+
+export function logBulkUpload(data: {
+  actor: string;
+  tipo: BulkUploadEntry['tipo'];
+  filas: number;
+  procesadas: number;
+  errores: { row: number; message: string }[];
+}) {
+  db.bulkUploads.unshift({
+    id: newId('bulk'),
+    timestamp: nowIso(),
+    actor: data.actor,
+    tipo: data.tipo,
+    estado: data.errores.length > 0 ? 'CON_ERRORES' : 'EXITOSA',
+    filas: data.filas,
+    procesadas: data.procesadas,
+    errores: data.errores,
   });
 }
 

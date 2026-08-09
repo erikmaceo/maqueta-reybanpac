@@ -195,8 +195,14 @@ export class ApiService {
     return this.request<{ items: AuditEntry[]; total: number; page: number; limit: number }>('GET', `/audit${qs ? '?' + qs : ''}`);
   }
 
-  listBulkUploads(): Observable<BulkUploadEntry[]> {
-    return this.request<BulkUploadEntry[]>('GET', '/bulk-uploads');
+  listBulkUploads(desde?: string, hasta?: string, page?: number, limit?: number): Observable<{ items: BulkUploadEntry[]; total: number; page: number; limit: number }> {
+    const params: string[] = [];
+    if (desde) params.push(`desde=${encodeURIComponent(desde)}`);
+    if (hasta) params.push(`hasta=${encodeURIComponent(hasta)}`);
+    if (page) params.push(`page=${page}`);
+    if (limit) params.push(`limit=${limit}`);
+    const qs = params.join('&');
+    return this.request<{ items: BulkUploadEntry[]; total: number; page: number; limit: number }>('GET', `/bulk-uploads${qs ? '?' + qs : ''}`);
   }
 
   registerBulkUploadError(tipo: BulkUploadTipo, errores: { row: number; message: string }[]): Observable<{ ok: boolean }> {

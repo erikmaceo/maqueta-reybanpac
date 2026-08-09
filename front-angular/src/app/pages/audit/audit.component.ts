@@ -52,11 +52,11 @@ import type { AuditEntry, BulkUploadEntry } from '../../shared/models/types';
             <div class="row gap-4 wrap" style="align-items: flex-end;">
               <div class="field" style="margin:0;">
                 <label class="small muted">Desde</label>
-                <input type="date" class="select" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+                <input type="datetime-local" class="select" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
               </div>
               <div class="field" style="margin:0;">
                 <label class="small muted">Hasta</label>
-                <input type="date" class="select" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+                <input type="datetime-local" class="select" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
               </div>
               <div class="field" style="margin:0;">
                 <label class="small muted">Actor</label>
@@ -160,6 +160,26 @@ import type { AuditEntry, BulkUploadEntry } from '../../shared/models/types';
 
         <!-- ============ HISTORIAL DE CARGAS MASIVAS ============ -->
         <p-tabpanel value="bulk">
+          <div class="card mb-4" style="padding: 28px;">
+            <div class="row gap-4 wrap" style="align-items: flex-end;">
+              <div class="field" style="margin:0;">
+                <label class="small muted">Desde</label>
+                <input type="datetime-local" class="select" [value]="bulkDesde()" (input)="bulkDesde.set($any($event.target).value)" />
+              </div>
+              <div class="field" style="margin:0;">
+                <label class="small muted">Hasta</label>
+                <input type="datetime-local" class="select" [value]="bulkHasta()" (input)="bulkHasta.set($any($event.target).value)" />
+              </div>
+              <div class="row gap-2" style="margin-left: auto;">
+                <button class="btn btn-primary" (click)="applyBulkFilters()">
+                  Buscar
+                </button>
+                <button class="btn btn-ghost" (click)="clearBulkFilters()">
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
           @if (bulkLoading()) {
             <app-table-skeleton [rows]="6" [cols]="6" />
           } @else if (bulkUploads().length === 0) {
@@ -219,6 +239,23 @@ import type { AuditEntry, BulkUploadEntry } from '../../shared/models/types';
                 </tbody>
               </table>
             </div>
+
+            <div class="pagination">
+              <div class="page-controls">
+                <button class="btn btn-ghost btn-sm" [disabled]="bulkPage() === 1" (click)="changeBulkPage(-1)">Anterior</button>
+              </div>
+              <span>Página {{ bulkPage() }} de {{ bulkTotalPages() }} ({{ bulkTotal() }} registros)</span>
+              <div class="page-size-selector">
+                <label class="small muted">Registros por página</label>
+                <select class="select" style="width: auto; min-width: 60px;" [ngModel]="bulkPageSize()" (ngModelChange)="changeBulkPageSize($event)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="15">15</option>
+                  <option [value]="20">20</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" [disabled]="bulkPage() === bulkTotalPages()" (click)="changeBulkPage(1)">Siguiente</button>
+              </div>
+            </div>
           }
         </p-tabpanel>
       </p-tabpanels>
@@ -237,6 +274,11 @@ export class AuditComponent implements OnInit {
   loading = signal(false);
   bulkUploads = signal<BulkUploadEntry[]>([]);
   bulkLoading = signal(false);
+  bulkTotal = signal(0);
+  bulkDesde = signal('');
+  bulkHasta = signal('');
+  bulkPage = signal(1);
+  bulkPageSize = signal(5);
   q = signal('');
   actor = signal('');
   action = signal('');
@@ -245,6 +287,8 @@ export class AuditComponent implements OnInit {
   hasta = signal('');
   page = signal(1);
   pageSize = signal(5);
+
+  bulkTotalPages = computed(() => Math.max(1, Math.ceil(this.bulkTotal() / this.bulkPageSize())));
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
   pageNumbers = computed(() => {
@@ -293,15 +337,39 @@ export class AuditComponent implements OnInit {
 
   loadBulkUploads(): void {
     this.bulkLoading.set(true);
-    this.api.listBulkUploads().subscribe({
+    this.api.listBulkUploads(this.bulkDesde() || undefined, this.bulkHasta() || undefined, this.bulkPage(), this.bulkPageSize()).subscribe({
       next: (data) => {
-        this.bulkUploads.set(data);
+        this.bulkUploads.set(data.items);
+        this.bulkTotal.set(data.total);
         this.bulkLoading.set(false);
       },
       error: () => {
         this.bulkLoading.set(false);
       },
     });
+  }
+
+  applyBulkFilters(): void {
+    this.bulkPage.set(1);
+    this.loadBulkUploads();
+  }
+
+  clearBulkFilters(): void {
+    this.bulkDesde.set('');
+    this.bulkHasta.set('');
+    this.bulkPage.set(1);
+    this.loadBulkUploads();
+  }
+
+  changeBulkPageSize(value: any): void {
+    this.bulkPageSize.set(Number(value));
+    this.bulkPage.set(1);
+    this.loadBulkUploads();
+  }
+
+  changeBulkPage(delta: number): void {
+    this.bulkPage.set(Math.min(Math.max(this.bulkPage() + delta, 1), this.bulkTotalPages()));
+    this.loadBulkUploads();
   }
 
   tipoLabel(tipo: BulkUploadEntry['tipo']): string {

@@ -25,13 +25,6 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     IconSearchComponent,
   ],
   template: `
-    <div class="page-head">
-      <div>
-        <h1>{{ editMode() ? 'Editar acceso' : 'Nuevo acceso' }}</h1>
-        <p>{{ editMode() ? 'Modifique los nodos de segregación y perfiles asignados al usuario.' : 'Asigne nodos de segregación y perfiles a un usuario.' }}</p>
-      </div>
-    </div>
-
     @if (loading()) {
       <app-table-skeleton [rows]="5" [cols]="1" />
     } @else if (error()) {

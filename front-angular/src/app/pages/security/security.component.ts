@@ -354,9 +354,9 @@ interface ControlRow {
         </select>
       </div>
       <div class="field">
-        <label>Nodo de Segregación</label>
+        <label>Nodo de Segregación <span class="required">*</span></label>
         <div class="search-field">
-          <input class="select" type="text" [ngModel]="appNodoSearchText()" readonly placeholder="Seleccione un nodo padre..." />
+          <input class="select" [class.invalid]="appTouched && !appForm.nodoIds?.length" type="text" [ngModel]="appNodoSearchText()" readonly placeholder="Seleccione un nodo padre..." />
           <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppNodoSearchDialog()" title="Buscar nodo">
             <app-icon-search [width]="16" [height]="16" />
           </button>
@@ -1345,6 +1345,7 @@ export class SecurityComponent implements OnInit {
   saveApp(): void {
     this.appTouched = true;
     if (!this.appForm.codigo || !this.appForm.nombre) { this.toast.error('Faltan datos', 'Código y nombre son obligatorios.'); return; }
+    if (!this.appForm.nodoIds?.length) { this.toast.error('Faltan datos', 'El nodo de segregación es obligatorio.'); return; }
     const padreIds = new Set(this.nodosSegregacionPadresActivos().map(n => n.id));
     const nodoIds = (this.appForm.nodoIds || []).filter(id => padreIds.has(id)).slice(0, 1);
     const payload = { ...this.appForm, nodoIds };

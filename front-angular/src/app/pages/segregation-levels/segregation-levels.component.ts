@@ -1,4 +1,4 @@
-﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
+﻿import { Component, inject, OnInit, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -14,7 +14,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
-  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconUploadComponent, IconDownloadComponent,
+  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconUploadComponent, IconDownloadComponent, IconCloseComponent,
 } from '../../shared/components/icons';
 import type { NivelSegregacion, NodoSegregacion, NivelAtributo, NodoAtributoValor, Pais, Provincia, Ciudad } from '../../shared/models/types';
 import { validateBulkFileSize } from '../../shared/utils/file-validation';
@@ -36,7 +36,7 @@ interface NodoView extends NodoSegregacion {
     CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
-    IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconUploadComponent, IconDownloadComponent,
+  IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconUploadComponent, IconDownloadComponent, IconCloseComponent,
   ],
   template: `
     <div class="page-head">
@@ -584,9 +584,14 @@ interface NodoView extends NodoSegregacion {
 
       <div class="field">
         <label>Archivo Excel</label>
-        <input type="file" accept=".xlsx,.xls" (change)="onBulkFileSelected($event)" />
+        <input #bulkFileInput type="file" accept=".xlsx,.xls" (change)="onBulkFileSelected($event)" />
         @if (bulkFileName()) {
-          <div class="small mt-1">{{ bulkFileName() }}</div>
+          <div class="small mt-1" style="display:flex;align-items:center;gap:8px;">
+            {{ bulkFileName() }}
+            <button class="btn btn-ghost btn-icon btn-sm" type="button" (click)="clearBulkFile()" title="Quitar archivo">
+              <app-icon-close [width]="14" [height]="14" />
+            </button>
+          </div>
         }
       </div>
 
@@ -607,11 +612,51 @@ interface NodoView extends NodoSegregacion {
 
       <ng-template pTemplate="footer">
         <button class="btn btn-ghost" (click)="closeBulkDialog()">Cerrar</button>
-        <button class="btn btn-primary" (click)="processBulkFile()" [disabled]="!bulkFile || bulkLoading()">
+        <button class="btn btn-primary" (click)="prepareBulkProcess()" [disabled]="!bulkFile || bulkLoading()">
           @if (bulkLoading()) {
             <span>Procesando...</span>
           } @else {
             <span>Procesar</span>
+          }
+        </button>
+      </ng-template>
+    </p-dialog>
+
+    <!-- ============ DIÁLOGO CONFIRMACIÓN CARGA MASIVA NODOS ============ -->
+    <p-dialog
+      [(visible)]="showBulkConfirmDlg"
+      header="Confirmar carga masiva"
+      [modal]="true" [style]="{ width: '480px' }" [closable]="false"
+      styleClass="bulk-confirm-dialog"
+      [baseZIndex]="1100"
+    >
+      <p class="muted small mb-3">
+        Revise el resumen de entidades que se verán afectadas antes de continuar.
+      </p>
+      <div class="card mb-3" style="padding: 20px;">
+        <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+          <span class="muted small">Total de filas válidas</span>
+          <b>{{ bulkSummary().total }}</b>
+        </div>
+        <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+          <span class="muted small">Nodos nuevos a crear</span>
+          <b style="color: var(--green-600, #16a34a);">{{ bulkSummary().nuevos }}</b>
+        </div>
+        <div class="row" style="justify-content: space-between;">
+          <span class="muted small">Nodos existentes a actualizar</span>
+          <b style="color: var(--blue-600, #2563eb);">{{ bulkSummary().actualizaciones }}</b>
+        </div>
+      </div>
+      <p class="muted small">
+        ¿Desea continuar con la carga masiva?
+      </p>
+      <ng-template pTemplate="footer">
+        <button class="btn btn-ghost" (click)="cancelBulkConfirm()">No</button>
+        <button class="btn btn-primary" (click)="processBulkFile()" [disabled]="bulkLoading()">
+          @if (bulkLoading()) {
+            <span>Procesando...</span>
+          } @else {
+            <span>Sí</span>
           }
         </button>
       </ng-template>
@@ -781,10 +826,14 @@ export class SegregationLevelsComponent implements OnInit {
   showBulkDlg = false;
   bulkFile: File | null = null;
   bulkFileName = signal('');
+  @ViewChild('bulkFileInput', { static: false }) bulkFileInput!: ElementRef<HTMLInputElement>;
   bulkErrors = signal<{ row: number; message: string }[]>([]);
   bulkErrorsSummary = signal('');
   bulkSuccess = signal('');
   bulkLoading = signal(false);
+  showBulkConfirmDlg = false;
+  bulkSummary = signal({ total: 0, nuevos: 0, actualizaciones: 0 });
+  bulkPendingRows: { row: number; nivel: string; codigo: string; nombre: string; padre: string; estado: string }[] = [];
 
   nivelesOrdenados = computed(() => [...this.niveles()].sort((a, b) => a.orden - b.orden));
 
@@ -1445,21 +1494,29 @@ export class SegregationLevelsComponent implements OnInit {
 
   openBulkDialog(): void {
     this.showBulkDlg = true;
-    this.bulkFile = null;
-    this.bulkFileName.set('');
+    this.clearBulkFile();
     this.bulkErrors.set([]);
     this.bulkSuccess.set('');
     this.bulkLoading.set(false);
   }
 
-  closeBulkDialog(): void {
-    this.showBulkDlg = false;
+  clearBulkFile(): void {
     this.bulkFile = null;
     this.bulkFileName.set('');
+    if (this.bulkFileInput?.nativeElement) {
+      this.bulkFileInput.nativeElement.value = '';
+    }
+  }
+
+  closeBulkDialog(): void {
+    this.showBulkDlg = false;
+    this.showBulkConfirmDlg = false;
+    this.clearBulkFile();
     this.bulkErrors.set([]);
     this.bulkErrorsSummary.set('');
     this.bulkSuccess.set('');
     this.bulkLoading.set(false);
+    this.bulkPendingRows = [];
   }
 
   setBulkErrors(errors: { row: number; message: string }[]): void {
@@ -1569,104 +1626,141 @@ export class SegregationLevelsComponent implements OnInit {
     return String(cell).trim();
   }
 
-  async processBulkFile(): Promise<void> {
+  async prepareBulkProcess(): Promise<void> {
     if (!this.bulkFile) return;
     this.bulkLoading.set(true);
     this.bulkErrors.set([]);
     this.bulkSuccess.set('');
+    this.bulkPendingRows = [];
 
     try {
-      const data = await this.bulkFile.arrayBuffer();
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-
-      if (rawRows.length < 2) {
-        this.setBulkErrors([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
-        this.registerBulkFormatError([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+      const rows = await this.parseBulkRows();
+      if (!rows) {
         this.bulkLoading.set(false);
         return;
       }
 
-      const headerRow = rawRows[0].map((h: any) => String(h).trim().toUpperCase());
-      const expected = ['NIVEL', 'CODIGO', 'NOMBRE', 'PADRE', 'ESTADO'];
-      const missing = expected.filter(h => !headerRow.includes(h));
-      if (missing.length > 0) {
-        const message = `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.`;
-        this.setBulkErrors([{ row: 1, message }]);
-        this.registerBulkFormatError([{ row: 1, message }]);
-        this.bulkLoading.set(false);
-        return;
+      const existingCodigos = new Set(this.nodos().map(n => n.codigo.toLowerCase()));
+      let nuevos = 0;
+      let actualizaciones = 0;
+      for (const r of rows) {
+        if (existingCodigos.has(r.codigo.toLowerCase())) {
+          actualizaciones++;
+        } else {
+          nuevos++;
+        }
       }
 
-      const idx = (h: string) => headerRow.indexOf(h);
-      const rows: { row: number; nivel: string; codigo: string; nombre: string; padre: string; estado: string }[] = [];
-      for (let i = 1; i < rawRows.length; i++) {
-        const raw = rawRows[i];
-        if (raw.every((v: any) => !v || String(v).trim() === '')) continue;
-        rows.push({
-          row: i + 1,
-          nivel: this.parseBulkCell(raw[idx('NIVEL')]),
-          codigo: this.parseBulkCell(raw[idx('CODIGO')]),
-          nombre: this.parseBulkCell(raw[idx('NOMBRE')]),
-          padre: this.parseBulkCell(raw[idx('PADRE')]),
-          estado: this.parseBulkCell(raw[idx('ESTADO')]),
-        });
-      }
-
-      if (!rows.length) {
-        this.setBulkErrors([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
-        this.registerBulkFormatError([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
-        this.bulkLoading.set(false);
-        return;
-      }
-
-      this.api.bulkCreateNodos(rows).subscribe({
-        next: (res) => {
-          if (res.ok) {
-            this.bulkSuccess.set(`Se procesaron ${res.processed} nodos: ${res.created} creados, ${res.updated} actualizados.`);
-            this.bulkFile = null;
-            this.bulkFileName.set('');
-            this.events.emitDataChanged();
-            this.loadNodos();
-          } else {
-            this.setBulkErrors(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
-          }
-          this.bulkLoading.set(false);
-        },
-        error: (e) => {
-          console.error('bulkCreateNodos error', e);
-          let message = 'Error al procesar el archivo.';
-          if (e instanceof HttpErrorResponse) {
-            if (e.status === 0) {
-              message = 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.';
-            } else if (e.status >= 500) {
-              message = `Error interno del servidor (${e.status}). Revise la consola del backend.`;
-            } else if (e.error?.error) {
-              message = e.error.error;
-            } else if (Array.isArray(e.error?.errors)) {
-              this.setBulkErrors(e.error.errors);
-              this.bulkLoading.set(false);
-              return;
-            } else if (e.message) {
-              message = e.message;
-            }
-          } else if (e?.error?.errors) {
-            this.setBulkErrors(e.error.errors);
-            this.bulkLoading.set(false);
-            return;
-          } else if (e?.error?.error) {
-            message = e.error.error;
-          }
-          this.setBulkErrors([{ row: 0, message }]);
-          this.bulkLoading.set(false);
-        },
-      });
+      this.bulkPendingRows = rows;
+      this.bulkSummary.set({ total: rows.length, nuevos, actualizaciones });
+      this.showBulkConfirmDlg = true;
+      this.bulkLoading.set(false);
     } catch (e: any) {
       this.setBulkErrors([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
       this.registerBulkFormatError([{ row: 0, message: 'No se pudo leer el archivo Excel. Verifique el formato.' }]);
       this.bulkLoading.set(false);
     }
+  }
+
+  private async parseBulkRows(): Promise<{ row: number; nivel: string; codigo: string; nombre: string; padre: string; estado: string }[] | null> {
+    if (!this.bulkFile) return null;
+    const data = await this.bulkFile.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+    if (rawRows.length < 2) {
+      this.setBulkErrors([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+      this.registerBulkFormatError([{ row: 0, message: 'El archivo no contiene filas de datos.' }]);
+      return null;
+    }
+
+    const headerRow = rawRows[0].map((h: any) => String(h).trim().toUpperCase());
+    const expected = ['NIVEL', 'CODIGO', 'NOMBRE', 'PADRE', 'ESTADO'];
+    const missing = expected.filter(h => !headerRow.includes(h));
+    if (missing.length > 0) {
+      const message = `Formato incorrecto. Faltan columnas: ${missing.join(', ')}.`;
+      this.setBulkErrors([{ row: 1, message }]);
+      this.registerBulkFormatError([{ row: 1, message }]);
+      return null;
+    }
+
+    const idx = (h: string) => headerRow.indexOf(h);
+    const rows: { row: number; nivel: string; codigo: string; nombre: string; padre: string; estado: string }[] = [];
+    for (let i = 1; i < rawRows.length; i++) {
+      const raw = rawRows[i];
+      if (raw.every((v: any) => !v || String(v).trim() === '')) continue;
+      rows.push({
+        row: i + 1,
+        nivel: this.parseBulkCell(raw[idx('NIVEL')]),
+        codigo: this.parseBulkCell(raw[idx('CODIGO')]),
+        nombre: this.parseBulkCell(raw[idx('NOMBRE')]),
+        padre: this.parseBulkCell(raw[idx('PADRE')]),
+        estado: this.parseBulkCell(raw[idx('ESTADO')]),
+      });
+    }
+
+    if (!rows.length) {
+      this.setBulkErrors([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+      this.registerBulkFormatError([{ row: 0, message: 'No se encontraron filas con datos válidos.' }]);
+      return null;
+    }
+
+    return rows;
+  }
+
+  cancelBulkConfirm(): void {
+    this.showBulkConfirmDlg = false;
+    this.bulkPendingRows = [];
+  }
+
+  processBulkFile(): void {
+    if (!this.bulkPendingRows.length) return;
+    this.bulkLoading.set(true);
+    this.showBulkConfirmDlg = false;
+
+    this.api.bulkCreateNodos(this.bulkPendingRows).subscribe({
+      next: (res) => {
+        if (res.ok) {
+          this.bulkSuccess.set(`Se procesaron ${res.processed} nodos: ${res.created} creados, ${res.updated} actualizados.`);
+          this.bulkFile = null;
+          this.bulkFileName.set('');
+          this.bulkPendingRows = [];
+          this.events.emitDataChanged();
+          this.loadNodos();
+        } else {
+          this.setBulkErrors(res.errors || [{ row: 0, message: 'Error desconocido.' }]);
+        }
+        this.bulkLoading.set(false);
+      },
+      error: (e) => {
+        console.error('bulkCreateNodos error', e);
+        let message = 'Error al procesar el archivo.';
+        if (e instanceof HttpErrorResponse) {
+          if (e.status === 0) {
+            message = 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.';
+          } else if (e.status >= 500) {
+            message = `Error interno del servidor (${e.status}). Revise la consola del backend.`;
+          } else if (e.error?.error) {
+            message = e.error.error;
+          } else if (Array.isArray(e.error?.errors)) {
+            this.setBulkErrors(e.error.errors);
+            this.bulkLoading.set(false);
+            return;
+          } else if (e.message) {
+            message = e.message;
+          }
+        } else if (e?.error?.errors) {
+          this.setBulkErrors(e.error.errors);
+          this.bulkLoading.set(false);
+          return;
+        } else if (e?.error?.error) {
+          message = e.error.error;
+        }
+        this.setBulkErrors([{ row: 0, message }]);
+        this.bulkLoading.set(false);
+      },
+    });
   }
 }
 

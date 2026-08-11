@@ -1797,6 +1797,13 @@ textarea.input {
   font-size: 0.875rem;
 }
 
+/* Diálogo de confirmación de carga masiva: siempre encima de otros diálogos */
+.bulk-confirm-dialog,
+.bulk-confirm-dialog .p-dialog-mask,
+.bulk-confirm-dialog .p-dialog {
+  z-index: 1100 !important;
+}
+
 /* ==========================================================================
    Ajustes para diálogos de búsqueda en "Nuevo Acceso"
    ========================================================================== */

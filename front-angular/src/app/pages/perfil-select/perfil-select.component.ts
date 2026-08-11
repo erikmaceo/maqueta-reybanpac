@@ -12,12 +12,6 @@ import type { Perfil } from '../../shared/models/types';
   standalone: true,
   imports: [CommonModule, FormsModule, TableSkeletonComponent, ErrorStateComponent],
   template: `
-    <div class="row" style="justify-content: flex-end; margin-bottom: 16px;">
-      <button class="btn btn-ghost" (click)="goBack()">
-        <i class="pi pi-arrow-left" style="margin-right: 6px;"></i> Volver
-      </button>
-    </div>
-
     @if (loading()) {
       <app-table-skeleton [rows]="8" [cols]="4" />
     } @else if (error()) {

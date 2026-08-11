@@ -37,9 +37,9 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
             <div class="search-field">
               <input class="select" type="text" [ngModel]="userSearchDisplayText()" readonly [placeholder]="editMode() ? 'Cargando usuario...' : 'Seleccione un usuario...'" />
               @if (!editMode()) {
-                <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openUserSearchDialog()" title="Buscar usuario">
-                  <app-icon-search [width]="16" [height]="16" />
-                </button>
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="goToUserSelect()" title="Buscar usuario">
+                <app-icon-search [width]="16" [height]="16" />
+              </button>
               }
             </div>
           </div>
@@ -69,7 +69,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
                   </div>
                 }
               </div>
-              <button class="btn btn-ghost btn-sm" type="button" (click)="openPerfilSearchDialog()" title="Buscar perfiles">
+              <button class="btn btn-ghost btn-sm" type="button" (click)="goToPerfilSelect()" title="Buscar perfiles">
                 <app-icon-search [width]="14" [height]="14" /> Buscar Perfiles
               </button>
             </div>
@@ -195,170 +195,6 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
         </div>
       </div>
     }
-    <p-dialog
-      [(visible)]="showUserSearchDlg"
-      header="Buscar usuario"
-      [modal]="true"
-      [style]="{ width: '1600px', maxWidth: '95vw' }"
-      [contentStyle]="{ maxHeight: '88vh', overflow: 'auto' }"
-      [closable]="true"
-      styleClass="search-dialog user-search-dialog"
-      (onHide)="closeUserSearchDialog()"
-    >
-      <div class="filter-row user-search-filter-row">
-        <div class="field">
-          <label>Usuario</label>
-          <input type="text" class="select" placeholder="Usuario"
-            [ngModel]="userSearchCodigo()" (ngModelChange)="userSearchCodigo.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre"
-            [ngModel]="userSearchNombre()" (ngModelChange)="userSearchNombre.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Apellido</label>
-          <input type="text" class="select" placeholder="Apellido"
-            [ngModel]="userSearchApellido()" (ngModelChange)="userSearchApellido.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Correo</label>
-          <input type="text" class="select" placeholder="Correo"
-            [ngModel]="userSearchCorreo()" (ngModelChange)="userSearchCorreo.set($event); userSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Empresa</label>
-          <input type="text" class="select" placeholder="Empresa"
-            [ngModel]="userSearchEmpresa()" (ngModelChange)="userSearchEmpresa.set($event); userSearchPage.set(1)" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearUserFilters()">Limpiar</button>
-      </div>
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Correo</th>
-              <th>Empresa</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (u of paginatedUsersForSearch(); track u.id) {
-              <tr>
-                <td class="mono">{{ u.username }}</td>
-                <td><div class="cell-strong">{{ u.firstName }}</div></td>
-                <td><div class="cell-strong">{{ u.lastName }}</div></td>
-                <td>{{ u.email }}</td>
-                <td>{{ u.company }}</td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectUserFromDialog(u)">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="6" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <div class="page-controls">
-          <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === 1" (click)="changeUserSearchPage(-1)">Anterior</button>
-        </div>
-        <span>Página {{ userSearchPage() }} de {{ userSearchTotalPages() }} ({{ filteredUsersForSearch().length }} registros)</span>
-        <div class="page-size-selector">
-          <label class="small muted">Registros por página</label>
-          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="userSearchPageSize()" (ngModelChange)="changeUserSearchPageSize($event)">
-            <option [value]="5">5</option>
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" [disabled]="userSearchPage() === userSearchTotalPages()" (click)="changeUserSearchPage(1)">Siguiente</button>
-        </div>
-      </div>
-    </p-dialog>
-    <p-dialog
-      [(visible)]="showPerfilSearchDlg"
-      header="Buscar perfiles"
-      [modal]="true"
-      [style]="{ width: '1100px', maxWidth: '95vw' }"
-      [contentStyle]="{ maxHeight: '88vh', overflow: 'auto' }"
-      [closable]="true"
-      styleClass="search-dialog perfil-search-dialog"
-      (onHide)="cancelPerfilSearch()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" placeholder="Código de perfil"
-            [ngModel]="perfilSearchCodigo()" (ngModelChange)="perfilSearchCodigo.set($event); perfilSearchPage.set(1)" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" placeholder="Nombre de perfil"
-            [ngModel]="perfilSearchNombre()" (ngModelChange)="perfilSearchNombre.set($event); perfilSearchPage.set(1)" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-ghost" (click)="clearPerfilFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th style="width:40px;"></th>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Descripción</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of paginatedPerfilesForSearch(); track p.id) {
-              <tr>
-                <td class="center">
-                  <input type="checkbox" [checked]="tempSelectedPerfilCodigos().includes(p.codigo)"
-                    (change)="togglePerfilSelection(p.codigo)" style="width:16px;height:16px;cursor:pointer;" />
-                </td>
-                <td class="mono">{{ p.codigo }}</td>
-                <td><div class="cell-strong">{{ p.nombre }}</div></td>
-                <td>{{ p.descripcion }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <div class="page-controls">
-          <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === 1" (click)="changePerfilSearchPage(-1)">Anterior</button>
-        </div>
-        <span>Página {{ perfilSearchPage() }} de {{ perfilSearchTotalPages() }} ({{ filteredPerfilesForSearch().length }} registros)</span>
-        <div class="page-size-selector">
-          <label class="small muted">Registros por página</label>
-          <select class="select" style="width: auto; min-width: 60px;" [ngModel]="perfilSearchPageSize()" (ngModelChange)="changePerfilSearchPageSize($event)">
-            <option [value]="5">5</option>
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" [disabled]="perfilSearchPage() === perfilSearchTotalPages()" (click)="changePerfilSearchPage(1)">Siguiente</button>
-        </div>
-      </div>
-
-      <ng-template pTemplate="footer">
-        <button class="btn btn-ghost" (click)="cancelPerfilSearch()">Cancelar</button>
-        <button class="btn btn-primary" (click)="acceptPerfilSearch()">Aceptar ({{ tempSelectedPerfilCodigos().length }})</button>
-      </ng-template>
-    </p-dialog>
     <p-dialog
       [(visible)]="showNodoSearchDlg"
       [header]="'Buscar ' + nodoSearchNivelNombre()"
@@ -603,10 +439,6 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
       overflow-y: auto;
       margin-top: 4px;
     }
-    .user-search-filter-row {
-      grid-template-columns: repeat(5, minmax(140px, 1fr));
-    }
-
     /* Diálogos de búsqueda: más anchos, altura ajustada y controles con ancho fijo */
     ::ng-deep .search-dialog {
       display: flex;
@@ -689,21 +521,6 @@ export class AccessCreateComponent implements OnInit {
   selectedUserId = '';
   editForm = signal({ nodoIds: [] as string[], perfilCodigos: [] as string[] });
   userSearchDisplayText = signal('');
-  showUserSearchDlg = false;
-  userSearchCodigo = signal('');
-  userSearchNombre = signal('');
-  userSearchApellido = signal('');
-  userSearchCorreo = signal('');
-  userSearchEmpresa = signal('');
-  userSearchPage = signal(1);
-  userSearchPageSize = signal(5);
-
-  showPerfilSearchDlg = false;
-  perfilSearchCodigo = signal('');
-  perfilSearchNombre = signal('');
-  perfilSearchPage = signal(1);
-  perfilSearchPageSize = signal(5);
-  tempSelectedPerfilCodigos = signal<string[]>([]);
 
   showNodoSearchDlg = false;
   nodoSearchNivelId = signal('');
@@ -782,44 +599,6 @@ export class AccessCreateComponent implements OnInit {
         (!q || p.codigo.toLowerCase().includes(q) || p.nombre.toLowerCase().includes(q)))
       .slice(0, 8);
   });
-  filteredUsersForSearch = computed(() => {
-    const qCodigo = this.userSearchCodigo().toLowerCase().trim();
-    const qNombre = this.userSearchNombre().toLowerCase().trim();
-    const qApellido = this.userSearchApellido().toLowerCase().trim();
-    const qCorreo = this.userSearchCorreo().toLowerCase().trim();
-    const qEmpresa = this.userSearchEmpresa().toLowerCase().trim();
-    return this.users().filter(u =>
-      (!qCodigo || u.username.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || u.firstName.toLowerCase().includes(qNombre)) &&
-      (!qApellido || u.lastName.toLowerCase().includes(qApellido)) &&
-      (!qCorreo || u.email.toLowerCase().includes(qCorreo)) &&
-      (!qEmpresa || u.company.toLowerCase().includes(qEmpresa))
-    );
-  });
-
-  paginatedUsersForSearch = computed(() => {
-    const start = (this.userSearchPage() - 1) * this.userSearchPageSize();
-    return this.filteredUsersForSearch().slice(start, start + this.userSearchPageSize());
-  });
-
-  userSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsersForSearch().length / this.userSearchPageSize())));
-
-  filteredPerfilesForSearch = computed(() => {
-    const qCodigo = this.perfilSearchCodigo().toLowerCase().trim();
-    const qNombre = this.perfilSearchNombre().toLowerCase().trim();
-    return this.perfiles().filter(p =>
-      (!qCodigo || p.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || p.nombre.toLowerCase().includes(qNombre))
-    );
-  });
-
-  paginatedPerfilesForSearch = computed(() => {
-    const start = (this.perfilSearchPage() - 1) * this.perfilSearchPageSize();
-    return this.filteredPerfilesForSearch().slice(start, start + this.perfilSearchPageSize());
-  });
-
-  perfilSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredPerfilesForSearch().length / this.perfilSearchPageSize())));
-
   selectedPerfilesDetails = computed(() => {
     return this.editForm().perfilCodigos
       .map(codigo => this.perfiles().find(p => p.codigo === codigo))
@@ -963,52 +742,40 @@ export class AccessCreateComponent implements OnInit {
 
   private applyEditMode(users: User[]): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) return;
-    const user = users.find(u => u.id === id);
-    if (!user) {
-      this.toast.error('Error', 'No se encontró el usuario seleccionado.');
-      this.cancel();
-      return;
+    const selectedUserId = this.route.snapshot.queryParamMap.get('selectedUserId');
+    if (id) {
+      const user = users.find(u => u.id === id);
+      if (!user) {
+        this.toast.error('Error', 'No se encontró el usuario seleccionado.');
+        this.cancel();
+        return;
+      }
+      this.editMode.set(true);
+      this.selectedUserId = user.id;
+      this.userSearchDisplayText.set(`${user.username} · ${user.firstName} ${user.lastName}`);
+      this.editForm.set({
+        nodoIds: [...(user.nodoIds || [])],
+        perfilCodigos: [...(user.perfilCodigos || [])],
+      });
+    } else if (selectedUserId) {
+      const user = users.find(u => u.id === selectedUserId);
+      if (!user) {
+        this.toast.error('Error', 'No se encontró el usuario seleccionado.');
+        return;
+      }
+      this.selectUser(user);
     }
-    this.editMode.set(true);
-    this.selectedUserId = user.id;
-    this.userSearchDisplayText.set(`${user.username} · ${user.firstName} ${user.lastName}`);
-    this.editForm.set({
-      nodoIds: [...(user.nodoIds || [])],
-      perfilCodigos: [...(user.perfilCodigos || [])],
-    });
+
+    if (!id) {
+      const perfilCodigos = this.route.snapshot.queryParamMap.getAll('perfilCodigos');
+      if (perfilCodigos.length > 0) {
+        this.editForm.update(f => ({ ...f, perfilCodigos }));
+      }
+    }
   }
 
-  openUserSearchDialog(): void {
-    this.userSearchCodigo.set('');
-    this.userSearchNombre.set('');
-    this.userSearchApellido.set('');
-    this.userSearchCorreo.set('');
-    this.userSearchEmpresa.set('');
-    this.userSearchPage.set(1);
-    this.showUserSearchDlg = true;
-  }
-
-  closeUserSearchDialog(): void {
-    this.showUserSearchDlg = false;
-  }
-
-  clearUserFilters(): void {
-    this.userSearchCodigo.set('');
-    this.userSearchNombre.set('');
-    this.userSearchApellido.set('');
-    this.userSearchCorreo.set('');
-    this.userSearchEmpresa.set('');
-    this.userSearchPage.set(1);
-  }
-
-  changeUserSearchPage(delta: number): void {
-    this.userSearchPage.set(Math.min(Math.max(this.userSearchPage() + delta, 1), this.userSearchTotalPages()));
-  }
-
-  changeUserSearchPageSize(value: any): void {
-    this.userSearchPageSize.set(Number(value));
-    this.userSearchPage.set(1);
+  goToUserSelect(): void {
+    this.router.navigate(['/nuevo-acceso/seleccionar-usuario']);
   }
 
   selectUser(u: User): void {
@@ -1016,53 +783,15 @@ export class AccessCreateComponent implements OnInit {
     this.userSearchDisplayText.set(`${u.username} · ${u.firstName} ${u.lastName}`);
   }
 
-  selectUserFromDialog(u: User): void {
-    this.selectUser(u);
-    this.closeUserSearchDialog();
-  }
-
-  openPerfilSearchDialog(): void {
-    this.perfilSearchCodigo.set('');
-    this.perfilSearchNombre.set('');
-    this.perfilSearchPage.set(1);
-    this.tempSelectedPerfilCodigos.set([...this.editForm().perfilCodigos]);
-    this.showPerfilSearchDlg = true;
-  }
-
-  cancelPerfilSearch(): void {
-    this.showPerfilSearchDlg = false;
-    this.tempSelectedPerfilCodigos.set([]);
-  }
-
-  clearPerfilFilters(): void {
-    this.perfilSearchCodigo.set('');
-    this.perfilSearchNombre.set('');
-    this.perfilSearchPage.set(1);
-  }
-
-  changePerfilSearchPage(delta: number): void {
-    this.perfilSearchPage.set(Math.min(Math.max(this.perfilSearchPage() + delta, 1), this.perfilSearchTotalPages()));
-  }
-
-  changePerfilSearchPageSize(value: any): void {
-    this.perfilSearchPageSize.set(Number(value));
-    this.perfilSearchPage.set(1);
-  }
-
-  togglePerfilSelection(codigo: string): void {
-    const selected = this.tempSelectedPerfilCodigos();
-    if (selected.includes(codigo)) {
-      this.tempSelectedPerfilCodigos.set(selected.filter(c => c !== codigo));
-    } else {
-      this.tempSelectedPerfilCodigos.set([...selected, codigo]);
+  goToPerfilSelect(): void {
+    const queryParams: any = {};
+    const currentCodigos = this.editForm().perfilCodigos;
+    if (currentCodigos.length > 0) {
+      queryParams.perfilCodigos = currentCodigos;
     }
+    this.router.navigate(['/nuevo-acceso/seleccionar-perfil'], { queryParams });
   }
 
-  acceptPerfilSearch(): void {
-    this.editForm.set({ ...this.editForm(), perfilCodigos: [...this.tempSelectedPerfilCodigos()] });
-    this.tempSelectedPerfilCodigos.set([]);
-    this.showPerfilSearchDlg = false;
-  }
   openNodoSearchDialog(nivelId: string, nivelNombre: string): void {
     this.nodoSearchNivelId.set(nivelId);
     this.nodoSearchNivelNombre.set(nivelNombre);

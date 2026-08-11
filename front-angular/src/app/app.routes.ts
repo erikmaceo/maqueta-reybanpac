@@ -96,6 +96,16 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'nuevo-acceso/seleccionar-usuario',
+        loadComponent: () => import('./pages/user-select/user-select.component').then(m => m.UserSelectComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'nuevo-acceso/seleccionar-perfil',
+        loadComponent: () => import('./pages/perfil-select/perfil-select.component').then(m => m.PerfilSelectComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'editar-acceso/:id',
         loadComponent: () => import('./pages/access-create/access-create.component').then(m => m.AccessCreateComponent),
         canActivate: [adminGuard],

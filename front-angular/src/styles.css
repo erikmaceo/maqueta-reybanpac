@@ -1825,6 +1825,7 @@ textarea.input {
   flex: 0 1 264px;
   max-width: 312px !important;
   min-width: 200px !important;
+  gap: 2px;
 }
 
 .search-dialog .filter-row .field input,
@@ -1888,6 +1889,7 @@ textarea.input {
 
 .filter-row .field {
   margin: 0;
+  gap: 2px;
 }
 
 .filter-actions {

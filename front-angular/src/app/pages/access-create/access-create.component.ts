@@ -318,6 +318,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     .form-col > label {
       display: block;
       margin-bottom: 10px;
+      color: #000;
     }
 
     .input-action-row {
@@ -369,6 +370,7 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
     .nivel-label {
       display: block;
       margin-bottom: 6px;
+      color: #000;
     }
     .nodos-box {
       max-height: 120px;

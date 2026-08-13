@@ -65,7 +65,7 @@ import type { User } from '../../shared/models/types';
               <th>Apellido</th>
               <th>Correo</th>
               <th>Empresa</th>
-              <th></th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>

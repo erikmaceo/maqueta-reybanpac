@@ -92,82 +92,30 @@ import type { User, NivelSegregacion, NodoSegregacion, Perfil } from '../../shar
             @for (nivel of niveles(); track nivel.id; let i = $index) {
               <div class="nivel-block">
                 <div class="input-action-row">
-                  @if (i === 0) {
-                    <div class="empresa-autocomplete" style="flex: 1;">
-                      <label class="small muted nivel-label"><b>{{ nivel.nombre }}</b></label>
-                      <input
-                        type="text"
-                        class="select"
-                        placeholder="Buscar empresa..."
-                        [ngModel]="empresaAutoQuery()"
-                        (ngModelChange)="empresaAutoQuery.set($event); empresaAutoOpen.set(true)"
-                        (focus)="empresaAutoOpen.set(true)"
-                        (blur)="closeEmpresaAutocomplete()"
-                      />
-                      @if (empresaAutoOpen() && empresaSuggestions().length > 0) {
-                        <div class="empresa-autocomplete-list">
-                          @for (n of empresaSuggestions(); track n.id) {
-                            <div class="empresa-autocomplete-item" (mousedown)="selectEmpresa(n)">
-                              <span class="mono small">{{ n.codigo }}</span>
-                              <span class="small">{{ n.nombre }}</span>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  } @else if (i === 1) {
-                    <div class="empresa-autocomplete" style="flex: 1;">
-                      <label class="small muted nivel-label"><b>{{ nivel.nombre }}</b></label>
-                      <input
-                        type="text"
-                        class="select"
-                        placeholder="Buscar sucursal..."
-                        [ngModel]="sucursalAutoQuery()"
-                        (ngModelChange)="sucursalAutoQuery.set($event)"
-                        (focus)="onSucursalAutocompleteFocus(nivel.id)"
-                        (blur)="closeSucursalAutocomplete()"
-                        [disabled]="!puedeBuscarNivel(nivel.id)"
-                        [attr.title]="puedeBuscarNivel(nivel.id) ? '' : 'Seleccione primero una ' + getNivelNombre(getNivelPadreId(nivel.id)!)"
-                      />
-                      @if (sucursalAutoOpen() && sucursalSuggestions().length > 0 && puedeBuscarNivel(nivel.id)) {
-                        <div class="empresa-autocomplete-list">
-                          @for (n of sucursalSuggestions(); track n.id) {
-                            <div class="empresa-autocomplete-item" (mousedown)="selectSucursal(n)">
-                              <span class="mono small">{{ n.codigo }}</span>
-                              <span class="small">{{ n.nombre }}</span>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  } @else if (i === 2) {
-                    <div class="empresa-autocomplete" style="flex: 1;">
-                      <label class="small muted nivel-label"><b>{{ nivel.nombre }}</b></label>
-                      <input
-                        type="text"
-                        class="select"
-                        placeholder="Buscar punto de venta..."
-                        [ngModel]="puntoVentaAutoQuery()"
-                        (ngModelChange)="puntoVentaAutoQuery.set($event)"
-                        (focus)="onPuntoVentaAutocompleteFocus(nivel.id)"
-                        (blur)="closePuntoVentaAutocomplete()"
-                        [disabled]="!puedeBuscarNivel(nivel.id)"
-                        [attr.title]="puedeBuscarNivel(nivel.id) ? '' : 'Seleccione primero una ' + getNivelNombre(getNivelPadreId(nivel.id)!)"
-                      />
-                      @if (puntoVentaAutoOpen() && puntoVentaSuggestions().length > 0 && puedeBuscarNivel(nivel.id)) {
-                        <div class="empresa-autocomplete-list">
-                          @for (n of puntoVentaSuggestions(); track n.id) {
-                            <div class="empresa-autocomplete-item" (mousedown)="selectPuntoVenta(n)">
-                              <span class="mono small">{{ n.codigo }}</span>
-                              <span class="small">{{ n.nombre }}</span>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    <span class="small muted"><b>{{ nivel.nombre }}</b></span>
-                  }
+                  <div class="empresa-autocomplete" style="flex: 1;">
+                    <label class="small muted nivel-label"><b>{{ nivel.nombre }}</b></label>
+                    <input
+                      type="text"
+                      class="select"
+                      [attr.placeholder]="'Buscar ' + (nivel.nombre | lowercase) + '...'"
+                      [ngModel]="autoQueries()[nivel.id] || ''"
+                      (ngModelChange)="setAutoQuery(nivel.id, $event)"
+                      (focus)="setAutoOpen(nivel.id, true)"
+                      (blur)="closeAutoAutocomplete(nivel.id)"
+                      [disabled]="!puedeBuscarNivel(nivel.id)"
+                      [attr.title]="puedeBuscarNivel(nivel.id) ? '' : 'Seleccione primero un ' + getNivelNombre(getNivelPadreId(nivel.id)!)"
+                    />
+                    @if (autoOpens()[nivel.id] && (autoSuggestions()[nivel.id] || []).length > 0 && puedeBuscarNivel(nivel.id)) {
+                      <div class="empresa-autocomplete-list">
+                        @for (n of autoSuggestions()[nivel.id]; track n.id) {
+                          <div class="empresa-autocomplete-item" (mousedown)="selectNodo(nivel.id, n)">
+                            <span class="mono small">{{ n.codigo }}</span>
+                            <span class="small">{{ n.nombre }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
                   <button class="btn btn-ghost btn-sm" type="button" (click)="goToNodoSelect(nivel.id, nivel.nombre)" [disabled]="!puedeBuscarNivel(nivel.id)" [title]="puedeBuscarNivel(nivel.id) ? 'Buscar ' + nivel.nombre : 'Seleccione primero un ' + getNivelNombre(getNivelPadreId(nivel.id)!)">
                     <app-icon-search [width]="14" [height]="14" /> Buscar {{ nivel.nombre }}
                   </button>
@@ -431,65 +379,29 @@ export class AccessCreateComponent implements OnInit {
   userSearchDisplayText = signal('');
   private pendingAllNodoIds: string[] | null = null;
 
-  empresaAutoQuery = signal('');
-  empresaAutoOpen = signal(false);
-  empresaAutoTimer: any = null;
-
-  sucursalAutoQuery = signal('');
-  sucursalAutoOpen = signal(false);
-  sucursalAutoTimer: any = null;
-
-  puntoVentaAutoQuery = signal('');
-  puntoVentaAutoOpen = signal(false);
-  puntoVentaAutoTimer: any = null;
+  autoQueries = signal<Record<string, string>>({});
+  autoOpens = signal<Record<string, boolean>>({});
+  autoTimers: Record<string, any> = {};
 
   perfilAutoQuery = signal('');
   perfilAutoOpen = signal(false);
   perfilAutoTimer: any = null;
 
-  primerNivel = computed(() => {
-    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
-    return sorted[0] || null;
-  });
-
-  segundoNivel = computed(() => {
-    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
-    return sorted[1] || null;
-  });
-
-  tercerNivel = computed(() => {
-    const sorted = [...this.niveles()].sort((a, b) => a.orden - b.orden);
-    return sorted[2] || null;
-  });
-
-  empresaSuggestions = computed(() => {
-    const primer = this.primerNivel();
-    if (!primer) return [];
-    const q = this.empresaAutoQuery().toLowerCase().trim();
-    return this.nodos()
-      .filter(n => n.nivelId === primer.id && n.estado === 'ACTIVO' &&
-        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
-      .slice(0, 8);
-  });
-
-  sucursalSuggestions = computed(() => {
-    const segundo = this.segundoNivel();
-    if (!segundo) return [];
-    const q = this.sucursalAutoQuery().toLowerCase().trim();
-    return this.nodos()
-      .filter(n => n.nivelId === segundo.id && n.estado === 'ACTIVO' &&
-        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
-      .slice(0, 8);
-  });
-
-  puntoVentaSuggestions = computed(() => {
-    const tercer = this.tercerNivel();
-    if (!tercer) return [];
-    const q = this.puntoVentaAutoQuery().toLowerCase().trim();
-    return this.nodos()
-      .filter(n => n.nivelId === tercer.id && n.estado === 'ACTIVO' &&
-        (!q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q)))
-      .slice(0, 8);
+  autoSuggestions = computed(() => {
+    const queries = this.autoQueries();
+    const nodos = this.nodos();
+    const result: Record<string, NodoSegregacion[]> = {};
+    for (const nivel of this.niveles()) {
+      const q = (queries[nivel.id] || '').toLowerCase().trim();
+      const parentNivelId = this.getNivelPadreId(nivel.id);
+      const parentIds = parentNivelId ? this.getSelectedParentIds(nivel.id) : [];
+      result[nivel.id] = nodos
+        .filter(n => n.nivelId === nivel.id && n.estado === 'ACTIVO')
+        .filter(n => !parentIds.length || parentIds.includes(n.padreId || ''))
+        .filter(n => !q || n.codigo.toLowerCase().includes(q) || n.nombre.toLowerCase().includes(q))
+        .slice(0, 8);
+    }
+    return result;
   });
 
   perfilSuggestions = computed(() => {
@@ -532,58 +444,30 @@ export class AccessCreateComponent implements OnInit {
       .filter((n): n is NodoSegregacion => !!n && n.nivelId === nivelId);
   };
 
-  selectEmpresa(n: NodoSegregacion): void {
+  selectNodo(nivelId: string, n: NodoSegregacion): void {
     this.editForm.update(f => ({
       ...f,
       nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
     }));
-    this.empresaAutoQuery.set('');
-    this.empresaAutoOpen.set(false);
-    clearTimeout(this.empresaAutoTimer);
+    this.autoQueries.update(q => ({ ...q, [nivelId]: '' }));
+    this.autoOpens.update(o => ({ ...o, [nivelId]: false }));
+    clearTimeout(this.autoTimers[nivelId]);
   }
 
-  selectSucursal(n: NodoSegregacion): void {
-    this.editForm.update(f => ({
-      ...f,
-      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
-    }));
-    this.sucursalAutoQuery.set('');
-    this.sucursalAutoOpen.set(false);
-    clearTimeout(this.sucursalAutoTimer);
+  setAutoQuery(nivelId: string, value: string): void {
+    this.autoQueries.update(q => ({ ...q, [nivelId]: value }));
+    this.autoOpens.update(o => ({ ...o, [nivelId]: true }));
   }
 
-  selectPuntoVenta(n: NodoSegregacion): void {
-    this.editForm.update(f => ({
-      ...f,
-      nodoIds: f.nodoIds.includes(n.id) ? f.nodoIds : [...f.nodoIds, n.id],
-    }));
-    this.puntoVentaAutoQuery.set('');
-    this.puntoVentaAutoOpen.set(false);
-    clearTimeout(this.puntoVentaAutoTimer);
+  setAutoOpen(nivelId: string, open: boolean): void {
+    if (open && !this.puedeBuscarNivel(nivelId)) return;
+    this.autoOpens.update(o => ({ ...o, [nivelId]: open }));
   }
 
-  onSucursalAutocompleteFocus(nivelId: string): void {
-    if (this.puedeBuscarNivel(nivelId)) {
-      this.sucursalAutoOpen.set(true);
-    }
-  }
-
-  onPuntoVentaAutocompleteFocus(nivelId: string): void {
-    if (this.puedeBuscarNivel(nivelId)) {
-      this.puntoVentaAutoOpen.set(true);
-    }
-  }
-
-  closeEmpresaAutocomplete(): void {
-    this.empresaAutoTimer = setTimeout(() => this.empresaAutoOpen.set(false), 150);
-  }
-
-  closeSucursalAutocomplete(): void {
-    this.sucursalAutoTimer = setTimeout(() => this.sucursalAutoOpen.set(false), 150);
-  }
-
-  closePuntoVentaAutocomplete(): void {
-    this.puntoVentaAutoTimer = setTimeout(() => this.puntoVentaAutoOpen.set(false), 150);
+  closeAutoAutocomplete(nivelId: string): void {
+    this.autoTimers[nivelId] = setTimeout(() => {
+      this.autoOpens.update(o => ({ ...o, [nivelId]: false }));
+    }, 150);
   }
 
   addPerfilFromAutocomplete(p: Perfil): void {

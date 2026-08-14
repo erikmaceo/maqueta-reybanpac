@@ -106,6 +106,16 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'nuevo-acceso/seleccionar-empresa',
+        loadComponent: () => import('./pages/nodo-select/nodo-select.component').then(m => m.NodoSelectComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'nuevo-acceso/seleccionar-nodo',
+        loadComponent: () => import('./pages/nodo-select/nodo-select.component').then(m => m.NodoSelectComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'editar-acceso/:id',
         loadComponent: () => import('./pages/access-create/access-create.component').then(m => m.AccessCreateComponent),
         canActivate: [adminGuard],

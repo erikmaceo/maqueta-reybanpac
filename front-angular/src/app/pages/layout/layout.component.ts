@@ -63,6 +63,8 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/nuevo-acceso': { title: 'Nuevo acceso', sub: 'Asignar un nuevo acceso a usuario, perfil y aplicación' },
   '/nuevo-acceso/seleccionar-usuario': { title: 'Seleccionar usuario', sub: 'Busque y seleccione el usuario al que desea asignar el acceso' },
   '/nuevo-acceso/seleccionar-perfil': { title: 'Seleccionar perfiles', sub: 'Busque y seleccione los perfiles a asignar al usuario' },
+  '/nuevo-acceso/seleccionar-empresa': { title: 'Seleccionar empresas', sub: 'Busque y seleccione las empresas a asignar al usuario' },
+  '/nuevo-acceso/seleccionar-nodo': { title: 'Seleccionar nodos', sub: 'Busque y seleccione los nodos de segregación a asignar al usuario' },
   '/editar-acceso/:id': { title: 'Editar acceso', sub: 'Modificar nodos de segregación y perfiles asignados al usuario' },
   '/auditoria': { title: 'Auditoría', sub: 'Trazabilidad de todas las acciones de la consola' },
   '/soluciones': { title: 'Ordenar Soluciones', sub: 'Navegación por aplicación y su jerarquía de seguridades' },
@@ -328,7 +330,7 @@ export class LayoutComponent implements OnInit {
   }
 
   private updateMetaFromPath(): void {
-    const path = this.location.path();
+    const path = this.router.url.split('?')[0];
     let meta = PAGE_META[path];
     if (!meta && path.startsWith('/perfiles/')) {
       meta = PAGE_META['/perfiles/:id/editar'];

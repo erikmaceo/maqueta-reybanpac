@@ -4,6 +4,28 @@
 
  ---
 
+ ## 2026-08-18 — Documento de estimación de desarrollo por pantallas
+
+ ### Resumen
+
+ Se creó un documento de estimación de tiempo de desarrollo por pantalla de la SPA Angular (vista activa), con complejidad por pantalla, tiempos de integración con backend y tiempos de pruebas funcionales, orientado a presentación al cliente.
+
+ ### Cambios realizados
+
+ - Nuevo documento `docs/ESTIMACION-DESARROLLO-PANTALLAS.md` (Markdown) con 21 pantallas agrupadas en 4 módulos, desglose FE/BE/QA, resumen por módulo, fases sugeridas, supuestos y riesgos.
+ - Nuevo documento `docs/ESTIMACION-DESARROLLO-PANTALLAS.docx` (Word) generado con `python-docx` para presentación al cliente.
+ - Estimación total: ~957 horas (536 h frontend, 244 h integración backend, 177 h pruebas), ~6 meses con 1 desarrollador full-stack o ~3 meses con 2.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `docs/ESTIMACION-DESARROLLO-PANTALLAS.md` | Estimación en Markdown |
+ | `docs/ESTIMACION-DESARROLLO-PANTALLAS.docx` | Estimación en Word |
+ | `docs/CHANGES.md` | Este registro |
+
+ ---
+
  ## 2026-08-09 — Diálogo "Editar acceso" convertido en pantalla navegable
 
  ### Resumen

@@ -14,7 +14,11 @@
 
  - Nuevo documento `docs/ESTIMACION-DESARROLLO-PANTALLAS.md` (Markdown) con 21 pantallas agrupadas en 4 módulos, desglose FE/BE/QA, resumen por módulo, fases sugeridas, supuestos y riesgos.
  - Nuevo documento `docs/ESTIMACION-DESARROLLO-PANTALLAS.docx` (Word) generado con `python-docx` para presentación al cliente.
- - Estimación total: ~957 horas (536 h frontend, 244 h integración backend, 177 h pruebas), ~6 meses con 1 desarrollador full-stack o ~3 meses con 2.
+ - Estimación total: ~907 horas (508 h frontend, 232 h integración backend, 167 h pruebas), ~6 meses con 1 desarrollador full-stack o ~3 meses con 2.
+ - Corrección posterior: la pantalla `/soluciones` se documentó como **"Ordenar Soluciones"** (jerarquía por aplicación con drag & drop de módulos/programas/controles y botón "Actualizar Orden", endpoints `/api/seg-*/reordenar`), con estimación Media-Alta de 44 h.
+ - Eliminación posterior: se retiró la pantalla **Autorizador** (bandeja de solicitudes, aprobación/rechazo) del apartado 3.4 y del desglose de integración, por decisión de no implementarse en la etapa de desarrollo; se restaron sus horas (32 FE + 16 BE + 12 QA) y se reordenaron las pantallas de la sección.
+ - Adición posterior: nuevo apartado **4. Diálogos de gestión de entidades** en `docs/ESTIMACION-DESARROLLO-PANTALLAS.md` (y `.docx`) con el desglose de los 33 diálogos de creación/edición/búsqueda/carga masiva (232 h FE + 94 h BE + 67 h QA ≈ 393 h). Estas horas ya están incluidas en la estimación de las pantallas y no se suman al total para evitar doble contabilización. Las secciones siguientes se renumeraron (5→9).
+ - Corrección posterior: Fase 5 ahora incluye Configuración (contenido incompleto); UAT promoted to **Fase 6 — UAT / Estabilización (Pruebas de Aceptación de Usuario)** con ~90 h.
 
  ### Archivos principales modificados
 

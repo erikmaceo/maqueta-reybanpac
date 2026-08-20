@@ -49,9 +49,9 @@ import type { Stats } from '../../shared/models/types';
             <div class="kpi-icon" style="background: var(--blue-50); color: var(--navy-600);">
               <app-icon-systems />
             </div>
-            <div class="kpi-val">{{ stats()!.systems }}</div>
-            <div class="kpi-label">Sistemas gobernados</div>
-            <div class="kpi-foot">{{ stats()!.permissions }} accesos catalogados</div>
+            <div class="kpi-val">{{ aplicacionesCount() }}</div>
+            <div class="kpi-label">Aplicaciones</div>
+            <div class="kpi-foot">Registradas en seguridades</div>
           </div>
           <div class="card kpi">
             <div class="kpi-icon" style="background: #f5f3ff; color: var(--violet-600);">
@@ -219,6 +219,7 @@ export class DashboardComponent implements OnInit {
 
   stats = signal<Stats | null>(null);
   segregationLevelsCount = signal<number>(0);
+  aplicacionesCount = signal<number>(0);
 
   get isAdmin(): boolean {
     return this.auth.isAdmin();
@@ -248,6 +249,11 @@ export class DashboardComponent implements OnInit {
 
     this.api.listNivelesSegregacion().subscribe({
       next: (niveles) => this.segregationLevelsCount.set(niveles.length),
+      error: () => {},
+    });
+
+    this.api.listAplicaciones().subscribe({
+      next: (apps) => this.aplicacionesCount.set(apps.length),
       error: () => {},
     });
   }

@@ -16,16 +16,16 @@ El presente documento detalla la estimación de tiempo de desarrollo **por panta
 2. **Integración con backend** (servicios REST existentes, 88 endpoints, autenticación JWT, LDAP y API Gateway).
 3. **Pruebas funcionales** (QA manual de cada funcionalidad).
 
-La estimación total asciende a **aproximadamente 907 horas** (~113 jornadas de 8 horas), lo que equivale a **~6 meses de un desarrollador full-stack** o **~3 meses con un equipo de 2 desarrolladores full-stack trabajando en paralelo**.
+La estimación total asciende a **aproximadamente 862 horas** (~108 jornadas de 8 horas), lo que equivale a **~5 meses de un desarrollador full-stack** o **~3 meses con un equipo de 2 desarrolladores full-stack trabajando en paralelo**.
 
 ### Cifras clave
 
 | Concepto | Horas | % del total |
 |----------|-------|-------------|
-| Desarrollo frontend | 508 h | 56 % |
-| Integración con backend | 232 h | 26 % |
-| Pruebas funcionales | 167 h | 18 % |
-| **Total** | **907 h** | **100 %** |
+| Desarrollo frontend | 488 h | 57 % |
+| Integración con backend | 216 h | 25 % |
+| Pruebas funcionales | 158 h | 18 % |
+| **Total** | **862 h** | **100 %** |
 
 ---
 
@@ -42,11 +42,11 @@ La estimación total asciende a **aproximadamente 907 horas** (~113 jornadas de 
 
 ## 3. Estimación detallada por pantalla
 
-> **Convención de unidades:** FE = desarrollo frontend, BE = integración con backend, QA = pruebas funcionales.
+> **Convención de unidades:** DF = Desarrollo Frontend, IB = Integración Backend, PF = Pruebas Funcionales.
 
 ### 3.1 Infraestructura y base de la aplicación
 
-| # | Pantalla | Complejidad | FE | BE | QA | Total |
+| # | Pantalla | Complejidad | DF | IB | PF | Total |
 |---|----------|-------------|----|----|----|-------|
 | 1 | **Login y autenticación** (login, sesión, JWT) | Media | 12 h | 4 h | 4 h | **20 h** |
 | 2 | **Layout y navegación** (shell, sidebar, guards, breadcrumbs, roles de acceso) | Media | 24 h | 0 h | 6 h | **30 h** |
@@ -55,44 +55,67 @@ La estimación total asciende a **aproximadamente 907 horas** (~113 jornadas de 
 
 ### 3.2 Catálogos y seguridades
 
-| # | Pantalla | Complejidad | FE | BE | QA | Total |
+| # | Pantalla / Tab | Complejidad | DF | IB | PF | Total |
 |---|----------|-------------|----|----|----|-------|
 | 4 | **Sistemas** (CRUD catálogo de aplicaciones) | Media | 20 h | 8 h | 6 h | **34 h** |
-| 5 | **Seguridades** (pestañas Aplicaciones, Módulos, Programas, Controles y Perfiles; CRUD, permisos, exportación Excel, paginación) | Muy Alta | 60 h | 24 h | 16 h | **100 h** |
+| 5 | **Seguridades** | Muy Alta | 60 h | 24 h | 16 h | **100 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Aplicaciones | | 12 h | 5 h | 3 h | **20 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Módulos | | 12 h | 5 h | 3 h | **20 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Programas | | 14 h | 5 h | 4 h | **23 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Controles | | 10 h | 4 h | 3 h | **17 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Perfiles | | 12 h | 5 h | 3 h | **20 h** |
 | 6 | **Roles** (CRUD, asignación de permisos por rol) | Media-Alta | 24 h | 12 h | 8 h | **44 h** |
-| 7 | **Usuarios** (CRUD, usuarios locales + LDAP, asignación de roles, estado) | Alta | 36 h | 20 h | 12 h | **68 h** |
+| 7 | **Usuarios** | Alta | 36 h | 20 h | 12 h | **68 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Usuarios | | 18 h | 10 h | 6 h | **34 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Accesos por usuario | | 18 h | 10 h | 6 h | **34 h** |
 | 8 | **Perfiles** (lista, detalle, permisos por programa y controles por perfil) | Alta | 32 h | 12 h | 10 h | **54 h** |
 | 9 | **Perfil Form** (crear/editar perfil con programas y permisos Nuevo/Modificar/Eliminar/Imprimir/Consultar) | Alta | 36 h | 12 h | 10 h | **58 h** |
 | | *Subtotal catálogos y seguridades* | | *208 h* | *88 h* | *62 h* | ***358 h*** |
 
 ### 3.3 Segregación de funciones y parámetros
 
-| # | Pantalla | Complejidad | FE | BE | QA | Total |
+| # | Pantalla / Tab | Complejidad | DF | IB | PF | Total |
 |---|----------|-------------|----|----|----|-------|
-| 10 | **Niveles de Segregación** (niveles, nodos en árbol jerárquico, atributos dinámicos por nivel, valores por nodo, exportación Excel) | Muy Alta | 56 h | 24 h | 16 h | **96 h** |
-| 11 | **Parámetros de Configuración** (países, provincias, ciudades, dispositivos móviles, fuentes de selects) | Media | 28 h | 16 h | 10 h | **54 h** |
+| 10 | **Niveles de Segregación** | Muy Alta | 56 h | 24 h | 16 h | **96 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Niveles | | 10 h | 4 h | 3 h | **17 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Atributos | | 10 h | 5 h | 3 h | **18 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Nodos | | 12 h | 5 h | 3 h | **20 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Empresa | | 8 h | 4 h | 2 h | **14 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Sucursal | | 8 h | 3 h | 2 h | **13 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Punto de Venta | | 8 h | 3 h | 3 h | **14 h** |
+| 11 | **Parámetros de Configuración** | Media | 28 h | 16 h | 10 h | **54 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Países | | 7 h | 4 h | 2 h | **13 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Provincias | | 7 h | 4 h | 2 h | **13 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Ciudades | | 7 h | 4 h | 2 h | **13 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Dispositivos móviles | | 7 h | 4 h | 4 h | **15 h** |
 | | *Subtotal segregación y parámetros* | | *84 h* | *40 h* | *26 h* | ***150 h*** |
 
 ### 3.4 Operación: autorización, accesos y directorio
 
-| # | Pantalla | Complejidad | FE | BE | QA | Total |
+| # | Pantalla | Complejidad | DF | IB | PF | Total |
 |---|----------|-------------|----|----|----|-------|
 | 12 | **Accesos** (consulta de accesos por usuario) | Alta | 32 h | 16 h | 12 h | **60 h** |
-| 13 | **Nuevo / Editar Acceso** (asignación de nodos de segregación en árbol y perfiles; alta y edición navegable) | Alta | 32 h | 16 h | 12 h | **60 h** |
+| 13 | **Nuevo / Editar Acceso** | Alta | 32 h | 16 h | 12 h | **60 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Ruta: Seleccionar Usuario (`/nuevo-acceso/seleccionar-usuario`) | | 8 h | 4 h | 3 h | **15 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Ruta: Seleccionar Perfil (`/nuevo-acceso/seleccionar-perfil`) | | 6 h | 3 h | 2 h | **11 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Ruta: Seleccionar Nodo (componente base dinámica `/seleccionar-nodo`) | | 12 h | 6 h | 4 h | **22 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Variante dinámica: Nivel Empresa (`niv_emp`) | | 2 h | 1 h | 1 h | **4 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Variante dinámica: Nivel Sucursal (`niv_suc`) | | 2 h | 1 h | 1 h | **4 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Variante dinámica: Nivel Punto de Venta (`niv_pv`) | | 2 h | 1 h | 1 h | **4 h** |
 | 14 | **Acceso por dispositivo móvil** (validación de dispositivo) | Baja | 12 h | 8 h | 4 h | **24 h** |
-| 15 | **Directorio LDAP** (consulta y sincronización de usuarios del directorio) | Media | 16 h | 16 h | 8 h | **40 h** |
-| 16 | **Selección de Empresa / Selección de Usuario** (diálogos de búsqueda reutilizables) | Baja | 8 h | 4 h | 2 h | **14 h** |
-| 17 | **Ordenar Soluciones** (jerarquía por aplicación con arrastrar y soltar: módulos, programas y controles; botón "Actualizar Orden") | Media-Alta | 24 h | 12 h | 8 h | **44 h** |
-| 18 | **Matriz de Acceso** (carga masiva Excel, plantilla de descarga, resumen de carga) | Media | 20 h | 12 h | 10 h | **42 h** |
-| 19 | **Auditoría** (consulta de logs de actividad, filtros, exportación) | Media | 20 h | 12 h | 8 h | **40 h** |
-| 20 | **Configuración** (wrapper/redirección a Niveles de Segregación) | Baja | 4 h | 0 h | 1 h | **5 h** |
-| | *Subtotal operación* | | *168 h* | *96 h* | *65 h* | ***329 h*** |
+| 15 | **Selección de Empresa / Selección de Usuario** (diálogos de búsqueda reutilizables) | Baja | 8 h | 4 h | 2 h | **14 h** |
+| 16 | **Ordenar Soluciones** (jerarquía por aplicación con arrastrar y soltar: módulos, programas y controles; botón "Actualizar Orden") | Media-Alta | 24 h | 12 h | 8 h | **44 h** |
+| 17 | **Matriz de Acceso** (carga masiva Excel, plantilla de descarga, resumen de carga) | Media | 20 h | 12 h | 10 h | **42 h** |
+| 18 | **Auditoría** | Media | 20 h | 12 h | 8 h | **40 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Consulta de logs | | 12 h | 7 h | 5 h | **24 h** |
+| | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Historial de cargas masivas | | 8 h | 5 h | 3 h | **16 h** |
+| | *Subtotal operación* | | *148 h* | *80 h* | *56 h* | ***284 h*** |
 
 ---
 
 ## 4. Diálogos de gestión de entidades
 
-Los diálogos de creación, edición, búsqueda y carga masiva son componentes que se ejecutan dentro de las pantallas de la sección 3. A continuación se desglosan los **33 diálogos** de gestión de entidades con su propia estimación (FE/BE/QA).
+Los diálogos de creación, edición, búsqueda y carga masiva son componentes que se ejecutan dentro de las pantallas de la sección 3. A continuación se desglosan los **32 diálogos** de gestión de entidades con su propia estimación (DF/IB/PF).
 
 > **Nota:** las horas de estos diálogos ya están incluidas dentro de la estimación de las pantallas correspondientes (sección 3). Se presentan aquí como detalle de su desarrollo y **no se suman** al total general para evitar doble contabilización.
 
@@ -132,12 +155,11 @@ Los diálogos de creación, edición, búsqueda y carga masiva son componentes q
 | 26 | Perfil Form | Buscar programa | Baja | 4 h | 1 h | 1 h | **6 h** |
 | | *Subtotal Perfil Form* | | | *12 h* | *3 h* | *3 h* | ***18 h*** |
 | 27 | User Access | Carga masiva de accesos (Excel) | Media | 8 h | 5 h | 3 h | **16 h** |
-| 28 | Directorio | Importar usuario desde LDAP | Media | 8 h | 4 h | 2 h | **14 h** |
-| 29 | Device Access | Nuevo/Editar Acceso (dispositivo) | Media | 8 h | 4 h | 3 h | **15 h** |
-| 30 | Device Access | Buscar usuario | Baja | 4 h | 1 h | 1 h | **6 h** |
-| 31 | Device Access | Buscar dispositivo móvil | Baja | 4 h | 1 h | 1 h | **6 h** |
+| 28 | Device Access | Nuevo/Editar Acceso (dispositivo) | Media | 8 h | 4 h | 3 h | **15 h** |
+| 29 | Device Access | Buscar usuario | Baja | 4 h | 1 h | 1 h | **6 h** |
+| 30 | Device Access | Buscar dispositivo móvil | Baja | 4 h | 1 h | 1 h | **6 h** |
 | | *Subtotal Device Access* | | | *16 h* | *6 h* | *5 h* | ***27 h*** |
-| | **Total diálogos (33)** | | | **232 h** | **94 h** | **67 h** | **393 h** |
+| | **Total diálogos (32)** | | | **224 h** | **90 h** | **65 h** | **379 h** |
 
 > **Nota:** la pantalla **Autorizador** (eliminada del alcance) contendría 3 diálogos adicionales (Aprobar solicitud, Rechazar solicitud y Nueva solicitud, ~16 h FE / 8 h BE / 6 h QA ≈ 30 h), que no se incluyen.
 
@@ -150,15 +172,15 @@ Los diálogos de creación, edición, búsqueda y carga masiva son componentes q
 | Infraestructura y base | 48 h | 8 h | 14 h | **70 h** |
 | Catálogos y seguridades | 208 h | 88 h | 62 h | **358 h** |
 | Segregación y parámetros | 84 h | 40 h | 26 h | **150 h** |
-| Operación y accesos | 168 h | 96 h | 65 h | **329 h** |
-| **Total** | **508 h** | **232 h** | **167 h** | **907 h** |
+| Operación y accesos | 148 h | 80 h | 56 h | **284 h** |
+| **Total** | **488 h** | **216 h** | **158 h** | **862 h** |
 
 ### Conversión a tiempo calendario
 
 | Equipo | Horas | Jornadas (8 h) | Meses calendario* |
 |--------|-------|----------------|-------------------|
-| 1 desarrollador full-stack | 907 h | ~113 | ~6 meses |
-| 2 desarrolladores full-stack | 907 h | ~57 | ~3 meses |
+| 1 desarrollador full-stack | 862 h | ~108 | ~5 meses |
+| 2 desarrolladores full-stack | 862 h | ~54 | ~3 meses |
 
 \*Considerando un 80 % de eficiencia (reuniones, contextos, imprevistos) y sin contar la fase de pruebas integrales UAT final (~10 % adicional).
 
@@ -174,7 +196,6 @@ La integración se basa en la API existente (88 endpoints: 26 GET, 27 POST, 19 P
 | Segregación dinámica (`/api/niveles-segregacion`, `/api/nodos-segregacion`, `/api/nodos-segregacion/arbol`, atributos) | 24 h | Niveles de Segregación, Nuevo/Editar Acceso |
 | Usuarios y roles (`/api/usuarios`, `/api/roles`, acceso por usuario) | 20 h | Usuarios, Roles, Accesos |
 | Parámetros (países, provincias, ciudades, dispositivos) | 16 h | Parámetros, Acceso por dispositivo |
-| Directorio LDAP | 16 h | Directorio LDAP, Usuarios |
 | Matriz de Acceso (upload XLSX con multer) | 12 h | Matriz de Acceso |
 | Auditoría (logs) | 12 h | Auditoría |
 | Reordenamiento de jerarquía (`PUT /api/seg-*/reordenar`, gateway `/aplicaciones/:codigo/orden`) | 12 h | Ordenar Soluciones |
@@ -190,7 +211,7 @@ La integración se basa en la API existente (88 endpoints: 26 GET, 27 POST, 19 P
 | **Fase 2 — Seguridades** | Sistemas, Seguridades, Roles, Usuarios | 246 h | ~2–3 semanas |
 | **Fase 3 — Perfiles** | Perfiles, Perfil Form | 112 h | ~1 semana |
 | **Fase 4 — Segregación** | Niveles de Segregación, Parámetros | 150 h | ~1–2 semanas |
-| **Fase 5 — Operación** | Accesos, Nuevo/Editar Acceso, Directorio, Dispositivos, Ordenar Soluciones, Matriz, Auditoría, Configuración | 329 h | ~2–3 semanas |
+| **Fase 5 — Operación** | Accesos, Nuevo/Editar Acceso, Dispositivos, Ordenar Soluciones, Matriz, Auditoría | 284 h | ~2–3 semanas |
 | **Fase 6 — UAT / Estabilización** (Pruebas de Aceptación de Usuario) | Pruebas integrales con el cliente, ajustes | ~90 h | ~1 semana |
 
 ---
@@ -198,7 +219,7 @@ La integración se basa en la API existente (88 endpoints: 26 GET, 27 POST, 19 P
 ## 8. Supuestos y riesgos
 
 - **Backend en memoria:** la API actual persiste datos en memoria (maqueta). Al conectar una base de datos real se debe reservar tiempo adicional (~10–15 % del total) para ajustes en consultas y transacciones.
-- **LDAP:** los tiempos asumen acceso al directorio corporativo real de Reybanpac para pruebas.
+- **LDAP:** los tiempos asumen acceso al directorio corporativo real de Reybanpac para pruebas de integración en la pantalla Usuarios (usuarios LDAP).
 - **API Gateway / WSO2:** el despliegue en WSO2 API Manager y Kubernetes no está incluido en las horas por pantalla; es una actividad transversal de infraestructura.
 - **Exportaciones Excel:** estimadas por pantalla; si se requieren plantillas corporativas con formatos específicos, añadir +2 h por pantalla.
 - **Riesgo principal:** cambios de alcance en la definición de segregación de funciones (niveles y atributos) pueden ampliar la Fase 4/5 en hasta un 20 %.

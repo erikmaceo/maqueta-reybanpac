@@ -32,7 +32,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: IconDashboardComponent, end: true, group: 'General' },
   { path: '/niveles-segregacion', label: 'Niveles de Segregación', icon: IconBuildingComponent, group: 'Sistemas y Configuración', adminOnly: true },
-  { path: '/seguridades', label: 'Aplicaciones', icon: IconSecurityComponent, group: 'Sistemas y Configuración', adminOnly: true },
+  { path: '/seguridades', label: 'Seguridades', icon: IconSecurityComponent, group: 'Sistemas y Configuración', adminOnly: true },
+  { path: '/aplicaciones', label: 'Aplicaciones', icon: IconSystemsComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
   { path: '/perfiles', label: 'Perfiles', icon: IconRolesComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/parametros', label: 'Parámetros y Configuración', icon: IconSettingsComponent, group: 'Sistemas y Configuración', adminOnly: true },
@@ -47,6 +48,7 @@ const NAV_ITEMS: NavItem[] = [
 const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/': { title: 'Panel de control', sub: 'Resumen de la gestión centralizada de accesos' },
   '/sistemas': { title: 'Sistemas', sub: 'Aplicativos gobernados y su catálogo de accesos' },
+  '/aplicaciones': { title: 'Aplicaciones', sub: 'Catálogo de aplicaciones registradas en seguridades' },
   '/seguridades': { title: 'Seguridades', sub: 'Configuración de seguridades y políticas de acceso' },
   '/niveles-segregacion': { title: 'Niveles de Segregación', sub: 'Gestión dinámica de la jerarquía de segregación' },
   '/configuracion': { title: 'Niveles de Segregación', sub: 'Gestión dinámica de la jerarquía de segregación' },

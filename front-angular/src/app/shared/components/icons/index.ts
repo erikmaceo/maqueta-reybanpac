@@ -386,6 +386,17 @@ export class IconMobileComponent {
   @Input() height = 16;
 }
 
+@Component({
+  selector: 'app-icon-arrow-left',
+  standalone: true,
+  imports: [CommonModule],
+  template: `<i class="pi pi-arrow-left" [style.font-size.px]="width"></i>`,
+})
+export class IconArrowLeftComponent {
+  @Input() width = 16;
+  @Input() height = 16;
+}
+
 export const ICONS = [
   IconDashboardComponent,
   IconSystemsComponent,
@@ -422,4 +433,5 @@ export const ICONS = [
   IconUploadComponent,
   IconSettingsComponent,
   IconMobileComponent,
+  IconArrowLeftComponent,
 ];

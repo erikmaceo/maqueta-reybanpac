@@ -19,6 +19,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'aplicaciones',
+        loadComponent: () => import('./pages/aplicaciones/aplicaciones.component').then(m => m.AplicacionesComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'seguridades',
         loadComponent: () => import('./pages/security/security.component').then(m => m.SecurityComponent),
         canActivate: [adminGuard],

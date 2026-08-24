@@ -84,8 +84,8 @@ import type { Stats } from '../../shared/models/types';
             <div class="card-head">
               <h3>Roles por sistema</h3>
               @if (isAdmin) {
-                <a routerLink="/sistemas" class="btn btn-ghost btn-sm">
-                  Ver sistemas <app-icon-chevron-right [width]="14" [height]="14" />
+                <a routerLink="/aplicaciones" class="btn btn-ghost btn-sm">
+                  Ver Aplicaciones <app-icon-chevron-right [width]="14" [height]="14" />
                 </a>
               }
             </div>

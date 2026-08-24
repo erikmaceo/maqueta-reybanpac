@@ -32,7 +32,7 @@ export interface Modulo {
   createdAt: string;
 }
 
-export type TipoPrograma = 'Menú' | 'Submenú' | 'Maestro' | 'Transacción' | 'Proceso' | 'Consulta' | 'Reporte' | 'Objeto';
+export type TipoPrograma = 'Menú' | 'Submenú' | 'Tapview' | 'Maestro' | 'Transacción' | 'Proceso' | 'Consulta' | 'Reporte' | 'Objeto';
 
 export interface Programa {
   id: string;
@@ -46,7 +46,7 @@ export interface Programa {
   createdAt: string;
 }
 
-export type TipoControl = 'Caja de Texto' | 'Botón' | 'Check' | 'Combo' | 'Grid' | 'Option' | 'Otros';
+export type TipoControl = 'Caja de Texto' | 'Botón' | 'Check' | 'Combo' | 'Grid' | 'Filtro' | 'Option' | 'Otros';
 
 export interface Control {
   id: string;

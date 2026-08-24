@@ -420,12 +420,18 @@ export const ldapFallbackUsers = [
 // Seguridades — jerarquía Aplicación → Modulo → Programa → Perfil
 // ===========================================================================
 export const aplicaciones: Aplicacion[] = [
+  { id: 'seg_app_auth', codigo: 'APP-AUTHORIZER', nombre: 'Central Access Manager', descripcion: 'Aplicación del sistema CAM (APP-AUTHORIZER). Gestionada por la consola; no admite edición ni eliminación.', estado: 'ACTIVO', nodoIds: ['nod_emp_1'], createdAt: iso(130) },
   { id: 'seg_app_1', codigo: 'APP-SAP', nombre: 'SAP ERP', descripcion: 'SAP ERP Reybanpac — Finanzas, Compras y Logística.', estado: 'ACTIVO', nodoIds: ['nod_emp_1'], createdAt: iso(120) },
   { id: 'seg_app_2', codigo: 'APP-KS8', nombre: 'Kubernetes KS8', descripcion: 'Clúster Kubernetes KS8 (No Productivo).', estado: 'ACTIVO', nodoIds: ['nod_emp_1'], createdAt: iso(100) },
   { id: 'seg_app_3', codigo: 'APP-RPA', nombre: 'RPA Cubolac', descripcion: 'Plataforma de automatización robótica Cubolac.', estado: 'ACTIVO', nodoIds: ['nod_emp_1'], createdAt: iso(80) },
 ];
 
 export const modulos: Modulo[] = [
+  // Módulos del sistema (protegidos contra edición/eliminación)
+  { id: 'seg_mod_seg', codigo: 'MOD-SEG', nombre: 'Seguridades', descripcion: 'Módulo de seguridades de la aplicación del sistema.', appCodigo: 'APP-AUTHORIZER', estado: 'ACTIVO', orden: 0, createdAt: iso(130) },
+  { id: 'seg_mod_perf', codigo: 'MOD-PERF', nombre: 'Perfiles', descripcion: 'Módulo de perfiles de la aplicación del sistema.', appCodigo: 'APP-AUTHORIZER', estado: 'ACTIVO', orden: 1, createdAt: iso(130) },
+  { id: 'seg_mod_nivseg', codigo: 'MOD-NIVSEG', nombre: 'Niveles de Segregación', descripcion: 'Módulo de niveles de segregación de la aplicación del sistema.', appCodigo: 'APP-AUTHORIZER', estado: 'ACTIVO', orden: 2, createdAt: iso(130) },
+  { id: 'seg_mod_usr', codigo: 'MOD-USR', nombre: 'Usuarios', descripcion: 'Módulo de usuarios de la aplicación del sistema.', appCodigo: 'APP-AUTHORIZER', estado: 'ACTIVO', orden: 3, createdAt: iso(130) },
   { id: 'seg_mod_1', codigo: 'MOD-FI', nombre: 'Finanzas (FI)', descripcion: 'Módulo financiero de SAP.', appCodigo: 'APP-SAP', estado: 'ACTIVO', orden: 0, createdAt: iso(90) },
   { id: 'seg_mod_2', codigo: 'MOD-MM', nombre: 'Compras (MM)', descripcion: 'Gestión de compras y materiales SAP.', appCodigo: 'APP-SAP', estado: 'ACTIVO', orden: 1, createdAt: iso(88) },
   { id: 'seg_mod_3', codigo: 'MOD-KS8-OPS', nombre: 'Operación KS8', descripcion: 'Operación del clúster Kubernetes.', appCodigo: 'APP-KS8', estado: 'ACTIVO', orden: 0, createdAt: iso(70) },
@@ -433,6 +439,11 @@ export const modulos: Modulo[] = [
 ];
 
 export const programas: Programa[] = [
+  // Módulo Seguridades de la aplicación del sistema (MOD-SEG / APP-AUTHORIZER)
+  { id: 'seg_prg_seg_tapv', codigo: 'PRG-SEG-TAPV', nombre: 'Seguridades Tapview', descripcion: 'Contenedor de pestañas del módulo Seguridades.', modCodigo: 'MOD-SEG', tipo: 'Tapview', estado: 'ACTIVO', orden: 0, createdAt: iso(130) },
+  { id: 'seg_prg_seg_app', codigo: 'PRG-SEG-APP', nombre: 'Aplicaciones', descripcion: 'Pestaña Aplicaciones: CRUD de aplicaciones.', modCodigo: 'MOD-SEG', tipo: 'Maestro', estado: 'ACTIVO', orden: 1, createdAt: iso(130) },
+  { id: 'seg_prg_seg_mod', codigo: 'PRG-SEG-MOD', nombre: 'Módulos', descripcion: 'Pestaña Módulos: CRUD de módulos por aplicación.', modCodigo: 'MOD-SEG', tipo: 'Maestro', estado: 'ACTIVO', orden: 2, createdAt: iso(130) },
+  { id: 'seg_prg_seg_prg', codigo: 'PRG-SEG-PRG', nombre: 'Programas', descripcion: 'Pestaña Programas: CRUD de programas y sus tipos.', modCodigo: 'MOD-SEG', tipo: 'Maestro', estado: 'ACTIVO', orden: 3, createdAt: iso(130) },
   { id: 'seg_prg_1', codigo: 'PRG-FI-DOCS', nombre: 'Documentos contables', descripcion: 'Consulta de documentos contables FI.', modCodigo: 'MOD-FI', tipo: 'Consulta', estado: 'ACTIVO', orden: 0, createdAt: iso(80) },
   { id: 'seg_prg_2', codigo: 'PRG-MM-PED', nombre: 'Pedidos de compra', descripcion: 'Creación de pedidos de compra MM.', modCodigo: 'MOD-MM', tipo: 'Transacción', estado: 'ACTIVO', orden: 0, createdAt: iso(78) },
   { id: 'seg_prg_3', codigo: 'PRG-KS8-DEP', nombre: 'Deployments', descripcion: 'Gestión de deployments en KS8.', modCodigo: 'MOD-KS8-OPS', tipo: 'Proceso', estado: 'ACTIVO', orden: 0, createdAt: iso(65) },
@@ -489,6 +500,28 @@ export const perfiles: Perfil[] = [
 ];
 
 export const controles: Control[] = [
+  // Controles del programa Aplicaciones (PRG-SEG-APP / MOD-SEG / APP-AUTHORIZER)
+  { id: 'seg_ctrl_seg_app_flt', prgCodigo: 'PRG-SEG-APP', codigo: 'CTRL-SEG-APP-FLT', tipoControl: 'Filtro', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_app_grd', prgCodigo: 'PRG-SEG-APP', codigo: 'CTRL-SEG-APP-GRD', tipoControl: 'Grid', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_app_exp', prgCodigo: 'PRG-SEG-APP', codigo: 'CTRL-SEG-APP-EXP', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 2, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_app_cre', prgCodigo: 'PRG-SEG-APP', codigo: 'CTRL-SEG-APP-CRE', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 3, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_app_edi', prgCodigo: 'PRG-SEG-APP', codigo: 'CTRL-SEG-APP-EDI', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 4, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_app_eli', prgCodigo: 'PRG-SEG-APP', codigo: 'CTRL-SEG-APP-ELI', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 5, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_app_cma', prgCodigo: 'PRG-SEG-APP', codigo: 'CTRL-SEG-APP-CMA', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 6, createdAt: iso(130) },
+  // Controles del programa Módulos (PRG-SEG-MOD / MOD-SEG / APP-AUTHORIZER)
+  { id: 'seg_ctrl_seg_mod_flt', prgCodigo: 'PRG-SEG-MOD', codigo: 'CTRL-SEG-MOD-FLT', tipoControl: 'Filtro', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_mod_grd', prgCodigo: 'PRG-SEG-MOD', codigo: 'CTRL-SEG-MOD-GRD', tipoControl: 'Grid', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_mod_exp', prgCodigo: 'PRG-SEG-MOD', codigo: 'CTRL-SEG-MOD-EXP', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 2, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_mod_cre', prgCodigo: 'PRG-SEG-MOD', codigo: 'CTRL-SEG-MOD-CRE', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 3, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_mod_edi', prgCodigo: 'PRG-SEG-MOD', codigo: 'CTRL-SEG-MOD-EDI', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 4, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_mod_eli', prgCodigo: 'PRG-SEG-MOD', codigo: 'CTRL-SEG-MOD-ELI', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 5, createdAt: iso(130) },
+  // Controles del programa Programas (PRG-SEG-PRG / MOD-SEG / APP-AUTHORIZER)
+  { id: 'seg_ctrl_seg_prg_flt', prgCodigo: 'PRG-SEG-PRG', codigo: 'CTRL-SEG-PRG-FLT', tipoControl: 'Filtro', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_prg_grd', prgCodigo: 'PRG-SEG-PRG', codigo: 'CTRL-SEG-PRG-GRD', tipoControl: 'Grid', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_prg_exp', prgCodigo: 'PRG-SEG-PRG', codigo: 'CTRL-SEG-PRG-EXP', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 2, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_prg_cre', prgCodigo: 'PRG-SEG-PRG', codigo: 'CTRL-SEG-PRG-CRE', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 3, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_prg_edi', prgCodigo: 'PRG-SEG-PRG', codigo: 'CTRL-SEG-PRG-EDI', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 4, createdAt: iso(130) },
+  { id: 'seg_ctrl_seg_prg_eli', prgCodigo: 'PRG-SEG-PRG', codigo: 'CTRL-SEG-PRG-ELI', tipoControl: 'Botón', descripcion: '', estado: 'ACTIVO', log: 'ACTIVO', orden: 5, createdAt: iso(130) },
   { id: 'seg_ctrl_1', prgCodigo: 'PRG-FI-DOCS', codigo: 'CTRL-DOC-NUM', tipoControl: 'Caja de Texto', descripcion: 'Número de documento', estado: 'ACTIVO', log: 'ACTIVO', orden: 0, createdAt: iso(70) },
   { id: 'seg_ctrl_2', prgCodigo: 'PRG-FI-DOCS', codigo: 'CTRL-DOC-BUS', tipoControl: 'Botón', descripcion: 'Buscar documento', estado: 'ACTIVO', log: 'ACTIVO', orden: 1, createdAt: iso(70) },
   { id: 'seg_ctrl_3', prgCodigo: 'PRG-FI-DOCS', codigo: 'CTRL-DOC-GRD', tipoControl: 'Grid', descripcion: 'Resultados de búsqueda', estado: 'ACTIVO', log: 'ACTIVO', orden: 2, createdAt: iso(70) },

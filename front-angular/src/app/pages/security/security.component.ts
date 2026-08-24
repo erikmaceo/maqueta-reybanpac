@@ -23,9 +23,9 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
 
 type Estado = 'ACTIVO' | 'INACTIVO';
 
-const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transacción', 'Proceso', 'Consulta', 'Reporte', 'Objeto'];
+const TIPOS_PROGRAMA: TipoPrograma[] = ['Menú', 'Submenú', 'Tapview', 'Maestro', 'Transacción', 'Proceso', 'Consulta', 'Reporte', 'Objeto'];
 
-const TIPOS_CONTROL: TipoControl[] = ['Caja de Texto', 'Botón', 'Check', 'Combo', 'Grid', 'Option', 'Otros'];
+const TIPOS_CONTROL: TipoControl[] = ['Caja de Texto', 'Botón', 'Check', 'Combo', 'Grid', 'Filtro', 'Option', 'Otros'];
 
 interface ControlRow {
   codigo: string;
@@ -121,14 +121,18 @@ interface ControlRow {
                       </span>
                     </td>
                     <td>
-                      <div class="cell-actions">
-                        <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openAppDialog(a)">
-                          <app-icon-edit [width]="15" [height]="15" />
-                        </button>
-                        <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteApp(a)">
-                          <app-icon-trash [width]="15" [height]="15" />
-                        </button>
-                      </div>
+                      @if (esAppSistema(a)) {
+                        <span class="badge badge-blue" title="Aplicación del sistema: no admite edición ni eliminación">Sistema</span>
+                      } @else {
+                        <div class="cell-actions">
+                          <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openAppDialog(a)">
+                            <app-icon-edit [width]="15" [height]="15" />
+                          </button>
+                          <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteApp(a)">
+                            <app-icon-trash [width]="15" [height]="15" />
+                          </button>
+                        </div>
+                      }
                     </td>
                   </tr>
                 } @empty {
@@ -203,14 +207,18 @@ interface ControlRow {
                       </span>
                     </td>
                     <td>
-                      <div class="cell-actions">
-                        <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openModDialog(m)">
-                          <app-icon-edit [width]="15" [height]="15" />
-                        </button>
-                        <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteMod(m)">
-                          <app-icon-trash [width]="15" [height]="15" />
-                        </button>
-                      </div>
+                      @if (esModuloSistema(m)) {
+                        <span class="badge badge-blue" title="Módulo del sistema: no admite edición ni eliminación">Sistema</span>
+                      } @else {
+                        <div class="cell-actions">
+                          <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openModDialog(m)">
+                            <app-icon-edit [width]="15" [height]="15" />
+                          </button>
+                          <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeleteMod(m)">
+                            <app-icon-trash [width]="15" [height]="15" />
+                          </button>
+                        </div>
+                      }
                     </td>
                   </tr>
                 } @empty {
@@ -287,14 +295,18 @@ interface ControlRow {
                       </span>
                     </td>
                     <td>
-                      <div class="cell-actions">
-                        <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openPrgDialog(p)">
-                          <app-icon-edit [width]="15" [height]="15" />
-                        </button>
-                        <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeletePrg(p)">
-                          <app-icon-trash [width]="15" [height]="15" />
-                        </button>
-                      </div>
+                      @if (esProgramaSistema(p)) {
+                        <span class="badge badge-blue" title="Programa de la aplicación del sistema: no admite edición ni eliminación">Sistema</span>
+                      } @else {
+                        <div class="cell-actions">
+                          <button class="btn btn-ghost btn-sm btn-icon" title="Editar" (click)="openPrgDialog(p)">
+                            <app-icon-edit [width]="15" [height]="15" />
+                          </button>
+                          <button class="btn btn-danger btn-sm btn-icon" title="Eliminar" (click)="confirmDeletePrg(p)">
+                            <app-icon-trash [width]="15" [height]="15" />
+                          </button>
+                        </div>
+                      }
                     </td>
                   </tr>
                 } @empty {
@@ -1306,6 +1318,22 @@ export class SecurityComponent implements OnInit {
   blankPrg() { return { codigo: '', nombre: '', descripcion: '', appCodigo: '', modCodigo: '', tipo: '' as TipoPrograma, estado: 'ACTIVO' as Estado }; }
 
 // ============ APLICACIÓN CRUD ============
+  readonly APP_SISTEMA_CODIGO = 'APP-AUTHORIZER';
+  readonly MODULOS_SISTEMA_CODIGOS = ['MOD-SEG', 'MOD-PERF', 'MOD-NIVSEG', 'MOD-USR'];
+
+  esAppSistema(a: Aplicacion): boolean {
+    return a.codigo === this.APP_SISTEMA_CODIGO;
+  }
+
+  esModuloSistema(m: Modulo): boolean {
+    return this.MODULOS_SISTEMA_CODIGOS.includes(m.codigo);
+  }
+
+  esProgramaSistema(p: Programa): boolean {
+    const mod = this.modulos().find(m => m.codigo === p.modCodigo);
+    return !!mod && mod.appCodigo === this.APP_SISTEMA_CODIGO;
+  }
+
   openAppDialog(a?: Aplicacion): void {
     const padreIds = new Set(this.nodosSegregacionPadresActivos().map(n => n.id));
     if (a) {

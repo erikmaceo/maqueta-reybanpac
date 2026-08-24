@@ -4,6 +4,162 @@
 
  ---
 
+ ## 2026-08-24 — Controles de los programas del módulo Seguridades
+
+ ### Resumen
+
+ Se agregaron al seed los controles de los 3 programas tipo Maestro del módulo `MOD-SEG` (APP-AUTHORIZER). Cada tab (Aplicaciones, Módulos, Programas) tiene un control Filtro (búsqueda), un Grid (tabla de consulta) y 4 botones (Exportar, Crear, Editar, Eliminar); el tab Aplicaciones tiene además el botón "Carga Masiva". Todos sin descripción, con `estado: ACTIVO` y `log: ACTIVO`.
+
+ ### Cambios realizados
+
+ - **Seed** (`backend/src/seed.ts`):
+   - `PRG-SEG-APP` (7 controles): `CTRL-SEG-APP-FLT` (Filtro), `CTRL-SEG-APP-GRD` (Grid), `CTRL-SEG-APP-EXP/CRE/EDI/ELI` (Botón) y `CTRL-SEG-APP-CMA` (Botón "Carga Masiva").
+   - `PRG-SEG-MOD` (6 controles): `CTRL-SEG-MOD-FLT/GRD/EXP/CRE/EDI/ELI`.
+   - `PRG-SEG-PRG` (6 controles): `CTRL-SEG-PRG-FLT/GRD/EXP/CRE/EDI/ELI`.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/seed.ts` | 19 controles nuevos distribuidos en los 3 programas Maestro |
+ | `docs/CHANGES.md` | Este registro |
+
+ ### Validación
+ - `tsc --noEmit` backend OK; contenedor reconstruido; `GET /api/seg-controles` muestra 7 controles para PRG-SEG-APP y 6 para PRG-SEG-MOD y PRG-SEG-PRG, ordenados por `orden`.
+
+ ---
+
+ ## 2026-08-24 — Nuevo tipo de control "Filtro"
+
+ ### Resumen
+
+ Se agregó el tipo de control **Filtro** al catálogo de tipos de control del apartado "Controles del programa" (diálogo de alta/edición de Programa en Seguridades), ubicado debajo de la opción "Grid".
+
+ ### Cambios realizados
+
+ - `backend/src/types.ts`: `TipoControl` incluye `'Filtro'` después de `'Grid'`.
+ - `front-angular/src/app/shared/models/types.ts`: tipo sincronizado.
+ - `front-angular/src/app/pages/security/security.component.ts`: catálogo `TIPOS_CONTROL` del diálogo con `'Filtro'`.
+
+ ### Validación
+ - `tsc --noEmit` backend OK; `ng build` frontend OK; contenedor reconstruido.
+
+ ---
+
+ ## 2026-08-24 — Protección de programas de la aplicación del sistema
+
+ ### Resumen
+
+ Los programas que pertenecen a módulos de la aplicación del sistema `APP-AUTHORIZER` (herederos por jerarquía App → Módulo → Programa) ahora no se pueden editar ni eliminar. La regla se resuelve por jerarquía (el programa hereda la protección de su aplicación), no por lista fija de códigos.
+
+ ### Cambios realizados
+
+ #### Backend (`backend/src/index.ts`)
+ - Helper `esProgramaDeAppSistema(prgCodigo)`: resuelve el módulo del programa y verifica `appCodigo === 'APP-AUTHORIZER'`.
+ - `PUT /api/seg-programas/:id` y `DELETE /api/seg-programas/:id`: 403 si el programa pertenece a la app del sistema.
+ - Carga masiva (`POST /api/seg-aplicaciones/bulk`): filas PROGRAMA cuyo módulo pertenece a la app del sistema generan error por fila (cubre crear y modificar).
+
+ #### Frontend (`front-angular/src/app/pages/security/security.component.ts`)
+ - Nuevo método `esProgramaSistema(p)`: busca el módulo del programa en el signal `modulos()` y compara `appCodigo`.
+ - Tab Programas: los programas protegidos muestran badge "Sistema" en lugar de los botones Editar/Eliminar.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/index.ts` | Protección PUT/DELETE/bulk para programas de la app del sistema |
+ | `front-angular/src/app/pages/security/security.component.ts` | Badge "Sistema" y ocultación de acciones en tab Programas |
+ | `docs/CHANGES.md` | Este registro |
+
+ ### Validación
+ - `tsc --noEmit` backend OK; `ng build` frontend OK; contenedor reconstruido.
+ - API real: PUT/DELETE sobre `PRG-SEG-TAPV` → 403; bulk con programa en `MOD-SEG` → error por fila; PUT sobre `PRG-FI-DOCS` (no protegido) → 200.
+
+ ---
+
+ ## 2026-08-24 — Programas del módulo Seguridades (APP-AUTHORIZER)
+
+ ### Resumen
+
+ Se agregaron al seed los programas del módulo `MOD-SEG` (Seguridades, de la aplicación del sistema `APP-AUTHORIZER`): un programa tipo **Tapview** que representa el contenedor de pestañas de la pantalla Seguridades y tres programas tipo **Maestro**, uno por pestaña (Aplicaciones, Módulos y Programas).
+
+ ### Cambios realizados
+
+ - **Seed** (`backend/src/seed.ts`) — programas bajo `MOD-SEG`:
+   - `PRG-SEG-TAPV` · "Seguridades Tapview" · tipo `Tapview` · orden 0
+   - `PRG-SEG-APP` · "Aplicaciones" · tipo `Maestro` · orden 1
+   - `PRG-SEG-MOD` · "Módulos" · tipo `Maestro` · orden 2
+   - `PRG-SEG-PRG` · "Programas" · tipo `Maestro` · orden 3
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/seed.ts` | 4 programas del módulo Seguridades |
+ | `docs/CHANGES.md` | Este registro |
+
+ ### Validación
+ - `tsc --noEmit` backend OK; contenedor reconstruido; `GET /api/seg-programas` muestra los 4 programas con su tipo y orden.
+
+ ---
+
+ ## 2026-08-24 — Nuevo tipo de programa "Tapview"
+
+ ### Resumen
+
+ Se agregó el tipo de programa **Tapview** al catálogo de tipos, ubicado debajo de "Submenú". Aplica al diálogo de alta/edición de Programas en Seguridades y a la validación del backend (incluida la carga masiva).
+
+ ### Cambios realizados
+
+ - `backend/src/types.ts`: `TipoPrograma` incluye `'Tapview'` después de `'Submenú'`.
+ - `backend/src/index.ts`: `TIPOS_PROGRAMA_VALIDOS` con `'Tapview'` (valida POST/PUT y carga masiva).
+ - `front-angular/src/app/shared/models/types.ts`: tipo sincronizado.
+ - `front-angular/src/app/pages/security/security.component.ts`: catálogo `TIPOS_PROGRAMA` del diálogo con `'Tapview'`.
+ - Nota: al no ser Menú/Submenú, un programa Tapview admite controles asociados.
+
+ ### Validación
+ - `tsc --noEmit` backend OK; `ng build` frontend OK; contenedor reconstruido; POST de prueba con `tipo: 'Tapview'` aceptado por el backend.
+
+ ---
+
+ ## 2026-08-24 — Aplicación del sistema APP-AUTHORIZER con módulos protegidos
+
+ ### Resumen
+
+ Se agregó la aplicación del sistema `APP-AUTHORIZER` (la propia consola CAM) al seed de Seguridades, con 4 módulos iniciales protegidos contra edición y eliminación. La protección se aplica en frontend (sin botones de editar/eliminar, badge "Sistema") y en backend (PUT/DELETE rechazados con 403, incluida la carga masiva).
+
+ ### Cambios realizados
+
+ #### Backend
+ - **Seed** (`backend/src/seed.ts`):
+   - Nueva aplicación `APP-AUTHORIZER` / "Central Access Manager" (`seg_app_auth`), primera en la lista para aparecer por defecto en la consulta.
+   - Nuevos módulos del sistema: `MOD-SEG` (Seguridades), `MOD-PERF` (Perfiles), `MOD-NIVSEG` (Niveles de Segregación), `MOD-USR` (Usuarios), con orden 0–3.
+ - **Protecciones** (`backend/src/index.ts`):
+   - Constantes `APP_SISTEMA_CODIGO` y `MODULOS_SISTEMA_CODIGOS`.
+   - `PUT /api/seg-aplicaciones/:id` y `DELETE /api/seg-aplicaciones/:id` retornan 403 si el código es `APP-AUTHORIZER`.
+   - `PUT /api/seg-modulos/:id` y `DELETE /api/seg-modulos/:id` retornan 403 para los módulos del sistema.
+   - Carga masiva (`POST /api/seg-aplicaciones/bulk`): filas con códigos protegidos generan error por fila y no se procesan.
+
+ #### Frontend
+ - **Seguridades** (`front-angular/src/app/pages/security/security.component.ts`):
+   - Métodos `esAppSistema()` y `esModuloSistema()` + constantes de códigos protegidos.
+   - Tabs Aplicaciones y Módulos: las entidades del sistema muestran badge "Sistema" en lugar de los botones Editar/Eliminar.
+
+ ### Archivos principales modificados
+
+ | Archivo | Descripción |
+ |---------|-------------|
+ | `backend/src/seed.ts` | Aplicación APP-AUTHORIZER y módulos del sistema |
+ | `backend/src/index.ts` | Protecciones PUT/DELETE/bulk para app y módulos del sistema |
+ | `front-angular/src/app/pages/security/security.component.ts` | Badge "Sistema" y ocultación de acciones para entidades protegidas |
+ | `docs/CHANGES.md` | Este registro |
+
+ ### Validación
+ - `npm run typecheck` en backend: OK. `ng build` en frontend: OK (warnings preexistentes).
+ - Contenedor `cam-backend` reconstruido; verificado con API real: seed visible y PUT/DELETE bloqueados con 403; carga masiva rechaza filas protegidas por fila.
+
+ ---
+
  ## 2026-08-18 — Documento de estimación de desarrollo por pantallas
 
  ### Resumen

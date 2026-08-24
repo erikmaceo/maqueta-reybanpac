@@ -805,6 +805,10 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: nowIso() }));
 // ===========================================================================
 
 // --- Aplicaciones ---
+// --- Aplicaciones ---
+const APP_SISTEMA_CODIGO = 'APP-AUTHORIZER';
+const MODULOS_SISTEMA_CODIGOS = ['MOD-SEG', 'MOD-PERF', 'MOD-NIVSEG', 'MOD-USR'];
+
 app.get('/api/seg-aplicaciones', requireAuth, (_req, res) => res.json(db.aplicaciones));
 
 app.post('/api/seg-aplicaciones', requireAuth, requireGlobalAdmin, (req, res) => {
@@ -825,6 +829,8 @@ app.post('/api/seg-aplicaciones', requireAuth, requireGlobalAdmin, (req, res) =>
 app.put('/api/seg-aplicaciones/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const app = db.aplicaciones.find((a) => a.id === req.params.id);
   if (!app) return res.status(404).json({ error: 'Aplicación no encontrada.' });
+  if (app.codigo === APP_SISTEMA_CODIGO)
+    return res.status(403).json({ error: `La aplicación del sistema "${APP_SISTEMA_CODIGO}" no se puede editar.` });
   const { codigo, nombre, descripcion, estado, nodoIds } = req.body || {};
   if (codigo && db.aplicaciones.some((a) => a.id !== app.id && a.codigo === codigo))
     return res.status(409).json({ error: 'El código ya existe.' });
@@ -844,6 +850,8 @@ app.put('/api/seg-aplicaciones/:id', requireAuth, requireGlobalAdmin, (req, res)
 app.delete('/api/seg-aplicaciones/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const idx = db.aplicaciones.findIndex((a) => a.id === req.params.id);
   if (idx < 0) return res.status(404).json({ error: 'Aplicación no encontrada.' });
+  if (db.aplicaciones[idx].codigo === APP_SISTEMA_CODIGO)
+    return res.status(403).json({ error: `La aplicación del sistema "${APP_SISTEMA_CODIGO}" no se puede eliminar.` });
   const [removed] = db.aplicaciones.splice(idx, 1);
   // Cascada: eliminar hijos
   const modCodigos = db.modulos.filter((m) => m.appCodigo === removed.codigo).map((m) => m.codigo);
@@ -898,6 +906,8 @@ app.put('/api/seg-modulos/reordenar', requireAuth, requireGlobalAdmin, (req, res
 app.put('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const mod = db.modulos.find((m) => m.id === req.params.id);
   if (!mod) return res.status(404).json({ error: 'Módulo no encontrado.' });
+  if (MODULOS_SISTEMA_CODIGOS.includes(mod.codigo))
+    return res.status(403).json({ error: `El módulo del sistema "${mod.codigo}" no se puede editar.` });
   const { codigo, nombre, descripcion, appCodigo, estado, orden } = req.body || {};
   if (codigo && db.modulos.some((m) => m.id !== mod.id && m.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
   Object.assign(mod, definedOnly({ codigo, nombre, descripcion, appCodigo, estado, orden }));
@@ -908,6 +918,8 @@ app.put('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) => {
 app.delete('/api/seg-modulos/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const idx = db.modulos.findIndex((m) => m.id === req.params.id);
   if (idx < 0) return res.status(404).json({ error: 'Módulo no encontrado.' });
+  if (MODULOS_SISTEMA_CODIGOS.includes(db.modulos[idx].codigo))
+    return res.status(403).json({ error: `El módulo del sistema "${db.modulos[idx].codigo}" no se puede eliminar.` });
   const [removed] = db.modulos.splice(idx, 1);
   const prgCodigos = db.programas.filter((p) => p.modCodigo === removed.codigo).map((p) => p.codigo);
   db.programas = db.programas.filter((p) => p.modCodigo !== removed.codigo);
@@ -972,9 +984,18 @@ app.put('/api/seg-programas/reordenar', requireAuth, requireGlobalAdmin, (req, r
   res.json({ ok: true });
 });
 
+function esProgramaDeAppSistema(prgCodigo: string): boolean {
+  const prg = db.programas.find((p) => p.codigo === prgCodigo);
+  if (!prg) return false;
+  const mod = db.modulos.find((m) => m.codigo === prg.modCodigo);
+  return !!mod && mod.appCodigo === APP_SISTEMA_CODIGO;
+}
+
 app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const prg = db.programas.find((p) => p.id === req.params.id);
   if (!prg) return res.status(404).json({ error: 'Programa no encontrado.' });
+  if (esProgramaDeAppSistema(prg.codigo))
+    return res.status(403).json({ error: `El programa "${prg.codigo}" pertenece a la aplicación del sistema "${APP_SISTEMA_CODIGO}" y no se puede editar.` });
   const { codigo, nombre, descripcion, modCodigo, tipo, estado, controles, orden } = req.body || {};
   if (codigo && db.programas.some((p) => p.id !== prg.id && p.codigo === codigo)) return res.status(409).json({ error: 'El código ya existe.' });
   const oldCodigo = prg.codigo;
@@ -1003,6 +1024,8 @@ app.put('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) =>
 app.delete('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res) => {
   const idx = db.programas.findIndex((p) => p.id === req.params.id);
   if (idx < 0) return res.status(404).json({ error: 'Programa no encontrado.' });
+  if (esProgramaDeAppSistema(db.programas[idx].codigo))
+    return res.status(403).json({ error: `El programa "${db.programas[idx].codigo}" pertenece a la aplicación del sistema "${APP_SISTEMA_CODIGO}" y no se puede eliminar.` });
   const [removed] = db.programas.splice(idx, 1);
   db.perfiles = db.perfiles.filter((p) => !p.programas.some((pp) => pp.prgCodigo === removed.codigo));
   db.controles = db.controles.filter((c) => c.prgCodigo !== removed.codigo);
@@ -1010,7 +1033,7 @@ app.delete('/api/seg-programas/:id', requireAuth, requireGlobalAdmin, (req, res)
   res.json({ ok: true });
 });
 
-const TIPOS_PROGRAMA_VALIDOS: TipoPrograma[] = ['Menú', 'Submenú', 'Maestro', 'Transacción', 'Proceso', 'Consulta', 'Reporte', 'Objeto'];
+const TIPOS_PROGRAMA_VALIDOS: TipoPrograma[] = ['Menú', 'Submenú', 'Tapview', 'Maestro', 'Transacción', 'Proceso', 'Consulta', 'Reporte', 'Objeto'];
 
 interface BulkSeguridadRow {
   row: number;
@@ -1065,6 +1088,10 @@ app.post('/api/seg-aplicaciones/bulk', requireAuth, requireGlobalAdmin, (req, re
     }
 
     if (tipo === 'APLICACION') {
+      if (codigo.toLowerCase() === APP_SISTEMA_CODIGO.toLowerCase()) {
+        errors.push({ row: r.row, message: `La aplicación del sistema "${APP_SISTEMA_CODIGO}" no puede ser creada ni modificada por carga masiva.` });
+        continue;
+      }
       const existing = db.aplicaciones.find(a => a.codigo.toLowerCase() === codigo.toLowerCase());
       if (existing) {
         existing.nombre = nombre;
@@ -1082,6 +1109,10 @@ app.post('/api/seg-aplicaciones/bulk', requireAuth, requireGlobalAdmin, (req, re
       if (!appCodigo) { errors.push({ row: r.row, message: 'El campo APP_CODIGO es obligatorio para un módulo.' }); continue; }
       const app = db.aplicaciones.find(a => a.codigo.toLowerCase() === appCodigo.toLowerCase());
       if (!app) { errors.push({ row: r.row, message: `La aplicación "${appCodigo}" no existe.` }); continue; }
+      if (MODULOS_SISTEMA_CODIGOS.some(c => c.toLowerCase() === codigo.toLowerCase())) {
+        errors.push({ row: r.row, message: `El módulo del sistema "${codigo}" no puede ser creado ni modificado por carga masiva.` });
+        continue;
+      }
       const existing = db.modulos.find(m => m.codigo.toLowerCase() === codigo.toLowerCase());
       if (existing) {
         if (existing.appCodigo.toLowerCase() !== appCodigo.toLowerCase()) {
@@ -1103,6 +1134,10 @@ app.post('/api/seg-aplicaciones/bulk', requireAuth, requireGlobalAdmin, (req, re
       if (!modCodigo) { errors.push({ row: r.row, message: 'El campo MOD_CODIGO es obligatorio para un programa.' }); continue; }
       const mod = db.modulos.find(m => m.codigo.toLowerCase() === modCodigo.toLowerCase());
       if (!mod) { errors.push({ row: r.row, message: `El módulo "${modCodigo}" no existe.` }); continue; }
+      if (mod.appCodigo === APP_SISTEMA_CODIGO) {
+        errors.push({ row: r.row, message: `El módulo "${mod.codigo}" pertenece a la aplicación del sistema "${APP_SISTEMA_CODIGO}" y no admite programas por carga masiva.` });
+        continue;
+      }
       if (appCodigo && mod.appCodigo.toLowerCase() !== appCodigo.toLowerCase()) {
         errors.push({ row: r.row, message: `El módulo "${modCodigo}" no pertenece a la aplicación "${appCodigo}".` });
         continue;

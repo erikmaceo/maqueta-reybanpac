@@ -60,9 +60,10 @@ docker ps --filter "name=cam-backend" --format "{{.Status}}"
 | `/configuracion` | redirectTo: `/niveles-segregacion` | — | Redirección por compatibilidad |
 | `/parametros` | ParametersConfigurationComponent | adminGuard | Países, provincias y ciudades |
 | `/roles` | RolesComponent | adminGuard | Roles y accesos |
-| `/usuarios` | UsersComponent | adminGuard | Usuarios |
-| `/acceso-usuarios` | UserAccessComponent | adminGuard | Nodos y perfiles por usuario |
-| `/matriz-acceso` | MatrixAccessComponent | adminGuard | Carga masiva Excel |
+| `/perfiles` | PerfilesComponent | adminGuard | Lista de Perfiles (con Carga Masiva) |
+| `/perfiles/nuevo` · `/perfiles/:id/editar` | PerfilFormComponent | adminGuard | Crear/editar Perfil |
+| `/nuevo-acceso` · `/editar-acceso/:id` | AccessCreateComponent | adminGuard | Nuevo/editar acceso por usuario |
+| `/usuarios` | UsersComponent | adminGuard | Usuarios (incluye tab Accesos por usuario con Carga Masiva) |
 | `/directorio` | DirectoryComponent | adminGuard | Directorio LDAP |
 | `/soluciones` | SolucionesComponent | adminGuard | Vista jerárquica por app |
 | `/soluciones/:codigo` | SolucionesComponent | adminGuard | Jerarquía de una app específica |
@@ -90,6 +91,12 @@ docker ps --filter "name=cam-backend" --format "{{.Status}}"
 | POST | `/api/seg-perfiles` | Crear perfil |
 | PUT | `/api/seg-perfiles/:id` | Actualizar perfil |
 | DELETE | `/api/seg-perfiles/:id` | Eliminar perfil |
+| POST | `/api/seg-aplicaciones/bulk` | Carga masiva: upsert de aplicaciones, módulos y programas |
+| POST | `/api/seg-perfiles/bulk` | Carga masiva: upsert de perfiles con permisos |
+| POST | `/api/nodos-segregacion/bulk` | Carga masiva: upsert de nodos de segregación |
+| POST | `/api/user-access/bulk` | Carga masiva: accesos por usuario |
+| GET | `/api/bulk-uploads` | Historial de cargas masivas |
+| POST | `/api/bulk-uploads/registro` | Registro de cargas rechazadas (auditoría) |
 | GET | `/api/niveles-segregacion` | Listar niveles de segregación |
 | POST | `/api/niveles-segregacion` | Crear nivel de segregación |
 | PUT | `/api/niveles-segregacion/:id` | Actualizar nivel de segregación |
@@ -99,34 +106,65 @@ docker ps --filter "name=cam-backend" --format "{{.Status}}"
 | POST | `/api/nodos-segregacion` | Crear nodo de segregación |
 | PUT | `/api/nodos-segregacion/:id` | Actualizar nodo de segregación |
 | DELETE | `/api/nodos-segregacion/:id` | Eliminar nodo de segregación |
-| POST | `/api/seg-matriz/upload` | Carga masiva desde Excel |
 
-## Plantilla Excel — Matriz de Acceso
+## Cargas Masivas
 
-18 columnas (A-R):
+La carga masiva única desde "Matriz de Acceso" (`POST /api/seg-matriz/upload`) fue reemplazada por 4 apartados desacoplados con el botón **"Carga Masiva"**:
 
-| Col | Campo | Obligatorio | Descripción |
-|-----|-------|-------------|-------------|
-| A | usr_codigo | Sí | Código único del usuario |
-| B | usr_nombre | Sí | Nombre del usuario |
-| C | usr_email | No | Email del usuario |
-| D | usr_estado | No | ACTIVE o INACTIVE. Default: ACTIVE |
-| E | app_codigo | Sí | Código único de la aplicación |
-| F | app_nombre | Sí | Nombre de la aplicación |
-| G | app_descripcion | No | Descripción de la aplicación |
-| H | mod_codigo | Sí | Código único del módulo |
-| I | mod_nombre | Sí | Nombre del módulo |
-| J | mod_descripcion | No | Descripción del módulo |
-| K | prg_codigo | Sí | Código único del programa |
-| L | prg_nombre | Sí | Nombre del programa |
-| M | prg_descripcion | No | Descripción del programa |
-| N | prg_tipo | No | Tipo: Menú, Submenú, Maestro, Transacción, Proceso, Consulta, Reporte, Objeto. Default: Transacción |
-| O | perf_codigo | Sí | Código único del perfil |
-| P | perf_nombre | Sí | Nombre del perfil |
-| Q | perf_descripcion | No | Descripción del perfil |
-| R | estado | No | ACTIVO o INACTIVO. Default: ACTIVO |
+| Apartado | Ruta / Tab | Endpoint |
+|----------|-----------|----------|
+| Aplicaciones, módulos y programas | `/seguridades` · tab Aplicaciones | `POST /api/seg-aplicaciones/bulk` |
+| Nodos de Segregación | `/niveles-segregacion` · tab Nodos | `POST /api/nodos-segregacion/bulk` |
+| Perfiles | `/perfiles` | `POST /api/seg-perfiles/bulk` |
+| Accesos por usuario | `/usuarios` · tab Accesos por usuario | `POST /api/user-access/bulk` |
 
-> Nota: La segregación territorial/comercial (Empresas, Sucursales, Puntos de Venta) se gestiona ahora de forma dinámica en el módulo **Niveles de Segregación**.
+Flujo: descargar plantilla → el archivo se parsea y valida **en el cliente** (sin subirlo al backend) → diálogo de confirmación con resumen (nuevos vs actualizaciones por upsert) → envío de filas como JSON al endpoint `/bulk` → errores reportados por número de fila. Las cargas rechazadas se registran vía `POST /api/bulk-uploads/registro` y quedan en Auditoría (`GET /api/bulk-uploads`, tab "Historial de cargas masivas").
+
+### Plantillas Excel por apartado
+
+**Aplicaciones / Módulos / Programas** (`plantilla-aplicaciones-modulos-programas.xlsx`) — una fila por registro, columna `TIPO_REGISTRO`:
+
+| Col | Campo | Descripción |
+|-----|-------|-------------|
+| A | TIPO_REGISTRO | `APLICACION`, `MODULO` o `PROGRAMA` |
+| B | CODIGO | Código único del registro |
+| C | NOMBRE | Nombre |
+| D | DESCRIPCION | Descripción |
+| E | APP_CODIGO | App del módulo/programa (vacío para APLICACION) |
+| F | MOD_CODIGO | Módulo del programa (vacío para APLICACION/MODULO) |
+| G | PRG_TIPO | Solo PROGRAMA: Menú, Submenú, Maestro, Transacción, Proceso, Consulta, Reporte, Objeto |
+| H | ESTADO | ACTIVO o INACTIVO. Default: ACTIVO |
+
+**Nodos de Segregación** (`plantilla-nodos-segregacion.xlsx`):
+
+| Col | Campo | Descripción |
+|-----|-------|-------------|
+| A | NIVEL | Nombre del nivel (ej. Empresa, Sucursal) |
+| B | CODIGO | Código único del nodo |
+| C | NOMBRE | Nombre del nodo |
+| D | PADRE | Código del nodo padre (obligatorio según nivel) |
+| E | ESTADO | ACTIVO o INACTIVO |
+
+**Perfiles** (`plantilla-perfiles.xlsx`) — upsert por perfil + programa:
+
+| Col | Campo | Descripción |
+|-----|-------|-------------|
+| A | PERFIL_CODIGO | Código único del perfil |
+| B | PERFIL_NOMBRE | Nombre del perfil |
+| C | PERFIL_DESCRIPCION | Descripción |
+| D | PRG_CODIGO | Código del programa asociado |
+| E-I | NUEVO, MODIFICAR, ANULAR, IMPRIMIR, CONSULTAR | Permisos (Sí/No) |
+| J | ESTADO | ACTIVO o INACTIVO |
+
+**Accesos por usuario** (`plantilla-accesos-usuario.xlsx`) — columnas dinámicas:
+
+| Col | Campo | Descripción |
+|-----|-------|-------------|
+| A | USUARIO | Username del usuario |
+| B | PERFILES | Códigos de perfiles asignados |
+| C+ | Una columna por cada nivel activo | Código del nodo asignado en ese nivel (nombre del nivel en mayúsculas) |
+
+> Nota: La segregación territorial/comercial (Empresas, Sucursales, Puntos de Venta) se gestiona de forma dinámica en el módulo **Niveles de Segregación**, y sus nodos se cargan masivamente desde su propio apartado.
 
 ## Convenciones de código
 
@@ -157,13 +195,13 @@ docker ps --filter "name=cam-backend" --format "{{.Status}}"
 ### Backend (`backend/package.json`)
 - `express`, `cors`, `tsx`
 - `multer` + `@types/multer` — Upload de archivos
-- `xlsx` — Parsing/escritura de Excel
+- `xlsx` — Parsing/escritura de Excel (cargas masivas y exportación en cliente)
 - `ldapjs` — Cliente LDAP
 
 ### Frontend Angular (`front-angular/package.json`)
 - `@angular/*` v21
 - `primeng` v21
-- `xlsx` — Exportación a Excel
+- `xlsx` — Cargas masivas (parseo de plantillas) y exportación a Excel
 
 ## Solución de problemas
 

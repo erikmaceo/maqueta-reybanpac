@@ -45,7 +45,7 @@ Cada vez que se realice un cambio en el proyecto:
 CAM es una consola de gobierno de accesos centralizado para Reybanpac. Permite:
 
 - Administrar aplicaciones, módulos, programas (con tipo) y perfiles (Seguridades).
-- Cargar masivamente la jerarquía de seguridades desde Excel (Matriz de Acceso).
+- Cargar masivamente datos por apartado con plantillas Excel: aplicaciones/módulos/programas, nodos de segregación, perfiles y accesos por usuario.
 - Ver la jerarquía por aplicación (Soluciones).
 - Gestionar usuarios locales y LDAP.
 - Administrar roles y accesos.

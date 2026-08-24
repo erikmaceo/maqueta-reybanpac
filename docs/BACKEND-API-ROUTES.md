@@ -89,7 +89,7 @@
 |--------|------|------------|-------------|
 | GET | `/api/user-access` | `requireAuth`, `requireGlobalAdmin` | Lista usuarios con sus accesos (nodos + perfiles). |
 | PUT | `/api/user-access/:id` | `requireAuth`, `requireGlobalAdmin` | Actualiza nodos y perfiles de un usuario. |
-| POST | `/api/user-access/bulk` | `requireAuth`, `requireGlobalAdmin` | Carga masiva de accesos por usuario. |
+| POST | `/api/user-access/bulk` | `requireAuth`, `requireGlobalAdmin` | Carga masiva de accesos por usuario (ver sección 19). |
 
 **Total: 3 rutas**
 
@@ -168,7 +168,7 @@
 | POST | `/api/seg-aplicaciones` | `requireAuth`, `requireGlobalAdmin` | Crea una aplicación. |
 | PUT | `/api/seg-aplicaciones/:id` | `requireAuth`, `requireGlobalAdmin` | Actualiza una aplicación. |
 | DELETE | `/api/seg-aplicaciones/:id` | `requireAuth`, `requireGlobalAdmin` | Elimina aplicación en cascada (módulos, programas, perfiles). |
-| POST | `/api/seg-aplicaciones/bulk` | `requireAuth`, `requireGlobalAdmin` | Carga masiva de aplicaciones, módulos y programas desde Excel. |
+| POST | `/api/seg-aplicaciones/bulk` | `requireAuth`, `requireGlobalAdmin` | Upsert masivo de aplicaciones, módulos y programas (ver sección 19). |
 
 **Total: 5 rutas**
 
@@ -210,7 +210,7 @@
 | POST | `/api/seg-perfiles` | `requireAuth`, `requireGlobalAdmin` | Crea un perfil con programas y permisos. |
 | PUT | `/api/seg-perfiles/:id` | `requireAuth`, `requireGlobalAdmin` | Actualiza un perfil. |
 | DELETE | `/api/seg-perfiles/:id` | `requireAuth`, `requireGlobalAdmin` | Elimina un perfil. |
-| POST | `/api/seg-perfiles/bulk` | `requireAuth`, `requireGlobalAdmin` | Carga masiva de perfiles desde Excel. |
+| POST | `/api/seg-perfiles/bulk` | `requireAuth`, `requireGlobalAdmin` | Upsert masivo de perfiles con permisos (ver sección 19). |
 
 **Total: 5 rutas**
 
@@ -228,13 +228,20 @@
 
 ---
 
-## 19. Seguridades — Matriz de Acceso (`/api/seg-matriz`)
+## 19. Cargas Masivas (`/api/seg-aplicaciones/bulk`, `/api/seg-perfiles/bulk`, `/api/nodos-segregacion/bulk`, `/api/user-access/bulk`, `/api/bulk-uploads`)
+
+La carga masiva única desde "Matriz de Acceso" (`POST /api/seg-matriz/upload`) fue reemplazada por 4 endpoints de carga desacoplados. El frontend parsea y valida el Excel en el cliente y envía las filas como JSON; el backend hace upsert por código y retorna contadores created/updated y errores por número de fila.
 
 | Método | Ruta | Middleware | Descripción |
 |--------|------|------------|-------------|
-| POST | `/api/seg-matriz/upload` | `requireAuth`, `requireGlobalAdmin`, `upload.single('file')` | Carga la matriz de acceso completa desde Excel. |
+| POST | `/api/seg-aplicaciones/bulk` | `requireAuth`, `requireGlobalAdmin` | Upsert de aplicaciones, módulos y programas (desde tab Aplicaciones de Seguridades). |
+| POST | `/api/seg-perfiles/bulk` | `requireAuth`, `requireGlobalAdmin` | Upsert de perfiles con permisos (desde Perfiles). |
+| POST | `/api/nodos-segregacion/bulk` | `requireAuth`, `requireGlobalAdmin` | Upsert de nodos de segregación (desde tab Nodos de Niveles de Segregación). |
+| POST | `/api/user-access/bulk` | `requireAuth`, `requireGlobalAdmin` | Carga de accesos por usuario: perfiles y nodos (desde tab Accesos por usuario). |
+| GET | `/api/bulk-uploads` | `requireAuth` | Historial de cargas masivas, con filtros de fecha y paginación (visible en Auditoría). |
+| POST | `/api/bulk-uploads/registro` | `requireAuth`, `requireGlobalAdmin` | Registra una carga rechazada por errores; queda auditada como `BULK_UPLOAD_REJECTED`. |
 
-**Total: 1 ruta**
+**Total: 6 rutas**
 
 ---
 
@@ -259,7 +266,7 @@
 | GET | `/api/nodos-segregacion/arbol` | `requireAuth` | Devuelve la jerarquía de nodos como árbol. |
 | GET | `/api/nodos-atributo-valor` | `requireAuth` | Lista valores de atributos de los nodos. |
 | POST | `/api/nodos-segregacion` | `requireAuth`, `requireGlobalAdmin` | Crea un nodo. |
-| POST | `/api/nodos-segregacion/bulk` | `requireAuth`, `requireGlobalAdmin` | Carga masiva de nodos desde Excel. |
+| POST | `/api/nodos-segregacion/bulk` | `requireAuth`, `requireGlobalAdmin` | Upsert masivo de nodos de segregación (ver sección 19). |
 | PUT | `/api/nodos-segregacion/:id` | `requireAuth`, `requireGlobalAdmin` | Actualiza un nodo. |
 | DELETE | `/api/nodos-segregacion/:id` | `requireAuth`, `requireGlobalAdmin` | Elimina un nodo. |
 
@@ -354,7 +361,7 @@
 | Seguridades — Programas | `/api/seg-programas` | 5 |
 | Seguridades — Perfiles | `/api/seg-perfiles` | 5 |
 | Seguridades — Controles | `/api/seg-controles` | 3 |
-| Seguridades — Matriz | `/api/seg-matriz` | 1 |
+| Cargas Masivas | `/api/seg-*-bulk`, `/api/user-access/bulk`, `/api/bulk-uploads` | 6 |
 | Segregación — Niveles | `/api/niveles-segregacion` | 4 |
 | Segregación — Nodos | `/api/nodos-segregacion` + `/api/nodos-atributo-valor` | 7 |
 | Segregación — Atributos | `/api/niveles-atributos` | 4 |
@@ -362,7 +369,7 @@
 | Parámetros — Provincias | `/api/param-provincias` | 4 |
 | Parámetros — Ciudades | `/api/param-ciudades` | 4 |
 | Parámetros — Dispositivos Móviles | `/api/param-dispositivos-moviles` | 4 |
-| **Total** | | **88** |
+| **Total** | | **89** |
 
 ---
 
@@ -370,11 +377,11 @@
 
 | Método | Cantidad |
 |--------|----------|
-| GET | 26 |
+| GET | 27 |
 | POST | 27 |
 | PUT | 19 |
 | DELETE | 16 |
-| **Total** | **88** |
+| **Total** | **89** |
 
 ---
 

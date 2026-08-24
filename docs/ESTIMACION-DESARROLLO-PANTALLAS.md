@@ -13,7 +13,7 @@
 El presente documento detalla la estimación de tiempo de desarrollo **por pantalla** de la aplicación CAM, desglosada en tres componentes:
 
 1. **Desarrollo frontend** (SPA Angular + PrimeNG).
-2. **Integración con backend** (servicios REST existentes, 88 endpoints, autenticación JWT, LDAP y API Gateway).
+2. **Integración con backend** (servicios REST existentes, 89 endpoints, autenticación JWT, LDAP y API Gateway).
 3. **Pruebas funcionales** (QA manual de cada funcionalidad).
 
 La estimación total asciende a **aproximadamente 862 horas** (~108 jornadas de 8 horas), lo que equivale a **~5 meses de un desarrollador full-stack** o **~3 meses con un equipo de 2 desarrolladores full-stack trabajando en paralelo**.
@@ -34,7 +34,7 @@ La estimación total asciende a **aproximadamente 862 horas** (~108 jornadas de 
 - **Jornada laboral:** 8 horas efectivas por día.
 - **Complejidad:** clasificada en 4 niveles (Baja, Media, Alta, Muy Alta) según número de entidades, interacciones, validaciones y casos borde.
 - **Frontend:** SPA Angular 21 + PrimeNG 21, componentes standalone, señales (signals), estilos globales compartidos.
-- **Backend:** API REST Express + TypeScript con datos en memoria (maqueta), 88 endpoints documentados, autenticación JWT, integración LDAP y API Gateway (WSO2).
+- **Backend:** API REST Express + TypeScript con datos en memoria (maqueta), 89 endpoints documentados, autenticación JWT, integración LDAP y API Gateway (WSO2).
 - **Las horas incluyen:** diseño de la pantalla, componentes, validaciones, mensajería, exportación a Excel cuando aplica, y corrección de defectos detectados en las pruebas.
 - **No incluye:** infraestructura de producción, alta disponibilidad, seguridad a nivel de red, ni gestión de cambio organizacional.
 
@@ -105,11 +105,13 @@ La estimación total asciende a **aproximadamente 862 horas** (~108 jornadas de 
 | 14 | **Acceso por dispositivo móvil** (validación de dispositivo) | Baja | 12 h | 8 h | 4 h | **24 h** |
 | 15 | **Selección de Empresa / Selección de Usuario** (diálogos de búsqueda reutilizables) | Baja | 8 h | 4 h | 2 h | **14 h** |
 | 16 | **Ordenar Soluciones** (jerarquía por aplicación con arrastrar y soltar: módulos, programas y controles; botón "Actualizar Orden") | Media-Alta | 24 h | 12 h | 8 h | **44 h** |
-| 17 | **Matriz de Acceso** (carga masiva Excel, plantilla de descarga, resumen de carga) | Media | 20 h | 12 h | 10 h | **42 h** |
+| 17 | **Cargas Masivas** (botón "Carga Masiva" integrado en Seguridades·Aplicaciones, Niveles de Segregación·Nodos, Perfiles y Usuarios·Accesos por usuario; plantillas Excel, validación en cliente, resumen de carga e histórico en Auditoría) | Media | 20 h | 12 h | 10 h | **42 h** |
 | 18 | **Auditoría** | Media | 20 h | 12 h | 8 h | **40 h** |
 | | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Consulta de logs | | 12 h | 7 h | 5 h | **24 h** |
 | | &nbsp;&nbsp;&nbsp;&nbsp;Tab: Historial de cargas masivas | | 8 h | 5 h | 3 h | **16 h** |
 | | *Subtotal operación* | | *148 h* | *80 h* | *56 h* | ***284 h*** |
+
+> **Nota:** la pantalla única **Matriz de Acceso** (upload XLSX con `multer`) fue reemplazada por 4 cargas masivas desacopladas, integradas como botón "Carga Masiva" dentro de las pantallas Seguridades, Niveles de Segregación, Perfiles y Usuarios. Su estimación se mantiene en la fila 17 y se detalla por diálogo en la sección 4.
 
 ---
 
@@ -188,7 +190,7 @@ Los diálogos de creación, edición, búsqueda y carga masiva son componentes q
 
 ## 6. Desglose de integración con backend por servicio
 
-La integración se basa en la API existente (88 endpoints: 26 GET, 27 POST, 19 PUT, 16 DELETE). Los tiempos de integración más significativos corresponden a:
+La integración se basa en la API existente (89 endpoints: 27 GET, 27 POST, 19 PUT, 16 DELETE). Los tiempos de integración más significativos corresponden a:
 
 | Servicio / Endpoint | Horas BE | Pantallas afectadas |
 |---------------------|----------|---------------------|
@@ -196,7 +198,7 @@ La integración se basa en la API existente (88 endpoints: 26 GET, 27 POST, 19 P
 | Segregación dinámica (`/api/niveles-segregacion`, `/api/nodos-segregacion`, `/api/nodos-segregacion/arbol`, atributos) | 24 h | Niveles de Segregación, Nuevo/Editar Acceso |
 | Usuarios y roles (`/api/usuarios`, `/api/roles`, acceso por usuario) | 20 h | Usuarios, Roles, Accesos |
 | Parámetros (países, provincias, ciudades, dispositivos) | 16 h | Parámetros, Acceso por dispositivo |
-| Matriz de Acceso (upload XLSX con multer) | 12 h | Matriz de Acceso |
+| Cargas masivas (`/api/seg-aplicaciones/bulk`, `/api/seg-perfiles/bulk`, `/api/nodos-segregacion/bulk`, `/api/user-access/bulk` + historial `/api/bulk-uploads`) | 12 h | Seguridades, Perfiles, Niveles de Segregación, Usuarios |
 | Auditoría (logs) | 12 h | Auditoría |
 | Reordenamiento de jerarquía (`PUT /api/seg-*/reordenar`, gateway `/aplicaciones/:codigo/orden`) | 12 h | Ordenar Soluciones |
 | API Gateway (autenticación OAuth2, scopes, validación runtime) | — | Aplica a todas las pantallas como requisito transversal de terceros |
@@ -211,7 +213,7 @@ La integración se basa en la API existente (88 endpoints: 26 GET, 27 POST, 19 P
 | **Fase 2 — Seguridades** | Sistemas, Seguridades, Roles, Usuarios | 246 h | ~2–3 semanas |
 | **Fase 3 — Perfiles** | Perfiles, Perfil Form | 112 h | ~1 semana |
 | **Fase 4 — Segregación** | Niveles de Segregación, Parámetros | 150 h | ~1–2 semanas |
-| **Fase 5 — Operación** | Accesos, Nuevo/Editar Acceso, Dispositivos, Ordenar Soluciones, Matriz, Auditoría | 284 h | ~2–3 semanas |
+| **Fase 5 — Operación** | Accesos, Nuevo/Editar Acceso, Dispositivos, Ordenar Soluciones, Cargas Masivas, Auditoría | 284 h | ~2–3 semanas |
 | **Fase 6 — UAT / Estabilización** (Pruebas de Aceptación de Usuario) | Pruebas integrales con el cliente, ajustes | ~90 h | ~1 semana |
 
 ---
@@ -231,7 +233,7 @@ La integración se basa en la API existente (88 endpoints: 26 GET, 27 POST, 19 P
 | Documento | Descripción |
 |-----------|-------------|
 | `docs/ARCHITECTURE.md` | Arquitectura general (SPA React/Angular, backend Express, LDAP) |
-| `docs/BACKEND-API-ROUTES.md` | Inventario de los 88 endpoints del backend |
+| `docs/BACKEND-API-ROUTES.md` | Inventario de los 89 endpoints del backend |
 | `docs/DATABASE-MODEL.md` | Modelo de datos |
 | `docs/DEV-GUIDE.md` | Guía de desarrollo, rutas y endpoints |
 | `docs/API-GATEWAY-DISCOVERY.md` | Documentación del API Gateway para consumidores |

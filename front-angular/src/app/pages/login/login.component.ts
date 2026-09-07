@@ -42,27 +42,27 @@ import {
           <div class="feat">
             <app-icon-roles />
             <div>
-              <b style="color: #fff;">Roles y accesos</b><br/>
+             <b style="color: var(--on-brand);">Roles y accesos</b><br/>
               Defina roles y seleccione qué accesos otorgan en cada sistema.
             </div>
           </div>
           <div class="feat">
             <app-icon-shield />
             <div>
-              <b style="color: #fff;">Módulo autorizador</b><br/>
+             <b style="color: var(--on-brand);">Módulo autorizador</b><br/>
               Flujo de aprobación para autorizar el acceso de los usuarios.
             </div>
           </div>
           <div class="feat">
             <app-icon-ldap />
             <div>
-              <b style="color: #fff;">Integración LDAP</b><br/>
+             <b style="color: var(--on-brand);">Integración LDAP</b><br/>
               Los clientes finales se integran exclusivamente desde el directorio.
             </div>
           </div>
         </div>
 
-        <div style="color: #8aa6da; font-size: 12px;">
+         <div style="color: var(--sidebar-foot); font-size: 12px;">
           © {{ currentYear }} Reybanpac · Maqueta de gobierno de identidades
         </div>
       </aside>

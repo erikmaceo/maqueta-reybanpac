@@ -304,7 +304,7 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
       border: 1px solid var(--border);
       border-radius: 8px;
       margin-bottom: 4px;
-      background: #fafafa;
+       background: var(--surface-2);
       position: relative;
       cursor: default;
     }
@@ -332,7 +332,7 @@ import type { Aplicacion, Modulo, Programa, Control } from '../../shared/models/
     }
     .skeleton-row {
       height: 40px;
-      background: linear-gradient(90deg, #eef1f7 25%, #f6f8fc 37%, #eef1f7 63%);
+       background: linear-gradient(90deg, var(--skeleton-1) 25%, var(--skeleton-2) 37%, var(--skeleton-1) 63%);
       background-size: 400% 100%;
       animation: shimmer 1.3s infinite;
       border-radius: 8px;

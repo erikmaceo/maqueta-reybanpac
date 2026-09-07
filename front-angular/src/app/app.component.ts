@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { ToastService } from './core/services/toast.service';
+import { ThemeService } from './core/services/theme.service';
 import { CommonModule } from '@angular/common';
 import {
   IconCheckComponent,
@@ -61,4 +62,5 @@ import {
 export class AppComponent {
   auth = inject(AuthService);
   toast = inject(ToastService);
+  private readonly theme = inject(ThemeService);
 }

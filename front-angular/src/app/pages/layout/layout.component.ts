@@ -6,6 +6,7 @@ import { filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { EventsService } from '../../core/services/events.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { AvatarComponent } from '../../shared/components/ui';
 
 import {
@@ -145,6 +146,21 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
           </div>
           @if (user()) {
             <div class="row gap-3">
+              <button
+                class="btn btn-ghost btn-icon theme-toggle"
+                type="button"
+                [attr.aria-label]="theme.theme() === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'"
+                [attr.aria-pressed]="theme.theme() === 'dark'"
+                [title]="theme.theme() === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'"
+                (click)="theme.toggle()"
+              >
+                <i
+                  class="pi"
+                  [class.pi-sun]="theme.theme() === 'dark'"
+                  [class.pi-moon]="theme.theme() !== 'dark'"
+                  aria-hidden="true"
+                ></i>
+              </button>
               <div class="userchip">
                 <app-avatar
                   [first]="user()!.firstName"
@@ -181,19 +197,32 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
       padding: 10px 12px;
       border-radius: 10px;
       margin: 2px 0;
-      color: #c2d4f5;
+      color: var(--sidebar-link);
       font-weight: 600;
       font-size: 13.5px;
       transition: background .15s, color .15s;
       text-decoration: none;
     }
+    .theme-toggle {
+      color: var(--text-2);
+    }
+    .theme-toggle:hover {
+      color: var(--text);
+    }
+    .theme-toggle:focus-visible {
+      outline: 2px solid var(--navy-500);
+      outline-offset: 2px;
+    }
+    .theme-toggle .pi {
+      font-size: 1rem;
+    }
     .nav-link:hover {
-      background: rgba(255, 255, 255, .07);
-      color: #fff;
+      background: var(--sidebar-hover);
+      color: var(--on-brand);
     }
     .nav-link.active {
       background: rgba(244, 194, 13, .16);
-      color: #fff;
+      color: var(--on-brand);
       box-shadow: inset 3px 0 0 var(--gold-500);
     }
     .nav-link span:first-child {
@@ -225,12 +254,12 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
       box-shadow: inset 2px 0 0 var(--gold-500);
     }
     .sub-label {
-      color: #a8c4e8;
+      color: var(--sidebar-sub);
     }
     .sub-empty {
       display: block;
       padding: 8px 28px;
-      color: #5a7a9a;
+      color: var(--sidebar-empty);
       font-size: 12px;
       font-style: italic;
     }
@@ -241,13 +270,13 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
       cursor: pointer;
       text-align: left;
       font-family: inherit;
-      color: #c2d4f5;
+      color: var(--sidebar-link);
       font-weight: 600;
       font-size: 13.5px;
     }
     .nav-section-header:hover {
-      background: rgba(255, 255, 255, .07);
-      color: #fff;
+      background: var(--sidebar-hover);
+      color: var(--on-brand);
     }
     .chevron-wrap {
       display: flex;
@@ -263,7 +292,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
     .apps-count {
       margin-left: auto;
       background: rgba(255,255,255,.1);
-      color: #8ab4d8;
+      color: var(--sidebar-sub);
       font-size: 11px;
       font-weight: 700;
       border-radius: 999px;
@@ -277,6 +306,7 @@ export class LayoutComponent implements OnInit {
   private events = inject(EventsService);
   private router = inject(Router);
   private location = inject(Location);
+  theme = inject(ThemeService);
 
   user = this.auth.user;
   pendingCount = signal(0);

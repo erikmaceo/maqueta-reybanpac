@@ -806,6 +806,42 @@
 - Usar español.
 - Mantener el formato de tabla para archivos modificados.
 - Documentar dependencias añadidas o eliminadas.
-- Si se corrige un bug, describir síntoma y causa raíz.
+ - Si se corrige un bug, describir síntoma y causa raíz.
+
+---
+
+## 2026-09-07 — Modo oscuro para la consola Angular
+
+### Resumen
+
+Se agregó un modo oscuro seleccionable para la SPA Angular activa. La preferencia se aplica sin recargar la página, se conserva localmente y cubre las superficies principales de la consola, el login y los componentes globales de PrimeNG.
+
+### Cambios realizados
+
+- Nuevo `ThemeService` con signal de tema, atributo `data-theme`, persistencia segura en `localStorage` y fallback al tema claro.
+- Nuevo control accesible de modo claro/oscuro en el topbar autenticado.
+- Nuevos tokens oscuros y ajustes de colores temables en estilos globales, layout, login y páginas representativas.
+- Overrides de PrimeNG para diálogos, tablas, tabs, formularios, overlays, mensajes, estados hover y foco.
+
+### Archivos principales modificados
+
+| Archivo | Descripción |
+|---------|-------------|
+| `front-angular/src/app/core/services/theme.service.ts` | Estado, aplicación y persistencia del tema |
+| `front-angular/src/app/app.component.ts` | Inicialización del tema durante el arranque |
+| `front-angular/src/app/pages/layout/layout.component.ts` | Control accesible del tema en el topbar |
+| `front-angular/src/styles.css` | Tokens claros/oscuros y estilos globales/PrimeNG |
+| `front-angular/src/app/pages/login/login.component.ts` | Colores temables del login |
+| `front-angular/src/app/pages/access-create/access-create.component.ts` | Etiquetas compatibles con tema oscuro |
+| `front-angular/src/app/pages/dashboard/dashboard.component.ts` | Token de color para KPI |
+| `front-angular/src/app/pages/roles/roles.component.ts` | Superficies temables en selector de color y rol administrador |
+| `front-angular/src/app/pages/systems/systems.component.ts` | Borde temable del selector de color |
+| `front-angular/src/app/pages/soluciones/soluciones.component.ts` | Superficies y skeletons temables |
+| `docs/CHANGES.md` | Este registro |
+
+### Validación
+
+- `npm.cmd run build` frontend Angular OK. Se mantienen warnings preexistentes de imports no utilizados y del presupuesto del bundle inicial.
+- El proyecto no tiene un target `test` configurado en `angular.json`; `npm.cmd test` no puede determinar proyecto/target, por lo que la validación se realizó mediante compilación y revisión estática.
 </parameter>
 </invoke>

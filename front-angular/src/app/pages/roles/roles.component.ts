@@ -202,7 +202,7 @@ interface RoleForm {
                 [style.height.px]="26"
                 [style.borderRadius.px]="7"
                 [style.background]="c"
-                [style.border]="formData.color === c ? '3px solid var(--navy-800)' : '2px solid #fff'"
+                 [style.border]="formData.color === c ? '3px solid var(--navy-800)' : '2px solid var(--surface)'"
                 [style.boxShadow]="'var(--shadow-sm)'"
                 (click)="formData.color = c"
               ></button>
@@ -214,7 +214,7 @@ interface RoleForm {
       <div
         class="check-card mb-4"
         [style.borderColor]="formData.isAdmin ? 'var(--red-100)' : 'var(--border)'"
-        [style.background]="formData.isAdmin ? 'var(--red-50)' : '#fff'"
+         [style.background]="formData.isAdmin ? 'var(--red-50)' : 'var(--surface)'"
       >
         <app-switch [(checked)]="formData.isAdmin" />
         <div>

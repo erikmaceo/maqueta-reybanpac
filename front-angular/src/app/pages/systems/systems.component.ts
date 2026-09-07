@@ -184,7 +184,7 @@ interface SystemForm {
               [style.height.px]="28"
               [style.borderRadius.px]="8"
               [style.background]="c"
-              [style.border]="formData.color === c ? '3px solid var(--navy-800)' : '2px solid #fff'"
+               [style.border]="formData.color === c ? '3px solid var(--navy-800)' : '2px solid var(--surface)'"
               [style.boxShadow]="'var(--shadow-sm)'"
               (click)="formData.color = c"
             ></button>

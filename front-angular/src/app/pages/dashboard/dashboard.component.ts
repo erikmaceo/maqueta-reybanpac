@@ -54,7 +54,7 @@ import type { Stats } from '../../shared/models/types';
             <div class="kpi-foot">Registradas en seguridades</div>
           </div>
           <div class="card kpi">
-            <div class="kpi-icon" style="background: #f5f3ff; color: var(--violet-600);">
+             <div class="kpi-icon" style="background: var(--violet-50); color: var(--violet-600);">
               <app-icon-roles />
             </div>
             <div class="kpi-val">{{ stats()!.roles }}</div>

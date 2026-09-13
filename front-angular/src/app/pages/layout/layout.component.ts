@@ -58,6 +58,8 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/perfiles': { title: 'Perfiles', sub: 'Administración de perfiles de usuario por aplicación, módulo y programa' },
   '/perfiles/nuevo': { title: 'Nuevo Perfil', sub: 'Registre un nuevo perfil y asigne programas con sus permisos' },
   '/perfiles/:id/editar': { title: 'Editar Perfil', sub: 'Modifique los datos del perfil y sus programas' },
+  '/perfiles/:perfilId': { title: 'Detalle de Perfil', sub: 'Consulte los programas y permisos asociados al perfil' },
+  '/perfiles/:perfilId/programas/:prgCodigo/permisos': { title: 'Permisos del Programa', sub: 'Modifique los permisos del programa dentro del perfil' },
   '/acceso-dispositivos': { title: 'Dispositivos Autorizados', sub: 'Gestión de dispositivos móviles asignados a cada usuario' },
   '/matriz-acceso': { title: 'Matriz de Acceso', sub: 'Carga masiva de seguridades mediante archivo Excel' },
   '/directorio': { title: 'Directorio LDAP', sub: 'Usuarios cliente final integrados desde el directorio corporativo' },
@@ -365,7 +367,13 @@ export class LayoutComponent implements OnInit {
     const path = this.router.url.split('?')[0];
     let meta = PAGE_META[path];
     if (!meta && path.startsWith('/perfiles/')) {
-      meta = PAGE_META['/perfiles/:id/editar'];
+      if (path.includes('/programas/') && path.endsWith('/permisos')) {
+        meta = PAGE_META['/perfiles/:perfilId/programas/:prgCodigo/permisos'];
+      } else if (path.endsWith('/editar')) {
+        meta = PAGE_META['/perfiles/:id/editar'];
+      } else {
+        meta = PAGE_META['/perfiles/:perfilId'];
+      }
     }
     if (!meta && path.startsWith('/editar-acceso/')) {
       meta = PAGE_META['/editar-acceso/:id'];

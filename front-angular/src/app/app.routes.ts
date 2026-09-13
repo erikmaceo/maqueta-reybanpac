@@ -65,6 +65,16 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'perfiles/:perfilId/programas/:prgCodigo/permisos',
+        loadComponent: () => import('./pages/perfil-permissions/perfil-permissions.component').then(m => m.PerfilPermissionsComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'perfiles/:perfilId',
+        loadComponent: () => import('./pages/perfil-detail/perfil-detail.component').then(m => m.PerfilDetailComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'acceso-dispositivos',
         loadComponent: () => import('./pages/device-access/device-access.component').then(m => m.DeviceAccessComponent),
         canActivate: [adminGuard],

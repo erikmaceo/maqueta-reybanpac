@@ -9,146 +9,32 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import {
   IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
-  IconCheckComponent, IconCloseComponent, IconUploadComponent,
+  IconUploadComponent,
 } from '../../shared/components/icons';
-import type { Perfil, Programa, Control } from '../../shared/models/types';
+import type { Perfil } from '../../shared/models/types';
 import { validateBulkFileSize } from '../../shared/utils/file-validation';
 
 @Component({
   selector: 'app-perfiles',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, Tabs, TabList, Tab, TabPanels, TabPanel,
+    CommonModule, FormsModule,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
-    IconCheckComponent, IconCloseComponent, IconUploadComponent,
+    IconUploadComponent,
   ],
   template: `
     @if (loadingPerf()) {
       <app-table-skeleton [rows]="5" [cols]="5" />
     } @else if (errorPerf()) {
       <app-error-state [message]="errorPerf()!" [onRetry]="loadPerfiles" />
-    } @else if (selectedPerfil(); as perf) {
-      <div class="perfil-detail">
-        <div class="perfil-detail-header">
-          <div>
-            <h2 style="margin:8px 0 2px;">{{ perf.nombre }}</h2>
-            <span class="muted small">{{ perf.codigo }} · {{ perf.descripcion }}</span>
-          </div>
-          <button class="btn btn-ghost btn-sm" (click)="backToPerfiles()">
-            <i class="pi pi-arrow-left mr-1"></i> Volver a Perfiles
-          </button>
-        </div>
-        <p-tabs value="0">
-          <p-tablist>
-            <p-tab value="0"><i class="pi pi-th-large mr-2"></i>Programas por perfil</p-tab>
-            <p-tab value="1"><i class="pi pi-lock mr-2"></i>Controles por perfil</p-tab>
-          </p-tablist>
-          <p-tabpanels>
-            <p-tabpanel value="0">
-              <div class="card table-wrap">
-                <table class="data">
-                  <thead>
-                    <tr>
-                      <th>Código de Programa</th>
-                      <th>Nombre</th>
-                      <th>Tipo de Programa</th>
-                      <th style="text-align:center;">Nuevo</th>
-                      <th style="text-align:center;">Modificar</th>
-                      <th style="text-align:center;">Eliminar</th>
-                      <th style="text-align:center;">Imprimir</th>
-                      <th style="text-align:center;">Consultar</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (pp of perfilDetalleProgramas(); track pp.prgCodigo) {
-                      <tr>
-                        <td class="mono">{{ pp.prgCodigo }}</td>
-                        <td><div class="cell-strong">{{ pp.prgNombre }}</div></td>
-                        <td><span class="badge badge-blue">{{ pp.tipo }}</span></td>
-                        <td style="text-align:center;">
-                          @if (pp.nuevo) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
-                          @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
-                        </td>
-                        <td style="text-align:center;">
-                          @if (pp.modificar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
-                          @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
-                        </td>
-                        <td style="text-align:center;">
-                          @if (pp.anular) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
-                          @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
-                        </td>
-                        <td style="text-align:center;">
-                          @if (pp.imprimir) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
-                          @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
-                        </td>
-                        <td style="text-align:center;">
-                          @if (pp.consultar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
-                          @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
-                        </td>
-                        <td>
-                          <div class="cell-actions">
-                            <button class="btn btn-ghost btn-sm btn-icon" title="Editar permisos" (click)="openPermDialog(pp.prgCodigo)">
-                              <app-icon-edit [width]="15" [height]="15" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    } @empty {
-                      <tr><td colspan="9" class="muted center" style="padding: 24px;">Este perfil no tiene programas asociados.</td></tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </p-tabpanel>
-            <p-tabpanel value="1">
-              <div class="card table-wrap">
-                <table class="data">
-                  <thead>
-                    <tr>
-                      <th>Código de Programa</th>
-                      <th>Código</th>
-                      <th>Tipo de Control</th>
-                      <th>Descripción del Control</th>
-                      <th style="text-align:center;width:90px;">Visualizar</th>
-                      <th style="text-align:center;width:90px;">Modificar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (c of perfilDetalleControles(); track $index) {
-                      <tr>
-                        <td class="mono">{{ c.prgCodigo }}</td>
-                        <td class="mono">{{ c.codigo }}</td>
-                        <td><span class="badge badge-blue">{{ c.tipoControl }}</span></td>
-                        <td>{{ c.descripcion }}</td>
-                        <td style="text-align:center;">
-                          @if (c.visualizar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
-                          @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
-                        </td>
-                        <td style="text-align:center;">
-                          @if (c.modificar) { <span class="perm-icon-yes"><app-icon-check [width]="16" [height]="16" /></span> }
-                          @else { <span class="perm-icon-no"><app-icon-close [width]="16" [height]="16" /></span> }
-                        </td>
-                      </tr>
-                    } @empty {
-                      <tr><td colspan="6" class="muted center" style="padding: 24px;">No hay controles asociados a los programas de este perfil.</td></tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </p-tabpanel>
-          </p-tabpanels>
-        </p-tabs>
-      </div>
     } @else {
       <div class="row between mb-4">
         <div class="search">
@@ -184,7 +70,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
               <tr>
                 <td class="mono">{{ p.codigo }}</td>
                 <td>
-                  <a class="perfil-link" (click)="openPerfilDetail(p)">{{ p.nombre }}</a>
+                  <a class="perfil-link" (click)="goToPerfilDetail(p)">{{ p.nombre }}</a>
                 </td>
                 <td class="desc-col">{{ p.descripcion }}</td>
                 <td>
@@ -228,82 +114,6 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
         </div>
       }
     }
-
-
-    <!-- ============ DIÁLOGO PERMISOS POR PROGRAMA ============ -->
-    <p-dialog
-      [(visible)]="showPermDlg"
-      [header]="'Permisos del Programa'"
-      [modal]="true" [style]="{ width: '640px' }" [closable]="true"
-      (onHide)="closePermDialog()"
-    >
-      <div class="perm-info-grid">
-        <div class="perm-info-item">
-          <span class="perm-info-label">Cod. Perfil</span>
-          <span class="perm-info-value mono">{{ selectedPerfil()?.codigo }}</span>
-        </div>
-        <div class="perm-info-item">
-          <span class="perm-info-label">Nombre del Perfil</span>
-          <span class="perm-info-value">{{ selectedPerfil()?.nombre }}</span>
-        </div>
-        <div class="perm-info-item">
-          <span class="perm-info-label">Cod. Programa</span>
-          <span class="perm-info-value mono">{{ editingPrgCodigo }}</span>
-        </div>
-        <div class="perm-info-item">
-          <span class="perm-info-label">Nombre del Programa</span>
-          <span class="perm-info-value">{{ editingPrgNombre }}</span>
-        </div>
-      </div>
-
-      <hr class="perm-divider" />
-
-      <div class="perm-section-title">Permisos del Programa</div>
-      <div class="perm-grid">
-        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.nuevo" /><span>Nuevo</span></label>
-        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.modificar" /><span>Modificar</span></label>
-        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.anular" /><span>Eliminar</span></label>
-        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.imprimir" /><span>Imprimir</span></label>
-        <label class="perm-check"><input type="checkbox" [(ngModel)]="permForm.consultar" /><span>Consultar</span></label>
-      </div>
-
-      <hr class="perm-divider" />
-
-      <div class="perm-section-title">Controles del Programa</div>
-      @if (permControles.length) {
-        <div class="card table-wrap" style="margin-top:8px;">
-          <table class="data" style="width:100%;">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Tipo de Control</th>
-                <th>Descripción</th>
-                <th style="text-align:center;width:90px;">Visualizar</th>
-                <th style="text-align:center;width:90px;">Modificar</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (c of permControles; track $index) {
-                <tr>
-                  <td class="mono">{{ c.codigo }}</td>
-                  <td><span class="badge badge-blue">{{ c.tipoControl }}</span></td>
-                  <td>{{ c.descripcion }}</td>
-                  <td style="text-align:center;"><input type="checkbox" [(ngModel)]="c.visualizar" style="width:16px;height:16px;cursor:pointer;" /></td>
-                  <td style="text-align:center;"><input type="checkbox" [(ngModel)]="c.modificar" style="width:16px;height:16px;cursor:pointer;" /></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="muted small" style="margin-top:8px;">Este programa no tiene controles registrados.</p>
-      }
-
-      <ng-template pTemplate="footer">
-        <button class="btn btn-ghost" (click)="closePermDialog()">Cancelar</button>
-        <button class="btn btn-primary" (click)="savePermDialog()">Guardar</button>
-      </ng-template>
-    </p-dialog>
 
     <!-- ============ DIÁLOGO CARGA MASIVA PERFILES ============ -->
     <p-dialog
@@ -370,85 +180,10 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
     .perfil-link:hover {
       text-decoration: underline;
     }
-    .perfil-detail {
-      padding: 0;
-    }
-    .perfil-detail-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .perfil-detail-header h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-    .perm-info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .perm-info-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .perm-info-label {
-      font-size: 0.7rem;
-      letter-spacing: 0.05em;
-      color: var(--muted, #6b7280);
-      font-weight: 600;
-    }
-    .perm-info-value {
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
-    .perm-divider {
-      border: none;
-      border-top: 1px solid var(--border, #e5e7eb);
-      margin: 16px 0;
-    }
-    .perm-section-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      color: var(--muted, #6b7280);
-      margin-bottom: 10px;
-    }
-    .perm-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-    }
-    .perm-check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .perm-icon-yes {
-      color: var(--green-600, #16a34a);
-    }
-    .perm-icon-no {
-      color: var(--red-500, #ef4444);
-    }
-    .required {
-      color: var(--red-600, #c8102e);
-      font-weight: bold;
-    }
-    .input.invalid {
-      border-color: var(--red-600, #c8102e);
-      background-color: var(--red-50, #fef2f2);
-    }
     ::ng-deep .p-confirmdialog-icon {
       font-size: 2.25rem !important;
       color: #ef4444 !important;
       margin-right: 1rem !important;
-    }
-    .dialog-table-fixed {
-      height: 310px;
-      overflow-y: auto;
-      overflow-x: auto;
     }
   `],
 })
@@ -461,51 +196,6 @@ export class PerfilesComponent implements OnInit {
 
   // --- Data signals ---
   perfiles = signal<Perfil[]>([]);
-  programas = signal<Programa[]>([]);
-  controlesMap = signal<Map<string, Control[]>>(new Map());
-
-  selectedPerfil = signal<Perfil | null>(null);
-
-  perfilDetalleProgramas = computed(() => {
-    const perf = this.selectedPerfil();
-    if (!perf) return [];
-    return perf.programas.map(pp => {
-      const prg = this.programas().find(p => p.codigo === pp.prgCodigo);
-      return {
-        prgCodigo: pp.prgCodigo,
-        prgNombre: prg?.nombre || '',
-        tipo: prg?.tipo || '',
-        nuevo: pp.nuevo,
-        modificar: pp.modificar,
-        anular: pp.anular,
-        procesar: pp.procesar,
-        imprimir: pp.imprimir,
-        consultar: pp.consultar,
-      };
-    });
-  });
-
-  perfilDetalleControles = computed(() => {
-    const perf = this.selectedPerfil();
-    if (!perf) return [];
-    const result: { prgCodigo: string; codigo: string; tipoControl: string; descripcion: string; visualizar: boolean; modificar: boolean }[] = [];
-    for (const pp of perf.programas) {
-      const ctrls = this.controlesMap().get(pp.prgCodigo) || [];
-      for (const c of ctrls) {
-        const ctrlIndex = ctrls.indexOf(c);
-        const perfilCtrl = pp.controles?.find(pc => pc.ctrlIndex === ctrlIndex);
-        result.push({
-          prgCodigo: pp.prgCodigo,
-          codigo: c.codigo,
-          tipoControl: c.tipoControl,
-          descripcion: c.descripcion,
-          visualizar: perfilCtrl?.visualizar ?? false,
-          modificar: perfilCtrl?.modificar ?? false,
-        });
-      }
-    }
-    return result;
-  });
 
   loadingPerf = signal(true);
   errorPerf = signal<string | null>(null);
@@ -547,22 +237,13 @@ export class PerfilesComponent implements OnInit {
 
   totalPagesPerf = computed(() => Math.max(1, Math.ceil(this.filteredPerfs().length / this.pageSize())));
 
-  // --- Perm dialog ---
-  showPermDlg = false;
-  editingPrgCodigo = '';
-  editingPrgNombre = '';
-  permForm = { nuevo: false, modificar: false, anular: false, procesar: false, imprimir: false, consultar: false };
-  permControles: { codigo: string; tipoControl: string; descripcion: string; visualizar: boolean; modificar: boolean }[] = [];
-
   // --- Refs ---
   loadPerfiles = () => this._loadPerf();
 
   ngOnInit(): void {
     this._loadPerf();
-    this._loadProgramas();
     this.events.onDataChanged(() => {
       this._loadPerf();
-      this._loadProgramas();
     });
   }
 
@@ -576,36 +257,13 @@ export class PerfilesComponent implements OnInit {
     });
   }
 
-  private _loadProgramas(): void {
-    this.api.listProgramas().subscribe({
-      next: (d) => this.programas.set(d),
-      error: () => {},
-    });
-    this.api.listControles().subscribe({
-      next: (d) => {
-        const map = new Map<string, Control[]>();
-        for (const c of d) {
-          const arr = map.get(c.prgCodigo) || [];
-          arr.push(c);
-          map.set(c.prgCodigo, arr);
-        }
-        this.controlesMap.set(map);
-      },
-      error: () => {},
-    });
-  }
-
-  // ============ PERFIL DETAIL ============
-  openPerfilDetail(p: Perfil): void {
-    this.selectedPerfil.set(p);
-  }
-  backToPerfiles(): void {
-    this.selectedPerfil.set(null);
-  }
-
   // ============ PERFIL NAVIGATION ============
   goToNuevoPerfil(): void {
     this.router.navigate(['/perfiles/nuevo']);
+  }
+
+  goToPerfilDetail(p: Perfil): void {
+    this.router.navigate(['/perfiles', p.id]);
   }
 
   goToEditarPerfil(p: Perfil): void {
@@ -631,47 +289,6 @@ export class PerfilesComponent implements OnInit {
       defaultFocus: 'none',
       accept: () => accept(),
     });
-  }
-
-  // ============ PERMISOS ============
-
-  openPermDialog(prgCodigo: string): void {
-    const perf = this.selectedPerfil();
-    if (!perf) return;
-    const pp = perf.programas.find(p => p.prgCodigo === prgCodigo);
-    if (!pp) return;
-    const prg = this.programas().find(p => p.codigo === prgCodigo);
-    this.editingPrgCodigo = prgCodigo;
-    this.editingPrgNombre = prg?.nombre || '';
-    this.permForm = { nuevo: pp.nuevo, modificar: pp.modificar, anular: pp.anular, procesar: pp.procesar, imprimir: pp.imprimir, consultar: pp.consultar };
-    const ctrls = (this.controlesMap().get(prgCodigo) || []).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
-    this.permControles = ctrls.map((c, i) => {
-      const existing = (pp.controles || []).find(x => x.ctrlIndex === i);
-      return { codigo: c.codigo, tipoControl: c.tipoControl, descripcion: c.descripcion, visualizar: existing?.visualizar ?? false, modificar: existing?.modificar ?? false };
-    });
-    this.showPermDlg = true;
-  }
-
-  closePermDialog(): void { this.showPermDlg = false; this.editingPrgCodigo = ''; this.editingPrgNombre = ''; this.permControles = []; }
-
-  async savePermDialog(): Promise<void> {
-    const perf = this.selectedPerfil();
-    if (!perf) return;
-    const idx = perf.programas.findIndex(p => p.prgCodigo === this.editingPrgCodigo);
-    if (idx === -1) return;
-    const controles = this.permControles.map((c, i) => ({ ctrlIndex: i, visualizar: c.visualizar, modificar: c.modificar }));
-    perf.programas[idx] = { ...perf.programas[idx], ...this.permForm, procesar: false, controles };
-    try {
-      await this.api.updatePerfil(perf.id, { programas: perf.programas }).toPromise();
-      this.toast.success('Permisos actualizados');
-      this.events.emitDataChanged();
-      this.selectedPerfil.set({ ...perf });
-      this._loadPerf();
-      this.closePermDialog();
-    } catch (e: any) {
-      const msg = e?.error?.error || e?.message || 'Error inesperado.';
-      this.toast.error('Error', msg);
-    }
   }
 
   // ============ PAGINATION ============

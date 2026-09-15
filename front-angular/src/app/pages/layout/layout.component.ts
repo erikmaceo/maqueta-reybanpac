@@ -51,6 +51,12 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/sistemas': { title: 'Sistemas', sub: 'Aplicativos gobernados y su catálogo de accesos' },
   '/aplicaciones': { title: 'Aplicaciones', sub: 'Catálogo de aplicaciones registradas en seguridades' },
   '/seguridades': { title: 'Seguridades', sub: 'Configuración de seguridades y políticas de acceso' },
+  '/seguridades/aplicaciones/nuevo': { title: 'Nueva Aplicación', sub: 'Registre una nueva aplicación y su nodo de segregación' },
+  '/seguridades/aplicaciones/:id/editar': { title: 'Editar Aplicación', sub: 'Modifique los datos de la aplicación y su nodo de segregación' },
+  '/seguridades/modulos/nuevo': { title: 'Nuevo Módulo', sub: 'Registre un nuevo módulo dentro de una aplicación' },
+  '/seguridades/modulos/:id/editar': { title: 'Editar Módulo', sub: 'Modifique los datos del módulo y su aplicación' },
+  '/seguridades/programas/nuevo': { title: 'Nuevo Programa', sub: 'Registre un nuevo programa dentro de un módulo' },
+  '/seguridades/programas/:id/editar': { title: 'Editar Programa', sub: 'Modifique los datos del programa y sus controles' },
   '/niveles-segregacion': { title: 'Niveles de Segregación', sub: 'Gestión dinámica de la jerarquía de segregación' },
   '/configuracion': { title: 'Niveles de Segregación', sub: 'Gestión dinámica de la jerarquía de segregación' },
   '/parametros': { title: 'Parámetros y Configuración', sub: 'Gestión de países, provincias y ciudades' },
@@ -373,6 +379,15 @@ export class LayoutComponent implements OnInit {
         meta = PAGE_META['/perfiles/:id/editar'];
       } else {
         meta = PAGE_META['/perfiles/:perfilId'];
+      }
+    }
+    if (!meta && path.startsWith('/seguridades/')) {
+      if (path.startsWith('/seguridades/aplicaciones/')) {
+        meta = path.endsWith('/editar') ? PAGE_META['/seguridades/aplicaciones/:id/editar'] : PAGE_META['/seguridades/aplicaciones/nuevo'];
+      } else if (path.startsWith('/seguridades/modulos/')) {
+        meta = path.endsWith('/editar') ? PAGE_META['/seguridades/modulos/:id/editar'] : PAGE_META['/seguridades/modulos/nuevo'];
+      } else if (path.startsWith('/seguridades/programas/')) {
+        meta = path.endsWith('/editar') ? PAGE_META['/seguridades/programas/:id/editar'] : PAGE_META['/seguridades/programas/nuevo'];
       }
     }
     if (!meta && path.startsWith('/editar-acceso/')) {

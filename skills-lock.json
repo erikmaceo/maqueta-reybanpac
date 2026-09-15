@@ -6,6 +6,96 @@
       "sourceType": "github",
       "skillPath": "angular-developer/SKILL.md",
       "computedHash": "cebee5c8c3477eb1c03452a318b9c452fa14e993d57924829cc7e0efa766658c"
+    },
+    "openspec-apply": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-apply/SKILL.md",
+      "computedHash": "90734d305c4cb66c447ff7695e5d6bee55fa169906ebddb5317ebae5a8f237ad"
+    },
+    "openspec-archive": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-archive/SKILL.md",
+      "computedHash": "a4e8eaafc165f487fd8bea8922bf57474f52d9d249caad257849e4af3b42f815"
+    },
+    "openspec-bulk-archive": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-bulk-archive/SKILL.md",
+      "computedHash": "bbaae0c4bffaeebd87bac3c6047a1abbfb923c09a7cf3c822bbc2e3fa2a35197"
+    },
+    "openspec-config": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-config/SKILL.md",
+      "computedHash": "c27333211fa75a68bb54740c5f798ca1bd88981d39eeb972d355c4a919d63609"
+    },
+    "openspec-continue": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-continue/SKILL.md",
+      "computedHash": "f980b1fba2301212542a4b2a433d2be9b0e1c5bdf0879c61305c4159e1285071"
+    },
+    "openspec-explore": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-explore/SKILL.md",
+      "computedHash": "d1f86a4836438483ed0c6b35d6ff8acc7758d0e4cef61937f381ec89eb032e79"
+    },
+    "openspec-ff": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-ff/SKILL.md",
+      "computedHash": "92c0b3314eefdf19e07a52d7d2746c4b908a6c7239531954ed4f453c5cc8148b"
+    },
+    "openspec-initial": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-initial/SKILL.md",
+      "computedHash": "2fc099e08e6a27467d3ce930c66e6caa6e80c259f663c9c3a8df016d0b16e844"
+    },
+    "openspec-install": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-install/SKILL.md",
+      "computedHash": "3de2b3a25caed58ae3c2306e27fbf34ea19011a6061a2e313a45a1c816e31445"
+    },
+    "openspec-new": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-new/SKILL.md",
+      "computedHash": "706c0761255aabd689c176916d41ea67e60cf43503bc986a6737ae873b8ec414"
+    },
+    "openspec-onboard": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-onboard/SKILL.md",
+      "computedHash": "050df89975e2a81a38e860579c6704a53121857bb7b184cf16ab1990028cb83f"
+    },
+    "openspec-schema": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-schema/SKILL.md",
+      "computedHash": "b174f44fc31ec1488f0527c739660f2020ccefbca000fe04e551d852a55c96ee"
+    },
+    "openspec-sync": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-sync/SKILL.md",
+      "computedHash": "f8db210c878450012b66fc287c80f8256275b4afae5eec2211f55d8231e15bbb"
+    },
+    "openspec-update": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-update/SKILL.md",
+      "computedHash": "0e28747bf3cac37e46908918476a0b2191b5dbf84126ad64345317d802116053"
+    },
+    "openspec-verify": {
+      "source": "full-stack-skills/openspec-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openspec-verify/SKILL.md",
+      "computedHash": "f714848468fcb0aa241b322d6e8a1e1248ec054b0e1abbf58c2d55234eb781ce"
     }
   }
 }

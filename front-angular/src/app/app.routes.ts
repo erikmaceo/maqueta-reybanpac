@@ -29,6 +29,36 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'seguridades/aplicaciones/nuevo',
+        loadComponent: () => import('./pages/aplicacion-form/aplicacion-form.component').then(m => m.AplicacionFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'seguridades/aplicaciones/:id/editar',
+        loadComponent: () => import('./pages/aplicacion-form/aplicacion-form.component').then(m => m.AplicacionFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'seguridades/modulos/nuevo',
+        loadComponent: () => import('./pages/modulo-form/modulo-form.component').then(m => m.ModuloFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'seguridades/modulos/:id/editar',
+        loadComponent: () => import('./pages/modulo-form/modulo-form.component').then(m => m.ModuloFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'seguridades/programas/nuevo',
+        loadComponent: () => import('./pages/programa-form/programa-form.component').then(m => m.ProgramaFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'seguridades/programas/:id/editar',
+        loadComponent: () => import('./pages/programa-form/programa-form.component').then(m => m.ProgramaFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'niveles-segregacion',
         loadComponent: () => import('./pages/segregation-levels/segregation-levels.component').then(m => m.SegregationLevelsComponent),
         canActivate: [adminGuard],

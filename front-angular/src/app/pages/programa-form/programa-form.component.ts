@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DragDropModule, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop';
-import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
+import { SeguridadDraftService } from '../../core/services/seguridad-draft.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import { IconPlusComponent, IconTrashComponent, IconSearchComponent } from '../../shared/components/icons';
 import type { Aplicacion, Modulo, Programa, TipoPrograma, TipoControl, Control } from '../../shared/models/types';
@@ -41,8 +41,8 @@ interface PrgForm {
 @Component({
   selector: 'app-programa-form',
   standalone: true,
-  imports: [
-    CommonModule, FormsModule, DragDropModule, DialogModule, ConfirmDialogModule,
+imports: [
+    CommonModule, FormsModule, ConfirmDialogModule, DragDropModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconSearchComponent,
   ],
@@ -78,7 +78,7 @@ interface PrgForm {
             <label>Aplicación <span class="required">*</span></label>
             <div class="search-field">
               <input class="select" type="text" [ngModel]="prgAppSearchText()" readonly placeholder="Seleccione una aplicación..." [class.invalid]="prgTouched && !prgForm.appCodigo" />
-              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPrgAppSearchDialog()" title="Buscar aplicación">
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="goToPrgAppSelect()" title="Buscar aplicación">
                 <app-icon-search [width]="16" [height]="16" />
               </button>
             </div>
@@ -87,7 +87,7 @@ interface PrgForm {
             <label>Módulo <span class="required">*</span></label>
             <div class="search-field">
               <input class="select" type="text" [ngModel]="prgModSearchText()" readonly placeholder="Seleccione un módulo..." [class.invalid]="prgTouched && !prgForm.modCodigo" />
-              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPrgModSearchDialog()" [disabled]="!prgForm.appCodigo" [attr.title]="!prgForm.appCodigo ? 'Seleccione una aplicación primero' : 'Buscar módulo'">
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="goToPrgModSelect()" [disabled]="!prgForm.appCodigo" [attr.title]="!prgForm.appCodigo ? 'Seleccione una aplicación primero' : 'Buscar módulo'">
                 <app-icon-search [width]="16" [height]="16" />
               </button>
             </div>
@@ -163,132 +163,6 @@ interface PrgForm {
         </div>
       </div>
     }
-
-    <!-- ============ DIÁLOGO BÚSQUEDA APLICACIÓN PARA PROGRAMA ============ -->
-    <p-dialog
-      [(visible)]="showPrgAppSearchDlg"
-      header="Buscar aplicación"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
-      (onHide)="closePrgAppSearchDialog()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="prgAppSearchCodigo" placeholder="Código de aplicación" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="prgAppSearchNombre" placeholder="Nombre de aplicación" />
-        </div>
-        <div class="field">
-          <label>Estado</label>
-          <select class="select" [(ngModel)]="prgAppSearchEstado">
-            <option value="">Todos</option>
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyPrgAppFilters()">Buscar</button>
-        <button class="btn btn-ghost" (click)="clearPrgAppFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (a of paginatedAppsForPrgSearch(); track a.id) {
-              <tr>
-                <td class="mono">{{ a.codigo }}</td>
-                <td><div class="cell-strong">{{ a.nombre }}</div></td>
-                <td>{{ a.descripcion }}</td>
-                <td>
-                  <span class="badge" [class.badge-green]="a.estado === 'ACTIVO'" [class.badge-gray]="a.estado !== 'ACTIVO'">
-                    {{ a.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPrgAppFromDialog(a)">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="prgAppSearchPage() === 1" (click)="changePrgAppSearchPage(-1)">Anterior</button>
-        <span>Página {{ prgAppSearchPage() }} de {{ prgAppSearchTotalPages() }} ({{ filteredAppsForPrgSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="prgAppSearchPage() === prgAppSearchTotalPages()" (click)="changePrgAppSearchPage(1)">Siguiente</button>
-      </div>
-    </p-dialog>
-
-    <!-- ============ DIÁLOGO BÚSQUEDA MÓDULO PARA PROGRAMA ============ -->
-    <p-dialog
-      [(visible)]="showPrgModSearchDlg"
-      header="Buscar módulo"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
-      (onHide)="closePrgModSearchDialog()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="prgModSearchCodigo" placeholder="Código de módulo" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="prgModSearchNombre" placeholder="Nombre de módulo" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyPrgModFilters()">Buscar</button>
-        <button class="btn btn-ghost" (click)="clearPrgModFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Aplicación</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (m of paginatedModsForPrgSearch(); track m.id) {
-              <tr>
-                <td class="mono">{{ m.codigo }}</td>
-                <td><div class="cell-strong">{{ m.nombre }}</div></td>
-                <td><span class="badge badge-blue">{{ m.appCodigo }}</span></td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectPrgModFromDialog(m)">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="prgModSearchPage() === 1" (click)="changePrgModSearchPage(-1)">Anterior</button>
-        <span>Página {{ prgModSearchPage() }} de {{ prgModSearchTotalPages() }} ({{ filteredModsForPrgSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="prgModSearchPage() === prgModSearchTotalPages()" (click)="changePrgModSearchPage(1)">Siguiente</button>
-      </div>
-    </p-dialog>
 
     <p-confirmDialog></p-confirmDialog>
   `,
@@ -412,6 +286,7 @@ export class ProgramaFormComponent implements OnInit {
   private toast = inject(ToastService);
   private events = inject(EventsService);
   private confirmationService = inject(ConfirmationService);
+  private draftService = inject(SeguridadDraftService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -430,65 +305,17 @@ export class ProgramaFormComponent implements OnInit {
   aplicaciones = signal<Aplicacion[]>([]);
   modulos = signal<Modulo[]>([]);
 
-  // --- Diálogo búsqueda de aplicación ---
-  showPrgAppSearchDlg = false;
-  prgAppSearchCodigo = '';
-  prgAppSearchNombre = '';
-  prgAppSearchEstado = '';
-  appliedPrgAppSearchCodigo = signal('');
-  appliedPrgAppSearchNombre = signal('');
-  appliedPrgAppSearchEstado = signal('');
-  prgAppSearchPage = signal(1);
-  prgAppSearchPageSize = signal(5);
+  // --- Búsqueda de aplicación ---
   prgAppSearchText = signal('');
 
-  // --- Diálogo búsqueda de módulo ---
-  showPrgModSearchDlg = false;
-  prgModSearchCodigo = '';
-  prgModSearchNombre = '';
-  appliedPrgModSearchCodigo = signal('');
-  appliedPrgModSearchNombre = signal('');
-  prgModSearchPage = signal(1);
-  prgModSearchPageSize = signal(5);
+  // --- Búsqueda de módulo ---
   prgModSearchText = signal('');
 
+  private recoveredDraft: { form?: PrgForm; touched?: boolean; controles?: ControlRow[] } | null = null;
+  private recoveredAppCodigo = '';
+  private recoveredModCodigo = '';
+
   aplicacionMap = computed(() => new Map(this.aplicaciones().map(a => [a.codigo, a])));
-
-  filteredAppsForPrgSearch = computed(() => {
-    const qCodigo = this.appliedPrgAppSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedPrgAppSearchNombre().toLowerCase().trim();
-    const qEstado = this.appliedPrgAppSearchEstado().trim();
-    return this.aplicaciones().filter(a =>
-      (!qCodigo || a.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || a.nombre.toLowerCase().includes(qNombre)) &&
-      (!qEstado || a.estado === qEstado)
-    );
-  });
-
-  paginatedAppsForPrgSearch = computed(() => {
-    const start = (this.prgAppSearchPage() - 1) * this.prgAppSearchPageSize();
-    return this.filteredAppsForPrgSearch().slice(start, start + this.prgAppSearchPageSize());
-  });
-
-  prgAppSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredAppsForPrgSearch().length / this.prgAppSearchPageSize())));
-
-  filteredModsForPrgSearch = computed(() => {
-    const appCod = this.prgAppCodigo();
-    const qCodigo = this.appliedPrgModSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedPrgModSearchNombre().toLowerCase().trim();
-    let mods = appCod ? this.modulos().filter(m => m.appCodigo === appCod) : this.modulos();
-    return mods.filter(m =>
-      (!qCodigo || m.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || m.nombre.toLowerCase().includes(qNombre))
-    );
-  });
-
-  paginatedModsForPrgSearch = computed(() => {
-    const start = (this.prgModSearchPage() - 1) * this.prgModSearchPageSize();
-    return this.filteredModsForPrgSearch().slice(start, start + this.prgModSearchPageSize());
-  });
-
-  prgModSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredModsForPrgSearch().length / this.prgModSearchPageSize())));
 
   loadData = () => this._load();
 
@@ -501,6 +328,9 @@ export class ProgramaFormComponent implements OnInit {
     this.prgAppSearchText.set('');
     this.prgModSearchText.set('');
     this.prgTouched = false;
+    this.recoveredDraft = this.draftService.consume() as { form?: PrgForm; touched?: boolean; controles?: ControlRow[] } | null;
+    this.recoveredAppCodigo = this.route.snapshot.queryParamMap.get('appCodigo') || '';
+    this.recoveredModCodigo = this.route.snapshot.queryParamMap.get('modCodigo') || '';
     this._load();
   }
 
@@ -508,13 +338,17 @@ export class ProgramaFormComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.api.listAplicaciones().subscribe({
-      next: (d) => this.aplicaciones.set(d),
+      next: (d) => {
+        this.aplicaciones.set(d);
+        this.applyRecovered();
+      },
       error: () => {},
     });
     this.api.listModulos().subscribe({
       next: (d) => {
         this.modulos.set(d);
         this.applyProgramaFromPending();
+        this.applyRecovered();
       },
       error: () => {},
     });
@@ -525,6 +359,7 @@ export class ProgramaFormComponent implements OnInit {
           if (!p) { this.error.set('No se encontró el programa solicitado.'); this.loading.set(false); return; }
           this.pendingProgram = p;
           this.applyProgramaFromPending();
+          this.applyRecovered();
         }
       },
       error: (e) => this.error.set(e?.error?.error || e?.message || 'Error al cargar el programa.'),
@@ -540,6 +375,7 @@ export class ProgramaFormComponent implements OnInit {
         }
         this.controlesMap.set(map);
         this.applyProgramaFromPending();
+        this.applyRecovered();
       },
       error: () => {},
     });
@@ -632,89 +468,50 @@ export class ProgramaFormComponent implements OnInit {
   }
 
   // --- Búsqueda de aplicación para programa ---
-  openPrgAppSearchDialog(): void {
-    this.prgAppSearchCodigo = '';
-    this.prgAppSearchNombre = '';
-    this.prgAppSearchEstado = '';
-    this.appliedPrgAppSearchCodigo.set('');
-    this.appliedPrgAppSearchNombre.set('');
-    this.appliedPrgAppSearchEstado.set('');
-    this.prgAppSearchPage.set(1);
-    this.showPrgAppSearchDlg = true;
-  }
-
-  closePrgAppSearchDialog(): void {
-    this.showPrgAppSearchDlg = false;
-  }
-
-  applyPrgAppFilters(): void {
-    this.appliedPrgAppSearchCodigo.set(this.prgAppSearchCodigo);
-    this.appliedPrgAppSearchNombre.set(this.prgAppSearchNombre);
-    this.appliedPrgAppSearchEstado.set(this.prgAppSearchEstado);
-    this.prgAppSearchPage.set(1);
-  }
-
-  clearPrgAppFilters(): void {
-    this.prgAppSearchCodigo = '';
-    this.prgAppSearchNombre = '';
-    this.prgAppSearchEstado = '';
-    this.applyPrgAppFilters();
-  }
-
-  changePrgAppSearchPage(delta: number): void {
-    this.prgAppSearchPage.set(Math.min(Math.max(this.prgAppSearchPage() + delta, 1), this.prgAppSearchTotalPages()));
-  }
-
-  selectPrgApp(a: Aplicacion): void {
-    this.prgForm.appCodigo = a.codigo;
-    this.prgAppSearchText.set(`${a.codigo} · ${a.nombre}`);
-    this.prgAppCodigo.set(a.codigo);
-    this.prgForm.modCodigo = '';
-    this.prgModSearchText.set('');
-  }
-
-  selectPrgAppFromDialog(a: Aplicacion): void {
-    this.selectPrgApp(a);
-    this.closePrgAppSearchDialog();
+  goToPrgAppSelect(): void {
+    this.draftService.save({ form: this.prgForm, touched: this.prgTouched, controles: this.prgControles });
+    const path = this.editPrgId ? `/seguridades/programas/${this.editPrgId}/editar` : '/seguridades/programas/nuevo';
+    this.router.navigate(['/seguridades/seleccionar-aplicacion'], { queryParams: { returnTo: path } });
   }
 
   // --- Búsqueda de módulo para programa ---
-  openPrgModSearchDialog(): void {
-    this.prgModSearchCodigo = '';
-    this.prgModSearchNombre = '';
-    this.appliedPrgModSearchCodigo.set('');
-    this.appliedPrgModSearchNombre.set('');
-    this.prgModSearchPage.set(1);
-    this.showPrgModSearchDlg = true;
+  goToPrgModSelect(): void {
+    this.draftService.save({ form: this.prgForm, touched: this.prgTouched, controles: this.prgControles });
+    const path = this.editPrgId ? `/seguridades/programas/${this.editPrgId}/editar` : '/seguridades/programas/nuevo';
+    this.router.navigate(['/seguridades/seleccionar-modulo'], { queryParams: { returnTo: path, appCodigo: this.prgAppCodigo() } });
   }
 
-  closePrgModSearchDialog(): void {
-    this.showPrgModSearchDlg = false;
-  }
-
-  applyPrgModFilters(): void {
-    this.appliedPrgModSearchCodigo.set(this.prgModSearchCodigo);
-    this.appliedPrgModSearchNombre.set(this.prgModSearchNombre);
-    this.prgModSearchPage.set(1);
-  }
-
-  clearPrgModFilters(): void {
-    this.prgModSearchCodigo = '';
-    this.prgModSearchNombre = '';
-    this.applyPrgModFilters();
-  }
-
-  changePrgModSearchPage(delta: number): void {
-    this.prgModSearchPage.set(Math.min(Math.max(this.prgModSearchPage() + delta, 1), this.prgModSearchTotalPages()));
-  }
-
-  selectPrgMod(m: Modulo): void {
-    this.prgForm.modCodigo = m.codigo;
-    this.prgModSearchText.set(`${m.codigo} · ${m.nombre}`);
-  }
-
-  selectPrgModFromDialog(m: Modulo): void {
-    this.selectPrgMod(m);
-    this.closePrgModSearchDialog();
+  private applyRecovered(): void {
+    const draft = this.recoveredDraft;
+    if (draft?.form) {
+      this.prgForm = { ...draft.form };
+      if (typeof draft.touched === 'boolean') this.prgTouched = draft.touched;
+    }
+    if (Array.isArray(draft?.controles)) {
+      this.prgControles = (draft!.controles).map(c => ({ ...c }));
+    }
+    if (this.recoveredAppCodigo) {
+      const changed = this.prgForm.appCodigo !== this.recoveredAppCodigo;
+      this.prgForm.appCodigo = this.recoveredAppCodigo;
+      this.prgAppCodigo.set(this.recoveredAppCodigo);
+      const a = this.aplicacionMap().get(this.recoveredAppCodigo);
+      this.prgAppSearchText.set(a ? `${a.codigo} · ${a.nombre}` : this.recoveredAppCodigo);
+      if (changed) {
+        this.prgForm.modCodigo = '';
+        this.prgModSearchText.set('');
+      }
+    } else if (this.prgForm.appCodigo) {
+      const a = this.aplicacionMap().get(this.prgForm.appCodigo);
+      this.prgAppSearchText.set(a ? `${a.codigo} · ${a.nombre}` : this.prgForm.appCodigo);
+      if (this.prgAppCodigo() !== this.prgForm.appCodigo) this.prgAppCodigo.set(this.prgForm.appCodigo);
+    }
+    if (this.recoveredModCodigo) {
+      this.prgForm.modCodigo = this.recoveredModCodigo;
+      const m = this.modulos().find(x => x.codigo === this.recoveredModCodigo);
+      this.prgModSearchText.set(m ? `${m.codigo} · ${m.nombre}` : this.recoveredModCodigo);
+    } else if (this.prgForm.modCodigo) {
+      const m = this.modulos().find(x => x.codigo === this.prgForm.modCodigo);
+      this.prgModSearchText.set(m ? `${m.codigo} · ${m.nombre}` : this.prgForm.modCodigo);
+    }
   }
 }

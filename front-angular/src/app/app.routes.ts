@@ -59,6 +59,21 @@ export const routes: Routes = [
         canActivate: [adminGuard],
       },
       {
+        path: 'seguridades/seleccionar-aplicacion',
+        loadComponent: () => import('./pages/aplicacion-select/aplicacion-select.component').then(m => m.AplicacionSelectComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'seguridades/seleccionar-modulo',
+        loadComponent: () => import('./pages/modulo-select/modulo-select.component').then(m => m.ModuloSelectComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'seguridades/seleccionar-nodo',
+        loadComponent: () => import('./pages/nodo-padre-select/nodo-padre-select.component').then(m => m.NodoPadreSelectComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'niveles-segregacion',
         loadComponent: () => import('./pages/segregation-levels/segregation-levels.component').then(m => m.SegregationLevelsComponent),
         canActivate: [adminGuard],

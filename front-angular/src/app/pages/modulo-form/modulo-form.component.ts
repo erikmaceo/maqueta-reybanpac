@@ -2,12 +2,12 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
+import { SeguridadDraftService } from '../../core/services/seguridad-draft.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import { IconSearchComponent } from '../../shared/components/icons';
 import type { Aplicacion, Modulo } from '../../shared/models/types';
@@ -26,7 +26,7 @@ interface ModForm {
   selector: 'app-modulo-form',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DialogModule, ConfirmDialogModule,
+    CommonModule, FormsModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconSearchComponent,
   ],
@@ -62,7 +62,7 @@ interface ModForm {
             <label>Aplicación <span class="required">*</span></label>
             <div class="search-field">
               <input class="select" type="text" [ngModel]="modAppSearchText()" readonly placeholder="Seleccione una aplicación..." [class.invalid]="modTouched && !modForm.appCodigo" />
-              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppSearchDialog()" title="Buscar aplicación">
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="goToAppSelect()" title="Buscar aplicación">
                 <app-icon-search [width]="16" [height]="16" />
               </button>
             </div>
@@ -87,76 +87,6 @@ interface ModForm {
         </div>
       </div>
     }
-
-    <!-- ============ DIÁLOGO BÚSQUEDA APLICACIÓN ============ -->
-    <p-dialog
-      [(visible)]="showAppSearchDlg"
-      header="Buscar aplicación"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
-      (onHide)="closeAppSearchDialog()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="appSearchCodigo" placeholder="Código de aplicación" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="appSearchNombre" placeholder="Nombre de aplicación" />
-        </div>
-        <div class="field">
-          <label>Estado</label>
-          <select class="select" [(ngModel)]="appSearchEstado">
-            <option value="">Todos</option>
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyAppFilters()">Buscar</button>
-        <button class="btn btn-ghost" (click)="clearAppFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (a of paginatedAppsForSearch(); track a.id) {
-              <tr>
-                <td class="mono">{{ a.codigo }}</td>
-                <td><div class="cell-strong">{{ a.nombre }}</div></td>
-                <td>{{ a.descripcion }}</td>
-                <td>
-                  <span class="badge" [class.badge-green]="a.estado === 'ACTIVO'" [class.badge-gray]="a.estado !== 'ACTIVO'">
-                    {{ a.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectAppFromDialog(a)">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="5" class="muted center" style="padding: 24px;">Sin resultados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="appSearchPage() === 1" (click)="changeAppSearchPage(-1)">Anterior</button>
-        <span>Página {{ appSearchPage() }} de {{ appSearchTotalPages() }} ({{ filteredAppsForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="appSearchPage() === appSearchTotalPages()" (click)="changeAppSearchPage(1)">Siguiente</button>
-      </div>
-    </p-dialog>
 
     <p-confirmDialog></p-confirmDialog>
   `,
@@ -189,6 +119,7 @@ export class ModuloFormComponent implements OnInit {
   private toast = inject(ToastService);
   private events = inject(EventsService);
   private confirmationService = inject(ConfirmationService);
+  private draftService = inject(SeguridadDraftService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -201,37 +132,13 @@ export class ModuloFormComponent implements OnInit {
 
   aplicaciones = signal<Aplicacion[]>([]);
 
-  // --- Diálogo búsqueda de aplicación ---
-  showAppSearchDlg = false;
-  appSearchCodigo = '';
-  appSearchNombre = '';
-  appSearchEstado = '';
-  appliedAppSearchCodigo = signal('');
-  appliedAppSearchNombre = signal('');
-  appliedAppSearchEstado = signal('');
-  appSearchPage = signal(1);
-  appSearchPageSize = signal(5);
+  // --- Búsqueda de aplicación ---
   modAppSearchText = signal('');
 
+  private recoveredDraft: { form?: ModForm; touched?: boolean } | null = null;
+  private recoveredAppCodigo = '';
+
   aplicacionMap = computed(() => new Map(this.aplicaciones().map(a => [a.codigo, a])));
-
-  filteredAppsForSearch = computed(() => {
-    const qCodigo = this.appliedAppSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedAppSearchNombre().toLowerCase().trim();
-    const qEstado = this.appliedAppSearchEstado().trim();
-    return this.aplicaciones().filter(a =>
-      (!qCodigo || a.codigo.toLowerCase().includes(qCodigo)) &&
-      (!qNombre || a.nombre.toLowerCase().includes(qNombre)) &&
-      (!qEstado || a.estado === qEstado)
-    );
-  });
-
-  paginatedAppsForSearch = computed(() => {
-    const start = (this.appSearchPage() - 1) * this.appSearchPageSize();
-    return this.filteredAppsForSearch().slice(start, start + this.appSearchPageSize());
-  });
-
-  appSearchTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredAppsForSearch().length / this.appSearchPageSize())));
 
   loadData = () => this._load();
 
@@ -241,6 +148,8 @@ export class ModuloFormComponent implements OnInit {
     this.modForm = { codigo: '', nombre: '', descripcion: '', appCodigo: '', estado: 'ACTIVO' };
     this.modTouched = false;
     this.modAppSearchText.set('');
+    this.recoveredDraft = this.draftService.consume() as { form?: ModForm; touched?: boolean } | null;
+    this.recoveredAppCodigo = this.route.snapshot.queryParamMap.get('appCodigo') || '';
     this._load();
   }
 
@@ -250,6 +159,7 @@ export class ModuloFormComponent implements OnInit {
     this.api.listAplicaciones().subscribe({
       next: (d) => {
         this.aplicaciones.set(d);
+        this.applyRecovered();
       },
       error: () => {},
     });
@@ -262,10 +172,27 @@ export class ModuloFormComponent implements OnInit {
           const a = this.aplicacionMap().get(m.appCodigo);
           this.modAppSearchText.set(a ? `${a.codigo} · ${a.nombre}` : `${m.appCodigo}`);
         }
+        this.applyRecovered();
       },
       error: (e) => this.error.set(e?.error?.error || e?.message || 'Error al cargar el módulo.'),
       complete: () => this.loading.set(false),
     });
+  }
+
+  private applyRecovered(): void {
+    const draft = this.recoveredDraft;
+    if (draft?.form) {
+      this.modForm = { ...draft.form };
+      if (typeof draft.touched === 'boolean') this.modTouched = draft.touched;
+    }
+    if (this.recoveredAppCodigo) {
+      this.modForm.appCodigo = this.recoveredAppCodigo;
+      const a = this.aplicacionMap().get(this.recoveredAppCodigo);
+      this.modAppSearchText.set(a ? `${a.codigo} · ${a.nombre}` : this.recoveredAppCodigo);
+    } else if (this.modForm.appCodigo) {
+      const a = this.aplicacionMap().get(this.modForm.appCodigo);
+      this.modAppSearchText.set(a ? `${a.codigo} · ${a.nombre}` : this.modForm.appCodigo);
+    }
   }
 
   volver(): void {
@@ -308,46 +235,14 @@ export class ModuloFormComponent implements OnInit {
   }
 
   // --- Búsqueda de aplicación ---
-  openAppSearchDialog(): void {
-    this.appSearchCodigo = '';
-    this.appSearchNombre = '';
-    this.appSearchEstado = '';
-    this.appliedAppSearchCodigo.set('');
-    this.appliedAppSearchNombre.set('');
-    this.appliedAppSearchEstado.set('');
-    this.appSearchPage.set(1);
-    this.showAppSearchDlg = true;
-  }
-
-  closeAppSearchDialog(): void {
-    this.showAppSearchDlg = false;
-  }
-
-  applyAppFilters(): void {
-    this.appliedAppSearchCodigo.set(this.appSearchCodigo);
-    this.appliedAppSearchNombre.set(this.appSearchNombre);
-    this.appliedAppSearchEstado.set(this.appSearchEstado);
-    this.appSearchPage.set(1);
-  }
-
-  clearAppFilters(): void {
-    this.appSearchCodigo = '';
-    this.appSearchNombre = '';
-    this.appSearchEstado = '';
-    this.applyAppFilters();
-  }
-
-  changeAppSearchPage(delta: number): void {
-    this.appSearchPage.set(Math.min(Math.max(this.appSearchPage() + delta, 1), this.appSearchTotalPages()));
+  goToAppSelect(): void {
+    this.draftService.save({ form: this.modForm, touched: this.modTouched });
+    const path = this.editModId ? `/seguridades/modulos/${this.editModId}/editar` : '/seguridades/modulos/nuevo';
+    this.router.navigate(['/seguridades/seleccionar-aplicacion'], { queryParams: { returnTo: path } });
   }
 
   selectApp(a: Aplicacion): void {
     this.modForm.appCodigo = a.codigo;
     this.modAppSearchText.set(`${a.codigo} · ${a.nombre}`);
-  }
-
-  selectAppFromDialog(a: Aplicacion): void {
-    this.selectApp(a);
-    this.closeAppSearchDialog();
   }
 }

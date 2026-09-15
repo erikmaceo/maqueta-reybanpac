@@ -2,12 +2,12 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EventsService } from '../../core/services/events.service';
+import { SeguridadDraftService } from '../../core/services/seguridad-draft.service';
 import { TableSkeletonComponent, ErrorStateComponent } from '../../shared/components/ui';
 import { IconSearchComponent, IconTrashComponent } from '../../shared/components/icons';
 import type { Aplicacion, NivelSegregacion, NodoSegregacion } from '../../shared/models/types';
@@ -26,7 +26,7 @@ interface AppForm {
   selector: 'app-aplicacion-form',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DialogModule, ConfirmDialogModule,
+    CommonModule, FormsModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconSearchComponent, IconTrashComponent,
   ],
@@ -69,7 +69,7 @@ interface AppForm {
             <label>Nodo de Segregación <span class="required">*</span></label>
             <div class="search-field">
               <input class="select" [class.invalid]="appTouched && !appForm.nodoIds.length" type="text" [ngModel]="appNodoSearchText()" readonly placeholder="Seleccione un nodo padre..." />
-              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppNodoSearchDialog()" title="Buscar nodo">
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="goToNodoSelect()" title="Buscar nodo">
                 <app-icon-search [width]="16" [height]="16" />
               </button>
               @if (appForm.nodoIds.length) {
@@ -92,62 +92,6 @@ interface AppForm {
         </div>
       </div>
     }
-
-    <!-- ============ DIÁLOGO BÚSQUEDA NODO PADRE ============ -->
-    <p-dialog
-      [(visible)]="showAppNodoSearchDlg"
-      header="Buscar nodo de segregación"
-      [modal]="true" [style]="{ width: '800px' }" [closable]="true"
-      (onHide)="closeAppNodoSearchDialog()"
-    >
-      <div class="filter-row">
-        <div class="field">
-          <label>Código</label>
-          <input type="text" class="select" [(ngModel)]="appNodoSearchCodigo" placeholder="Código de nodo" />
-        </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input type="text" class="select" [(ngModel)]="appNodoSearchNombre" placeholder="Nombre de nodo" />
-        </div>
-      </div>
-      <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyAppNodoFilters()">Buscar</button>
-        <button class="btn btn-ghost" (click)="clearAppNodoFilters()">Limpiar</button>
-      </div>
-
-      <div class="card table-wrap">
-        <table class="data">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Nivel</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (n of paginatedAppNodosForSearch(); track n.id) {
-              <tr>
-                <td class="mono">{{ n.codigo }}</td>
-                <td><div class="cell-strong">{{ n.nombre }}</div></td>
-                <td>{{ nivelMapSegregacion().get(n.nivelId)?.nombre || n.nivelId }}</td>
-                <td>
-                  <button class="btn btn-primary btn-sm" (click)="selectAppNodoFromDialog(n)">Seleccionar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4" class="muted center" style="padding: 24px;">Sin nodos padre activos.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination">
-        <button class="btn btn-ghost btn-sm" [disabled]="appNodoSearchPage() === 1" (click)="changeAppNodoSearchPage(-1)">Anterior</button>
-        <span>Página {{ appNodoSearchPage() }} de {{ appNodoSearchTotalPages() }} ({{ filteredAppNodosForSearch().length }} registros)</span>
-        <button class="btn btn-ghost btn-sm" [disabled]="appNodoSearchPage() === appNodoSearchTotalPages()" (click)="changeAppNodoSearchPage(1)">Siguiente</button>
-      </div>
-    </p-dialog>
 
     <p-confirmDialog></p-confirmDialog>
   `,
@@ -180,6 +124,7 @@ export class AplicacionFormComponent implements OnInit {
   private toast = inject(ToastService);
   private events = inject(EventsService);
   private confirmationService = inject(ConfirmationService);
+  private draftService = inject(SeguridadDraftService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -194,15 +139,11 @@ export class AplicacionFormComponent implements OnInit {
   nivelesSegregacion = signal<NivelSegregacion[]>([]);
   nodosSegregacion = signal<NodoSegregacion[]>([]);
 
-  // --- Diálogo búsqueda de nodo padre ---
-  showAppNodoSearchDlg = false;
-  appNodoSearchCodigo = '';
-  appNodoSearchNombre = '';
-  appliedAppNodoSearchCodigo = signal('');
-  appliedAppNodoSearchNombre = signal('');
-  appNodoSearchPage = signal(1);
-  appNodoSearchPageSize = signal(5);
+  // --- Búsqueda de nodo padre ---
   appNodoSearchText = signal('');
+
+  private recoveredDraft: { form?: AppForm; touched?: boolean } | null = null;
+  private recoveredNodoId = '';
 
   nivelMapSegregacion = computed(() => new Map(this.nivelesSegregacion().map(n => [n.id, n])));
   nodoMapSegregacion = computed(() => new Map(this.nodosSegregacion().map(n => [n.id, n])));
@@ -211,21 +152,6 @@ export class AplicacionFormComponent implements OnInit {
       .filter(n => n.estado === 'ACTIVO' && n.padreId === null)
       .sort((a, b) => a.codigo.localeCompare(b.codigo));
   });
-  filteredAppNodosForSearch = computed(() => {
-    const qCodigo = this.appliedAppNodoSearchCodigo().toLowerCase().trim();
-    const qNombre = this.appliedAppNodoSearchNombre().toLowerCase().trim();
-    return this.nodosSegregacionPadresActivos().filter(n => {
-      if (qCodigo && !n.codigo.toLowerCase().includes(qCodigo)) return false;
-      if (qNombre && !n.nombre.toLowerCase().includes(qNombre)) return false;
-      return true;
-    });
-  });
-  paginatedAppNodosForSearch = computed(() => {
-    const list = this.filteredAppNodosForSearch();
-    const start = (this.appNodoSearchPage() - 1) * this.appNodoSearchPageSize();
-    return list.slice(start, start + this.appNodoSearchPageSize());
-  });
-  appNodoSearchTotalPages = computed(() => Math.ceil(this.filteredAppNodosForSearch().length / this.appNodoSearchPageSize()) || 1);
 
   loadData = () => this._load();
 
@@ -235,6 +161,8 @@ export class AplicacionFormComponent implements OnInit {
     this.appForm = { codigo: '', nombre: '', descripcion: '', estado: 'ACTIVO', nodoIds: [] };
     this.appTouched = false;
     this.appNodoSearchText.set('');
+    this.recoveredDraft = this.draftService.consume() as { form?: AppForm; touched?: boolean } | null;
+    this.recoveredNodoId = this.route.snapshot.queryParamMap.get('nodoId') || '';
     this._load();
   }
 
@@ -259,6 +187,7 @@ export class AplicacionFormComponent implements OnInit {
           const nodo = nodoIds[0] ? this.nodoMapSegregacion().get(nodoIds[0]) : undefined;
           this.appNodoSearchText.set(nodo ? `${nodo.codigo} · ${nodo.nombre}` : '');
         }
+        this.applyRecovered();
       },
       error: (e) => this.error.set(e?.error?.error || e?.message || 'Error al cargar la aplicación.'),
       complete: () => this.loading.set(false),
@@ -268,9 +197,28 @@ export class AplicacionFormComponent implements OnInit {
       error: () => {},
     });
     this.api.listNodosSegregacion().subscribe({
-      next: (d) => this.nodosSegregacion.set(d),
+      next: (d) => {
+        this.nodosSegregacion.set(d);
+        this.applyRecovered();
+      },
       error: () => {},
     });
+  }
+
+  private applyRecovered(): void {
+    const draft = this.recoveredDraft;
+    if (draft?.form) {
+      this.appForm = { ...draft.form };
+      if (typeof draft.touched === 'boolean') this.appTouched = draft.touched;
+    }
+    if (this.recoveredNodoId) {
+      this.appForm.nodoIds = [this.recoveredNodoId];
+      const nodo = this.nodoMapSegregacion().get(this.recoveredNodoId);
+      if (nodo) this.appNodoSearchText.set(`${nodo.codigo} · ${nodo.nombre}`);
+    } else if (this.appForm.nodoIds[0]) {
+      const nodo = this.nodoMapSegregacion().get(this.appForm.nodoIds[0]);
+      if (nodo) this.appNodoSearchText.set(`${nodo.codigo} · ${nodo.nombre}`);
+    }
   }
 
   volver(): void {
@@ -317,43 +265,15 @@ export class AplicacionFormComponent implements OnInit {
   }
 
   // --- Búsqueda de nodo padre ---
-  openAppNodoSearchDialog(): void {
-    this.appNodoSearchCodigo = '';
-    this.appNodoSearchNombre = '';
-    this.appliedAppNodoSearchCodigo.set('');
-    this.appliedAppNodoSearchNombre.set('');
-    this.appNodoSearchPage.set(1);
-    this.showAppNodoSearchDlg = true;
-  }
-
-  closeAppNodoSearchDialog(): void {
-    this.showAppNodoSearchDlg = false;
-  }
-
-  applyAppNodoFilters(): void {
-    this.appliedAppNodoSearchCodigo.set(this.appNodoSearchCodigo);
-    this.appliedAppNodoSearchNombre.set(this.appNodoSearchNombre);
-    this.appNodoSearchPage.set(1);
-  }
-
-  clearAppNodoFilters(): void {
-    this.appNodoSearchCodigo = '';
-    this.appNodoSearchNombre = '';
-    this.applyAppNodoFilters();
-  }
-
-  changeAppNodoSearchPage(delta: number): void {
-    this.appNodoSearchPage.set(Math.min(Math.max(this.appNodoSearchPage() + delta, 1), this.appNodoSearchTotalPages()));
+  goToNodoSelect(): void {
+    this.draftService.save({ form: this.appForm, touched: this.appTouched });
+    const path = this.editAppId ? `/seguridades/aplicaciones/${this.editAppId}/editar` : '/seguridades/aplicaciones/nuevo';
+    this.router.navigate(['/seguridades/seleccionar-nodo'], { queryParams: { returnTo: path } });
   }
 
   selectAppNodo(nodo: NodoSegregacion): void {
     this.appForm.nodoIds = [nodo.id];
     this.appNodoSearchText.set(`${nodo.codigo} · ${nodo.nombre}`);
-  }
-
-  selectAppNodoFromDialog(nodo: NodoSegregacion): void {
-    this.selectAppNodo(nodo);
-    this.closeAppNodoSearchDialog();
   }
 
   clearAppNodo(): void {

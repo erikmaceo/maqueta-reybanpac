@@ -13,4 +13,4 @@
 ## 4. Verificación
 
 - [x] 4.1 Ejecutar `npm.cmd run build` en `front-angular` y confirmar compilación sin errores.
-- [ ] 4.2 Verificar visualmente en las rutas nuevo/editar de las tres entidades que el bloque de acciones está a la derecha con separación de 5px y sin cambios en el comportamiento de los botones.
+- [x] 4.2 Verificar visualmente en las rutas nuevo/editar de las tres entidades que el bloque de acciones está a la derecha con separación de 5px y sin cambios en el comportamiento de los botones.

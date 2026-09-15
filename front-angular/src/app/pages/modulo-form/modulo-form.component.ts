@@ -57,26 +57,28 @@ interface ModForm {
             <input class="input" [class.invalid]="modTouched && !modForm.nombre" [(ngModel)]="modForm.nombre" placeholder="Finanzas (FI)" />
           </div>
         </div>
-        <div class="field">
-          <label>Aplicación <span class="required">*</span></label>
-          <div class="search-field">
-            <input class="select" type="text" [ngModel]="modAppSearchText()" readonly placeholder="Seleccione una aplicación..." [class.invalid]="modTouched && !modForm.appCodigo" />
-            <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppSearchDialog()" title="Buscar aplicación">
-              <app-icon-search [width]="16" [height]="16" />
-            </button>
+        <div class="form-grid">
+          <div class="field">
+            <label>Aplicación <span class="required">*</span></label>
+            <div class="search-field">
+              <input class="select" type="text" [ngModel]="modAppSearchText()" readonly placeholder="Seleccione una aplicación..." [class.invalid]="modTouched && !modForm.appCodigo" />
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppSearchDialog()" title="Buscar aplicación">
+                <app-icon-search [width]="16" [height]="16" />
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Estado</label>
+            <select class="select" [(ngModel)]="modForm.estado">
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
           </div>
         </div>
         <div class="field">
           <label>Descripción</label>
           <textarea class="input" [(ngModel)]="modForm.descripcion" rows="2" maxlength="250"></textarea>
           <div class="muted small" style="margin-top:2px;">{{ (modForm.descripcion || '').length }}/250 caracteres máximos.</div>
-        </div>
-        <div class="field">
-          <label>Estado</label>
-          <select class="select" [(ngModel)]="modForm.estado">
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
         </div>
 
         <div class="form-actions">

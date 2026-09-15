@@ -30,17 +30,22 @@ The profile detail screen SHALL preserve the current `Programas por perfil` func
 - **THEN** the application navigates to `/perfiles`
 
 ### Requirement: Program permissions are edited through a navigable screen
-The system SHALL expose a route identifying both the profile and program whose permissions are being edited, SHALL replace the `Permisos del Programa` dialog with a full screen at that route, and SHALL present the permission editor using the available screen width with the profile/program context and program permissions arranged horizontally on desktop layouts.
+The system SHALL expose a route identifying both the profile and program whose permissions are being edited, SHALL replace the `Permisos del Programa` dialog with a full screen at that route, SHALL present the permission editor using the available screen width with the profile/program context and program permissions arranged horizontally on desktop layouts, and SHALL rely on the application header for the screen title and description instead of duplicating that text inside the screen card.
 
 #### Scenario: Open program permissions from the program table
 - **WHEN** an administrator clicks the edit action for a program in the `Programas por perfil` tab
 - **THEN** the application navigates to the permissions route containing the selected profile and program
 - **AND** the screen displays the profile code and name, program code and name, and the current permission values
 
+#### Scenario: Do not duplicate the application header
+- **WHEN** the permissions screen is displayed
+- **THEN** it does not render the internal texts `Permisos del Programa` or `Configure los permisos del programa dentro del perfil seleccionado.`
+- **AND** the application header remains the source of the screen title and description
+
 #### Scenario: Display the context fields in one row
 - **WHEN** the permissions screen is displayed on a desktop-width viewport
 - **THEN** the profile code, profile name, program code, and program name are displayed in a single horizontal row
-- **AND** the containing permissions card uses the maximum available width with `5px` of internal padding
+- **AND** the containing permissions card uses the maximum available width with `10px` of internal padding
 
 #### Scenario: Display program-level permissions in one row
 - **WHEN** the permissions screen is displayed on a desktop-width viewport
@@ -69,6 +74,12 @@ The system SHALL expose a route identifying both the profile and program whose p
 - **THEN** the table displays only the selected page using the options `5`, `10`, `15`, and `20`
 - **AND** the page is reset to the first page when the records-per-page value changes
 - **AND** the existing values for controls on other pages remain pending for saving
+
+#### Scenario: Place the form actions below the card
+- **WHEN** the permissions editor is displayed
+- **THEN** the bottom `Volver` and `Guardar` buttons are rendered outside the permissions card
+- **AND** the action group has a `10px` top margin from the card
+- **AND** the header `Volver` button remains available without changing its navigation behavior
 
 ### Requirement: Saving permissions preserves the profile and program associations
 The system SHALL save the edited program permissions and all edited control permissions from every controls page as part of the selected profile without removing or resetting the other programs associated with that profile.

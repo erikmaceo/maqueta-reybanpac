@@ -73,44 +73,48 @@ interface PrgForm {
             <input class="input" [class.invalid]="prgTouched && !prgForm.nombre" [(ngModel)]="prgForm.nombre" placeholder="Documentos contables" />
           </div>
         </div>
-        <div class="field">
-          <label>Aplicación <span class="required">*</span></label>
-          <div class="search-field">
-            <input class="select" type="text" [ngModel]="prgAppSearchText()" readonly placeholder="Seleccione una aplicación..." [class.invalid]="prgTouched && !prgForm.appCodigo" />
-            <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPrgAppSearchDialog()" title="Buscar aplicación">
-              <app-icon-search [width]="16" [height]="16" />
-            </button>
+        <div class="form-grid">
+          <div class="field">
+            <label>Aplicación <span class="required">*</span></label>
+            <div class="search-field">
+              <input class="select" type="text" [ngModel]="prgAppSearchText()" readonly placeholder="Seleccione una aplicación..." [class.invalid]="prgTouched && !prgForm.appCodigo" />
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPrgAppSearchDialog()" title="Buscar aplicación">
+                <app-icon-search [width]="16" [height]="16" />
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Módulo <span class="required">*</span></label>
+            <div class="search-field">
+              <input class="select" type="text" [ngModel]="prgModSearchText()" readonly placeholder="Seleccione un módulo..." [class.invalid]="prgTouched && !prgForm.modCodigo" />
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPrgModSearchDialog()" [disabled]="!prgForm.appCodigo" [attr.title]="!prgForm.appCodigo ? 'Seleccione una aplicación primero' : 'Buscar módulo'">
+                <app-icon-search [width]="16" [height]="16" />
+              </button>
+            </div>
           </div>
         </div>
-        <div class="field">
-          <label>Módulo <span class="required">*</span></label>
-          <div class="search-field">
-            <input class="select" type="text" [ngModel]="prgModSearchText()" readonly placeholder="Seleccione un módulo..." [class.invalid]="prgTouched && !prgForm.modCodigo" />
-            <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openPrgModSearchDialog()" [disabled]="!prgForm.appCodigo" [attr.title]="!prgForm.appCodigo ? 'Seleccione una aplicación primero' : 'Buscar módulo'">
-              <app-icon-search [width]="16" [height]="16" />
-            </button>
+        <div class="form-grid">
+          <div class="field">
+            <label>Tipo de Programa <span class="required">*</span></label>
+            <select class="select" [class.invalid]="prgTouched && !prgForm.tipo" [(ngModel)]="prgForm.tipo">
+              <option value="">— Seleccione —</option>
+              @for (tipo of tiposPrograma; track tipo) {
+                <option [value]="tipo">{{ tipo }}</option>
+              }
+            </select>
           </div>
-        </div>
-        <div class="field">
-          <label>Tipo de Programa <span class="required">*</span></label>
-          <select class="select" [class.invalid]="prgTouched && !prgForm.tipo" [(ngModel)]="prgForm.tipo">
-            <option value="">— Seleccione —</option>
-            @for (tipo of tiposPrograma; track tipo) {
-              <option [value]="tipo">{{ tipo }}</option>
-            }
-          </select>
+          <div class="field">
+            <label>Estado</label>
+            <select class="select" [(ngModel)]="prgForm.estado">
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </div>
         </div>
         <div class="field">
           <label>Descripción</label>
           <textarea class="input" [(ngModel)]="prgForm.descripcion" rows="2" maxlength="250"></textarea>
           <div class="muted small" style="margin-top:2px;">{{ (prgForm.descripcion || '').length }}/250 caracteres máximos.</div>
-        </div>
-        <div class="field">
-          <label>Estado</label>
-          <select class="select" [(ngModel)]="prgForm.estado">
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
         </div>
         @if (prgForm.tipo && prgForm.tipo !== 'Menú' && prgForm.tipo !== 'Submenú') {
           <div class="field">

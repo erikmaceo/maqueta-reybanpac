@@ -57,31 +57,33 @@ interface AppForm {
             <input class="input" [class.invalid]="appTouched && !appForm.nombre" [(ngModel)]="appForm.nombre" placeholder="SAP ERP" />
           </div>
         </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Estado</label>
+            <select class="select" [(ngModel)]="appForm.estado">
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Nodo de Segregación <span class="required">*</span></label>
+            <div class="search-field">
+              <input class="select" [class.invalid]="appTouched && !appForm.nodoIds.length" type="text" [ngModel]="appNodoSearchText()" readonly placeholder="Seleccione un nodo padre..." />
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppNodoSearchDialog()" title="Buscar nodo">
+                <app-icon-search [width]="16" [height]="16" />
+              </button>
+              @if (appForm.nodoIds.length) {
+                <button class="btn btn-danger btn-sm btn-icon" type="button" (click)="clearAppNodo()" title="Quitar nodo">
+                  <app-icon-trash [width]="16" [height]="16" />
+                </button>
+              }
+            </div>
+          </div>
+        </div>
         <div class="field">
           <label>Descripción</label>
           <textarea class="input" [(ngModel)]="appForm.descripcion" rows="2" maxlength="250"></textarea>
           <div class="muted small" style="margin-top:2px;">{{ (appForm.descripcion || '').length }}/250 caracteres máximos.</div>
-        </div>
-        <div class="field">
-          <label>Estado</label>
-          <select class="select" [(ngModel)]="appForm.estado">
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Nodo de Segregación <span class="required">*</span></label>
-          <div class="search-field">
-            <input class="select" [class.invalid]="appTouched && !appForm.nodoIds.length" type="text" [ngModel]="appNodoSearchText()" readonly placeholder="Seleccione un nodo padre..." />
-            <button class="btn btn-ghost btn-sm btn-icon" type="button" (click)="openAppNodoSearchDialog()" title="Buscar nodo">
-              <app-icon-search [width]="16" [height]="16" />
-            </button>
-            @if (appForm.nodoIds.length) {
-              <button class="btn btn-danger btn-sm btn-icon" type="button" (click)="clearAppNodo()" title="Quitar nodo">
-                <app-icon-trash [width]="16" [height]="16" />
-              </button>
-            }
-          </div>
         </div>
 
         <div class="form-actions">

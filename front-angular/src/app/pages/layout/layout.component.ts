@@ -33,7 +33,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: IconDashboardComponent, end: true, group: 'General' },
   { path: '/niveles-segregacion', label: 'Niveles de Segregación', icon: IconBuildingComponent, group: 'Sistemas y Configuración', adminOnly: true },
-  { path: '/seguridades', label: 'Seguridades', icon: IconSecurityComponent, group: 'Sistemas y Configuración', adminOnly: true },
+  { path: '/seguridades', label: 'Aplicaciones', icon: IconSecurityComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/aplicaciones', label: 'Aplicaciones', icon: IconSystemsComponent, group: 'Sistemas y Configuración', adminOnly: true, hidden: true },
   { path: '/perfiles', label: 'Perfiles', icon: IconRolesComponent, group: 'Sistemas y Configuración', adminOnly: true },
   { path: '/usuarios', label: 'Usuarios', icon: IconUsersComponent, group: 'Sistemas y Configuración', adminOnly: true },

@@ -1,7 +1,7 @@
 ﻿import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as XLSX from 'xlsx';
 import { DialogModule } from 'primeng/dialog';
@@ -24,7 +24,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
   selector: 'app-perfiles',
   standalone: true,
   imports: [
-    CommonModule, FormsModule,
+    CommonModule, FormsModule, RouterLink,
     DialogModule, ButtonModule, InputTextModule, ConfirmDialogModule,
     TableSkeletonComponent, ErrorStateComponent,
     IconPlusComponent, IconTrashComponent, IconEditComponent, IconSearchComponent, IconDownloadComponent,
@@ -70,7 +70,7 @@ import { validateBulkFileSize } from '../../shared/utils/file-validation';
               <tr>
                 <td class="mono">{{ p.codigo }}</td>
                 <td>
-                  <a class="perfil-link" (click)="goToPerfilDetail(p)">{{ p.nombre }}</a>
+                  <a class="perfil-link" [routerLink]="p.id ? ['/perfiles', p.id] : null" [class.disabled]="!p.id">{{ p.nombre }}</a>
                 </td>
                 <td class="desc-col">{{ p.descripcion }}</td>
                 <td>
@@ -260,10 +260,6 @@ export class PerfilesComponent implements OnInit {
   // ============ PERFIL NAVIGATION ============
   goToNuevoPerfil(): void {
     this.router.navigate(['/perfiles/nuevo']);
-  }
-
-  goToPerfilDetail(p: Perfil): void {
-    this.router.navigate(['/perfiles', p.id]);
   }
 
   goToEditarPerfil(p: Perfil): void {

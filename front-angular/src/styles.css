@@ -847,6 +847,22 @@ table.data tbody tr:hover {
   justify-content: center;
 }
 
+.perfil-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.perfil-link:hover {
+  text-decoration: underline;
+}
+
+.perfil-link.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ==========================================================================
    Formularios
    ========================================================================== */

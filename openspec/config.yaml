@@ -1,0 +1,50 @@
+# OpenSpec project configuration
+# Docs: https://github.com/Fission-AI/OpenSpec
+
+schema: spec-driven
+
+context: |
+  Proyecto: Central Access Manager (CAM) - consola de gobierno de accesos para Reybanpac (Favorita Fruit Company).
+
+  Estructura del monorepo:
+  - backend/         API Express + TypeScript (ESM, tsx, Node 20). Puerto 4000.
+                     Persistencia en memoria (IRAM), auth por sesiones opacas `cam.<hex>`
+                     con TTL 8h, middlewares requireAuth / requireGlobalAdmin, validación con zod,
+                     seguridad con helmet/cors/rate-limit, Swagger documentado.
+  - front-angular/   SPA Angular 21 + PrimeNG 21 + PrimeFlex (frontend activo). Puerto 5174,
+                     proxy /api via proxy.conf.json. Comandos: npm start, npm run build, npm run typecheck/test.
+  - frontend/        SPA React legado (puerto 8080 en Docker); solo mantenimiento, no agregar features nuevas aquí.
+  - ldap/            Contenedor OpenLDAP (cam-ldap, puerto 389 -> 3890 host) con usuarios corporativos.
+  - matriz/          Contenido/datos de matriz de aplicaciones y permisos.
+  - docker-compose.yaml orquesta backend, frontends y LDAP.
+  - docs/            Documentación fuente de verdad: ARCHITECTURE.md, DEV-GUIDE.md, BACKEND-API-ROUTES.md,
+                     DATABASE-MODEL.md, AUTH-AUTHZ-GUIDE.md, API-GATEWAY-*.md, CHANGES.md.
+
+  Dominio: aplicaciones, módulos, programas, controles, perfiles, usuarios, roles y solicitudes de
+  acceso; integración LDAP; API Gateway (/api/v1/gateway) con OAuth2 Client Credentials, JWT,
+  scopes y rate limit para apps terceras.
+
+  Convenciones:
+  - Idioma de UI, documentación y comentarios de negocio: español.
+  - Endpoints REST bajo /api, respuestas JSON, errores con status HTTP coherente.
+  - Tipado estricto de TypeScript, sin `any` salvo justificación.
+  - Los cambios se modelan con OpenSpec (proposal → specs → design → tasks) antes de codificar.
+  - La documentación en docs/ debe actualizarse cuando cambie rutas, modelo de datos o arquitectura.
+
+rules:
+  proposal:
+    - Escribir en español e incluir qué cambia, por qué, alcance y qué queda fuera
+    - Mencionar los archivos/directorios afectados (backend/, front-angular/, docs/) y si toca el API Gateway o LDAP
+    - Incluir criterios de aceptación verificables y cómo revertir el cambio
+  specs:
+    - Usar formato Given/When/Then para cada escenario
+    - Cubrir autorización (requireAuth/requireGlobalAdmin) y validación de entrada cuando aplique
+    - Especificar el contrato JSON de request/response de los endpoints tocados
+  design:
+    - Detallar decisión técnica y alternativas descartadas, con justificación corta
+    - Señalar impacto en la API (rutas, contratos) y en el modelo de datos en memoria
+    - Incluir pasos de verificación concretos (typecheck, build, prueba manual)
+  tasks:
+    - Tareas pequeñas, ordenadas y accionables, con el archivo exacto a modificar
+    - Agrupar por capa: backend, front-angular, docs
+    - La última tarea debe ser correr typecheck/build y actualizar docs/CHANGES.md

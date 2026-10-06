@@ -874,3 +874,37 @@ Se creó `AGENTS.md` en la raíz del repositorio con las instrucciones de trabaj
 - Verificación: `npm.cmd run typecheck` en `backend/` OK; `npm.cmd run build` en `front-angular/` OK (warnings preexistentes NG8113 y de presupuesto de bundle, no relacionados con este cambio).
 - Enlaces relativos de `AGENTS.md` verificados con `Test-Path`; comandos contrastados contra `docs/DEV-GUIDE.md`.
 - Reversión: `git rm AGENTS.md` (no hay dependencias ni efectos en runtime).
+---
+
+## 2026-10-06 — Instalación de la skill grill-me (mattpocock/skills)
+
+### Resumen
+
+Se instalaron en el proyecto (scope project) la skill `grill-me` y su dependencia funcional `grilling`, ambas de `mattpocock/skills`, usando el CLI oficial `skills` (v1.7.0) vía `npx.cmd`. En este repo la skill `grill-me` es solo un *stub* de compatibilidad con `disable-model-invocation: true` cuyo contenido reenvía a la skill `grilling`, que aporta el comportamiento real de entrevista (rondas por frontera de decisiones). Ambas quedaron disponibles para OpenCode y los agentes ya vinculados, con trazabilidad en `skills-lock.json`.
+
+### Cambios realizados
+
+- `.agents/skills/grill-me/SKILL.md` — stub de 7 líneas que reenvía a "grilling" (frontmatter `name: grill-me`, `disable-model-invocation: true`).
+- `.agents/skills/grilling/SKILL.md` + `agents/openai.yaml` — comportamiento real: entrevista por "design tree", rondas sobre la frontera de decisiones, respuestas numeradas con recomendación; no es bug-hunting, es expandir intención/diseño.
+- `skills-lock.json` — entradas nuevas `grill-me` (`5e0c683385eafd83…`) y `grilling` (`4fa026e597977034…`) con `source`, `skillPath` y `computedHash`.
+- Se eliminó `.claude/` generado por el CLI (los skills previos del proyecto no están vinculados a Claude Code).
+- Cambio modelado con OpenSpec (change `install-grill-me-skill`); la spec fue actualizada durante la implementación al descubrir la dependencia `grilling`.
+
+### Archivos principales modificados
+
+| Archivo | Descripción |
+|---------|-------------|
+| `.agents/skills/grill-me/SKILL.md` | Stub de compatibilidad que reenvía a `grilling` |
+| `.agents/skills/grilling/SKILL.md` | Skill de entrevista por rondas |
+| `skills-lock.json` | Entradas `grill-me` y `grilling` con hash |
+| `docs/CHANGES.md` | Este registro |
+| `openspec/changes/install-grill-me-skill/` | Artefactos del cambio OpenSpec |
+
+### Notas técnicas
+
+- Instalación: `npx.cmd skills add mattpocock/skills --skill grill-me -y` y `--skill grilling -y` (no interactiva, project scope).
+- Seguridad evaluada por el CLI: `grill-me` y `grilling` → **Safe / 0 alerts / Snyk Low Risk**; revisión manual del contenido de ambos `SKILL.md` antes de dar por válida la instalación.
+- Verificación: `npx.cmd skills list --json` muestra ambas con `scope: "project"` y `source: "mattpocock/skills"`; `git status` limitado a los archivos esperados; `npm.cmd run typecheck` en `backend/` sin cambios.
+- Actualización posterior: `npx.cmd skills update grill-me grilling` (renueva hashes del lock).
+- Uso: invocar con `/grill-me <tema>` o frase "gríllame sobre…" / "stress-test esto…".
+- Reversión: `npx.cmd skills remove grill-me grilling -y` (o revert del commit).

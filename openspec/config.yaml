@@ -46,5 +46,5 @@ rules:
     - Incluir pasos de verificación concretos (typecheck, build, prueba manual)
   tasks:
     - Tareas pequeñas, ordenadas y accionables, con el archivo exacto a modificar
-    - Agrupar por capa: backend, front-angular, docs
+    - "Agrupar por capa: backend, front-angular, docs"
     - La última tarea debe ser correr typecheck/build y actualizar docs/CHANGES.md

@@ -843,5 +843,34 @@ Se agregó un modo oscuro seleccionable para la SPA Angular activa. La preferenc
 
 - `npm.cmd run build` frontend Angular OK. Se mantienen warnings preexistentes de imports no utilizados y del presupuesto del bundle inicial.
 - El proyecto no tiene un target `test` configurado en `angular.json`; `npm.cmd test` no puede determinar proyecto/target, por lo que la validación se realizó mediante compilación y revisión estática.
-</parameter>
-</invoke>
+
+---
+
+## 2026-10-06 — Archivo AGENTS.md con instrucciones para agentes de IA
+
+### Resumen
+
+Se creó `AGENTS.md` en la raíz del repositorio con las instrucciones de trabajo para agentes de IA: visión general de CAM, mapa del monorepo, comandos de desarrollo/verificación, convenciones, advertencias frecuentes y enlaces a la documentación fuente en `docs/`. El archivo resume y enlaza; no duplica tablas de rutas ni de endpoints.
+
+### Cambios realizados
+
+- Nuevo `AGENTS.md` en la raíz, en español, con secciones: Visión general, Mapa del monorepo, Comandos, Convenciones, Advertencias, Documentación y Mantenimiento.
+- Se indica explícitamente que `front-angular/` es el frontend activo y `frontend/` (React) es legado, y que `docker restart` no aplica cambios de código.
+- Se enlazan `docs/ARCHITECTURE.md`, `docs/DEV-GUIDE.md`, `docs/README.md` y `docs/CHANGES.md` como fuentes de detalle.
+- Cambio modelado con OpenSpec (change `add-agents-md`: proposal, specs, design, tasks).
+- Se eliminaron líneas residuales de una tool call anterior al final de `docs/CHANGES.md`.
+
+### Archivos principales modificados
+
+| Archivo | Descripción |
+|---------|-------------|
+| `AGENTS.md` | Nuevo archivo de instrucciones para agentes de IA |
+| `docs/CHANGES.md` | Este registro (y limpieza de líneas residuales) |
+| `openspec/config.yaml` | Corregida regla `tasks` con comillas (evita error de parseo YAML) |
+| `openspec/changes/add-agents-md/` | Artefactos del cambio OpenSpec |
+
+### Notas técnicas
+
+- Verificación: `npm.cmd run typecheck` en `backend/` OK; `npm.cmd run build` en `front-angular/` OK (warnings preexistentes NG8113 y de presupuesto de bundle, no relacionados con este cambio).
+- Enlaces relativos de `AGENTS.md` verificados con `Test-Path`; comandos contrastados contra `docs/DEV-GUIDE.md`.
+- Reversión: `git rm AGENTS.md` (no hay dependencias ni efectos en runtime).
